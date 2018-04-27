@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "lib": ["esnext"],
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "paths": {
+      "*": ["packages/*"]
+    }
+  },
+  "include": ["packages/**/*.ts"],
+  "exclude": ["node_modules"]
+}
