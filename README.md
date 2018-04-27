@@ -2,11 +2,14 @@
 
 > JavaScript/TypeScript framework for Distributed Event Sourcing & CQRS
 
-[![Build Status](https://travis-ci.org/skalar/ddes.svg?branch=master)](https://travis-ci.org/skalar/ddes)
-
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![NPM version](https://img.shields.io/npm/v/@ddes/core.svg)](https://www.npmjs.com/org/ddes)
+[![Node](https://img.shields.io/npm/v/@ddes/core.svg)](https://www.npmjs.com/org/ddes)
+[![Type definitions](https://img.shields.io/npm/types/@ddes/core.svg)](https://ddes.io/api)
+[![Build Status](https://travis-ci.org/Skalar/ddes.svg?branch=master)](https://travis-ci.org/Skalar/ddes)
 ## Usage
 
-See the [website](https://ddes.io) and [API Docs](https://github.com/skalar/ddes).
+See [website](https://ddes.io) for documentation.
 
 ## Development
 
