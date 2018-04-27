@@ -1,0 +1,11 @@
+#!/bin/bash
+
+npx typedoc \
+  --out ${1:-docs} \
+  --name 'ddes' \
+  --target ESNEXT \
+  --excludeNotExported \
+  --exclude '**/+(tests|test-support)/**/*.ts' \
+  --readme none \
+  --mode modules \
+  packages

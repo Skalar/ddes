@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "preserveWatchOutput": true,
+    "outDir": "dist/node-10"
+  },
+  "exclude": ["node_modules", "dist"]
+}

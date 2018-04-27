@@ -1,0 +1,23 @@
+#!/bin/bash
+
+tsc=$PWD/node_modules/.bin/tsc
+root=$PWD
+
+declare -a targets=("node-8.10" "node-10")
+
+rm -rf $root/packages/@ddes/core/dist
+rm -rf $root/packages/@ddes/aws-store/dist
+rm -rf $root/packages/@ddes/event-streaming/dist
+rm -rf $root/.transpiled-tests
+
+if [[ $1 != "clean" ]]; then
+  for target in "${targets[@]}"
+  do
+    echo -n "target $target.. "
+    cd $root/packages/@ddes/core && $tsc -p tsconfig.$target.json
+    cd $root/packages/@ddes/aws-store && $tsc -p tsconfig.$target.json
+    cd $root/packages/@ddes/event-streaming && $tsc -p tsconfig.$target.json
+    cd $root/tests && $tsc -p tsconfig.$target.json
+    echo "done."
+  done
+fi

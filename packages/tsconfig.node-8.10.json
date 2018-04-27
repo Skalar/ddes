@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "lib": ["esnext"],
+    "experimentalDecorators": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "preserveWatchOutput": true,
+    "outDir": "dist/node-8.10"
+  },
+  "exclude": ["node_modules", "dist"]
+}

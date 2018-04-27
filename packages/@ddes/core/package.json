@@ -1,0 +1,37 @@
+{
+  "name": "@ddes/core",
+  "version": "5.4.4",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "description": "Core package for DDES, a framework for distributed Event Sourcing & CQRS",
+  "author": "Trym Skaar <trym.skaar@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "index.js",
+    "package.json",
+    "README.md"
+  ],
+  "types": "./dist/node-10/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "debug": "^3.1.0",
+    "semver": "^5.5.0"
+  },
+  "repository": "skalar/ddes",
+  "homepage": "https://ddes.io",
+  "keywords": [
+    "distributed",
+    "event sourcing",
+    "event store",
+    "aws",
+    "cqrs"
+  ],
+  "devDependencies": {
+    "@types/debug": "^0.0.30",
+    "typescript": "^2.8.3"
+  }
+}

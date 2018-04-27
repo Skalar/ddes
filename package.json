@@ -1,0 +1,64 @@
+{
+  "name": "ddes-dev",
+  "description": "DDES",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "scripts/build.js",
+    "test": "scripts/test"
+  },
+  "release": {
+    "verifyConditions": [
+      "@semantic-release/git",
+      "@semantic-release/npm",
+      "@semantic-release/github"
+    ],
+    "prepare": [
+      "semantic-release-npm-monorepo",
+      {
+        "path": "@semantic-release/git",
+        "assets": [
+          "packages/**/package.json"
+        ]
+      }
+    ],
+    "publish": [
+      "semantic-release-npm-monorepo",
+      "@semantic-release/github"
+    ]
+  },
+  "devDependencies": {
+    "@async-generators/timeout": "^0.2.0",
+    "@lerna/collect-packages": "^3.0.0-beta.17",
+    "@semantic-release/git": "^4.0.2",
+    "@types/jest": "^22.2.2",
+    "@types/lodash": "^4.14.106",
+    "@types/node": "^9.6.1",
+    "@types/semver": "^5.5.0",
+    "@types/ws": "^4.0.2",
+    "debug": "^3.1.0",
+    "env-ci": "^1.7.1",
+    "glob": "^7.1.2",
+    "jest": "^22.4.3",
+    "ora": "^2.0.0",
+    "semantic-release": "^15.1.7",
+    "semantic-release-github-pr": "^5.0.1",
+    "travis-deploy-once": "^4.4.1",
+    "ts-jest": "^22.4.4",
+    "tslint": "^5.9.1",
+    "typedoc": "^0.11.1",
+    "typedoc-plugin-external-module-name": "^1.1.1",
+    "typescript": "^2.8.1"
+  },
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "workspaces": [
+    "packages/@ddes/core",
+    "packages/@ddes/aws-store",
+    "packages/@ddes/event-streaming"
+  ],
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  }
+}

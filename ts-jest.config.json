@@ -1,0 +1,15 @@
+{
+  "transform": {
+    "^.+\\.tsx?$": "ts-jest"
+  },
+  "testEnvironment": "node",
+  "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+  "roots": ["tests"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+  "globals": {
+    "ts-jest": {
+      "tsConfigFile": "tests/tsconfig.json",
+      "skipBabel": true
+    }
+  }
+}

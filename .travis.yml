@@ -1,0 +1,28 @@
+sudo: required
+
+language: node_js
+node_js:
+  - "8.10"
+  - "9"
+  - "10"
+
+services:
+  - docker
+
+env:
+  - GIT_USERNAME=ddes-ci GIT_EMAIL=ci@ddes.io
+
+before_script:
+  - docker-compose up --build -d dynamodb s3
+  - docker-compose ps
+
+script:
+  - scripts/build
+  - scripts/test
+
+after_script:
+  - docker-compose kill
+
+after_success:
+  - "[[ $TRAVIS_PULL_REQUEST != 'false' ]] && NODE_PATH=$NODE_PATH:support npx semantic-release-github-pr"
+  - NODE_PATH="$NODE_PATH:support" npx travis-deploy-once "npx semantic-release"

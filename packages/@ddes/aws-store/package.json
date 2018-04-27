@@ -1,0 +1,39 @@
+{
+  "name": "@ddes/aws-store",
+  "version": "5.4.4",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "description": "AWS Store and MetaStore implementations for DDES, a framework for distributed Event Sourcing & CQRS",
+  "author": "Trym Skaar <trym.skaar@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "index.js",
+    "package.json",
+    "README.md"
+  ],
+  "types": "./dist/node-10/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ddes/core": "^5.4.4",
+    "aws-sdk": "^2.217.1",
+    "debug": "^3.1.0"
+  },
+  "repository": "skalar/ddes",
+  "homepage": "https://ddes.io",
+  "keywords": [
+    "aws",
+    "dynamodb",
+    "distributed",
+    "event store",
+    "event sourcing",
+    "cqrs"
+  ],
+  "devDependencies": {
+    "@types/debug": "^0.0.30",
+    "typescript": "^2.8.3"
+  }
+}

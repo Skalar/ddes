@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "strict": true,
+    "sourceMap": false,
+    "outDir": "../.transpiled-tests/node-10",
+    "preserveWatchOutput": true,
+    "paths": {
+      "*": ["packages/*", "tests/*", "*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}

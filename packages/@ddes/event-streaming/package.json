@@ -1,0 +1,40 @@
+{
+  "name": "@ddes/event-streaming",
+  "version": "5.4.4",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "description": "WebSocket event streaming for DDES - the framework for distributed Event Sourcing & CQRS",
+  "author": "Trym Skaar <trym.skaar@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "index.js",
+    "package.json",
+    "README.md"
+  ],
+  "types": "./dist/node-10/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ddes/core": "^5.4.4",
+    "debug": "^3.1.0",
+    "lodash": "^4.17.5",
+    "ws": "^5.1.1"
+  },
+  "repository": "skalar/ddes",
+  "homepage": "https://ddes.io",
+  "keywords": [
+    "distributed",
+    "websockets",
+    "streaming",
+    "event sourcing",
+    "event store",
+    "cqrs"
+  ],
+  "devDependencies": {
+    "@types/debug": "^0.0.30",
+    "typescript": "^2.8.3"
+  }
+}

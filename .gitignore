@@ -1,0 +1,4 @@
+node_modules
+docs/
+packages/**/dist
+.transpiled-tests
