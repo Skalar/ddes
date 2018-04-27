@@ -24,7 +24,7 @@
     "ws": "^5.1.1"
   },
   "repository": "skalar/ddes",
-  "homepage": "https://ddes.io",
+  "homepage": "http://ddes.io",
   "keywords": [
     "distributed",
     "websockets",

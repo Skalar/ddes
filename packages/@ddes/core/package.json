@@ -22,7 +22,7 @@
     "semver": "^5.5.0"
   },
   "repository": "skalar/ddes",
-  "homepage": "https://ddes.io",
+  "homepage": "http://ddes.io",
   "keywords": [
     "distributed",
     "event sourcing",
