@@ -35,7 +35,6 @@
     "@types/lodash": "^4.14.106",
     "@types/node": "^9.6.1",
     "@types/semver": "^5.5.0",
-    "@types/ws": "^4.0.2",
     "debug": "^3.1.0",
     "env-ci": "^1.7.1",
     "glob": "^7.1.2",
