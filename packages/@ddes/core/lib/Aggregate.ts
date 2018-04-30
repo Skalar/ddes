@@ -129,15 +129,15 @@ export class Aggregate {
 
   public static async create<T extends Aggregate>(
     this: AggregateStatic<T>,
-    props: object
+    props: object = {}
   ) {
     if (!this.keySchema) {
       throw new Error(
         `To use ${this.name}.create(), you need to define a keySchema`
       )
     }
-
-    const instance = new this(this.keySchema.keyStringFromObject(props))
+    const keyProps = this.keySchema.keyPropsFromObject(props)
+    const instance = new this(this.keySchema.keyStringFromKeyProps(keyProps))
 
     if (!instance.create) {
       throw new Error(`Missing create() method`)
@@ -145,7 +145,7 @@ export class Aggregate {
 
     const createParams = {
       ...props,
-      ...this.keySchema.keyPropsFromObject(props),
+      ...keyProps,
     }
 
     try {

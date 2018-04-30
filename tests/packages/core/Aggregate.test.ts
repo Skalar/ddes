@@ -13,11 +13,19 @@ import {
   VersionConflictError,
 } from '@ddes/core'
 
+import {randomBytes} from 'crypto'
 import {commitYielder} from 'support'
 
 function createTestAggregateClass(options?: {store?: object}) {
   class TestAggregate extends Aggregate {
-    public static keySchema = new KeySchema(['id'])
+    public static keySchema = new KeySchema([
+      {
+        name: 'id',
+        value: (props: {id?: string}) =>
+          props.id || randomBytes(8).toString('hex'),
+      },
+    ])
+
     public static store = ((options && options.store) || {}) as any
     public static useSnapshots = true
 
@@ -25,19 +33,21 @@ function createTestAggregateClass(options?: {store?: object}) {
       switch (event.type) {
         case 'Created':
         case 'NameChanged': {
-          const {name} = event.properties
-          return {...state, name}
+          const {id, name} = event.properties
+          return {...state, id, name}
         }
         default:
           return state
       }
     }
 
-    public async create(props: object) {
+    public async create(props: {id: string}) {
+      const {id} = props
+
       return await this.commit({
         type: 'Created',
         version: 1,
-        properties: {name: 'My item'},
+        properties: {id, name: 'My item'},
       })
     }
   }
@@ -61,24 +71,26 @@ describe('Aggregate [unit]', () => {
       store,
     })
 
-    const aggregate = await TestAggregate.create({
-      id: 'myid',
-    })
+    const aggregate = await TestAggregate.create()
+
+    expect(aggregate.key).toBeDefined()
 
     expect(store.commit.mock.calls[0][0]).toMatchObject({
       active: true,
-      aggregateKey: 'myid',
       aggregateType: 'TestAggregate',
       aggregateVersion: 1,
       events: [{properties: {name: 'My item'}, type: 'Created', version: 1}],
     })
 
     expect(aggregate.toJSON()).toMatchObject({
-      key: 'myid',
       state: {name: 'My item'},
       type: 'TestAggregate',
       version: 1,
     })
+
+    expect(aggregate.key).toBe(
+      store.commit.mock.calls[0][0].events[0].properties.id
+    )
   })
 
   test('static load()', async () => {
