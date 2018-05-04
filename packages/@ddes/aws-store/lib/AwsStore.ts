@@ -393,12 +393,10 @@ export class AwsStore extends Store {
       throw new Error('Snapshots are not configured')
     }
 
-    const s3 = new S3()
-
     let listResult
 
     do {
-      listResult = await s3
+      listResult = await this.s3
         .listObjectsV2({
           Bucket: this.snapshots.s3BucketName,
           Prefix: this.snapshots.keyPrefix,
@@ -413,7 +411,7 @@ export class AwsStore extends Store {
       }
 
       for (const s3Object of listResult.Contents) {
-        await s3
+        await this.s3
           .deleteObject({
             Bucket: this.snapshots.s3BucketName,
             Key: s3Object.Key!,
