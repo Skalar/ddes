@@ -31,7 +31,7 @@ export abstract class Store {
   /**
    * Get the most recent commit from the store
    */
-  public abstract getHeadCommit(): Promise<Commit>
+  public abstract getHeadCommit(): Promise<Commit | null>
 
   /**
    * DANGER: Delete ALL commits in the store
@@ -62,8 +62,9 @@ export abstract class Store {
     from?: string
     after?: string
     before?: string
-    reverse?: boolean
+    descending?: boolean
     filterAggregateTypes?: string[]
+    limit?: number
   }): AsyncIterableIterator<Commit>
 
   public abstract queryAggregateCommits(params: {
@@ -80,7 +81,7 @@ export abstract class Store {
   public abstract getAggregateHeadCommit(params: {
     type: string
     key: AggregateKeyString
-  }): Promise<Commit>
+  }): Promise<Commit | null>
 
   public abstract writeSnapshot(params: {
     type: string

@@ -123,8 +123,14 @@ export class AwsStore extends Store {
     }
   }
 
-  public async getHeadCommit(): Promise<Commit> {
-    return {} as Commit
+  public async getHeadCommit() {
+    for await (const commit of this.chronologicalCommits({
+      descending: true,
+      limit: 1,
+    })) {
+      return commit
+    }
+    return null
   }
 
   public async getAggregateHeadCommit(params: {
@@ -133,13 +139,16 @@ export class AwsStore extends Store {
   }) {
     const {type, key} = params
 
-    const {value: commit} = await this.queryAggregateCommits({
+    for await (const commit of this.queryAggregateCommits({
       descending: true,
       type,
       key,
-    }).next()
+      limit: 1,
+    })) {
+      return commit
+    }
 
-    return commit
+    return null
   }
 
   public chronologicalCommits(
@@ -147,8 +156,9 @@ export class AwsStore extends Store {
       from?: string
       after?: string
       before?: string
-      reverse?: boolean
+      descending?: boolean
       filterAggregateTypes?: string[]
+      limit?: number
     } = {}
   ): AsyncIterableIterator<Commit> {
     const keyExpressions = ['z = :z']
@@ -184,7 +194,7 @@ export class AwsStore extends Store {
     return this.queryCommits({
       queryParams: {
         IndexName: 'chronologicalCommits',
-        ScanIndexForward: !options.reverse,
+        ScanIndexForward: !options.descending,
       },
       keyExpressions,
       queryVariables,
@@ -204,6 +214,7 @@ export class AwsStore extends Store {
     maxVersion?: number
     maxTime?: Iso8601Timestamp
     descending?: boolean
+    limit?: number
   }): AsyncIterableIterator<Commit> {
     const {
       type,
@@ -213,6 +224,7 @@ export class AwsStore extends Store {
       maxVersion = 10 ** this.maxVersionDigits - 1,
       maxTime,
       descending,
+      limit,
     } = params
 
     if (!type) {
@@ -240,6 +252,7 @@ export class AwsStore extends Store {
 
     const queryParams = {
       ConsistentRead: consistentRead,
+      ...(limit && {Limit: limit}),
       ...(descending && {ScanIndexForward: false}),
     }
 
