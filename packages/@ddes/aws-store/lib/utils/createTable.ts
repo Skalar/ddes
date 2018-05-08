@@ -52,19 +52,22 @@ export async function createTable(
         case 'ACTIVE':
           clearTimeout(timer)
 
-          try {
-            await dynamodb
-              .updateTimeToLive({
-                TableName: tableSpecification.TableName,
-                TimeToLiveSpecification: {
-                  Enabled: !!options.ttl,
-                  AttributeName: 'e',
-                },
-              })
-              .promise()
-          } catch (error) {
-            if (error.code !== 'UnknownOperationException') {
-              throw error
+          if (options.ttl) {
+            try {
+              await dynamodb
+                .updateTimeToLive({
+                  TableName: tableSpecification.TableName,
+                  TimeToLiveSpecification: {
+                    Enabled: !!options.ttl,
+                    AttributeName: 'e',
+                  },
+                })
+                .promise()
+            } catch (error) {
+              // dynalite does not support ttl
+              if (error.code !== 'UnknownOperationException') {
+                throw error
+              }
             }
           }
 
