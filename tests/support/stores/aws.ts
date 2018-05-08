@@ -4,7 +4,7 @@ export function aws(opts: {testId: string}, config: Partial<AwsStoreConfig>) {
   const {testId} = opts
 
   return new AwsStore({
-    tableName: `ddess-${testId}`,
+    tableName: `ddes-${testId}`,
     ...(!process.env.REAL_SERVICES_TEST && {
       s3ClientConfiguration: {
         endpoint: process.env.LOCAL_S3 || 'http://localhost:5000',
@@ -36,7 +36,7 @@ export function awsMeta(opts: {testId: string}) {
   const {testId} = opts
 
   return new AwsMetaStore({
-    tableName: `ddess-${testId}-meta`,
+    tableName: `ddes-${testId}-meta`,
     ...(!process.env.REAL_SERVICES_TEST && {
       dynamodbClientConfiguration: {
         endpoint: process.env.LOCAL_DDB || 'http://localhost:8000',
