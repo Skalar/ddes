@@ -2,6 +2,7 @@
 // import testEachStore from './testEachStore'
 import {AwsStore} from '@ddes/aws-store'
 import {MetaStore, Store} from '@ddes/core'
+import {randomBytes} from 'crypto'
 import * as Resources from './resources'
 import * as Stores from './stores'
 
@@ -11,10 +12,16 @@ enum ResourceName {
 
 const storeTypes = ['aws']
 
+export interface TestWithResourcesContext {
+  store: Store
+  testId: string
+  [resourceName: string]: any
+}
+
 export function describeWithResources( // describe with resources
   what: string,
   opts: any,
-  fn: (resources: any) => void
+  fn: (context: TestWithResourcesContext) => void
 ) {
   const {stores, ...resources} = opts || {stores: false}
 
@@ -23,13 +30,10 @@ export function describeWithResources( // describe with resources
     store?: Store,
     metaStore?: MetaStore
   ) => {
-    const testContext = {store, metaStore} as any
+    const testId = randomBytes(8).toString('hex')
+    const testContext = {store, metaStore, testId} as TestWithResourcesContext
     const createdResources: {[resourceName: string]: any} = {}
     const teardownFunctions: Array<() => Promise<void>> = []
-
-    const testId = Math.random()
-      .toString(36)
-      .substring(2, 15)
 
     describe(description, () => {
       beforeAll(async () => {
@@ -71,9 +75,7 @@ export function describeWithResources( // describe with resources
         continue
       }
 
-      const testId = Math.random()
-        .toString(36)
-        .substring(2, 15)
+      const testId = randomBytes(8).toString('hex')
 
       const store = (Stores as any)[storeTypeName]({testId})
       const metaStore = (Stores as any)[storeTypeName + 'Meta']({testId})
