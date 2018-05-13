@@ -4,6 +4,7 @@
 
 import {MetaStore, MetaStoreKey} from '@ddes/core'
 import {DynamoDB} from 'aws-sdk'
+import {ConfigurationOptions} from 'aws-sdk/lib/config'
 import {AutoscalingConfig, CapacityConfig} from './types'
 import * as utils from './utils'
 
@@ -17,6 +18,7 @@ export class AwsMetaStore extends MetaStore {
     indexWrite: 2,
   }
   public autoscaling?: AutoscalingConfig
+  public awsConfig?: ConfigurationOptions
   public dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
 
   private dynamodb: DynamoDB
@@ -25,6 +27,7 @@ export class AwsMetaStore extends MetaStore {
     tableName: string
     initialCapacity?: CapacityConfig
     autoscaling?: AutoscalingConfig
+    awsConfig?: ConfigurationOptions
     dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
   }) {
     super()
@@ -36,9 +39,13 @@ export class AwsMetaStore extends MetaStore {
     }
 
     this.autoscaling = config.autoscaling
-    this.dynamodbClientConfiguration = config.dynamodbClientConfiguration
 
-    this.dynamodb = new DynamoDB(config.dynamodbClientConfiguration)
+    this.dynamodbClientConfiguration = {
+      ...config.dynamodbClientConfiguration,
+      ...config.awsConfig,
+    }
+
+    this.dynamodb = new DynamoDB(this.dynamodbClientConfiguration)
   }
 
   public async get(key: MetaStoreKey) {
@@ -139,9 +146,19 @@ export class AwsMetaStore extends MetaStore {
       dynamodbClientConfiguration: this.dynamodbClientConfiguration,
       ttl: true,
     })
+
+    if (this.autoscaling) {
+      await utils.setupAutoScaling(this.tableName, this.autoscaling, {
+        awsConfig: this.awsConfig,
+      })
+    }
   }
 
   public async teardown() {
+    if (this.autoscaling) {
+      await utils.removeAutoScaling(this.tableName, this.awsConfig)
+    }
+
     await utils.deleteTable(this.tableName, {
       dynamodbClientConfiguration: this.dynamodbClientConfiguration,
     })
