@@ -3,15 +3,24 @@
     "target": "esnext",
     "module": "commonjs",
     "experimentalDecorators": true,
+    "rootDir": ".",
     "baseUrl": ".",
     "strict": true,
     "sourceMap": false,
     "outDir": "../.transpiled-tests/node-10",
-    "preserveWatchOutput": true,
     "paths": {
-      "*": ["packages/*", "tests/*", "*"]
+      "*": [
+        "packages/*",
+        "tests/*",
+        "*"
+      ]
     }
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
