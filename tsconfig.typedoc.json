@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "target": "es2017",
+    "target": "esnext",
     "module": "commonjs",
     "experimentalDecorators": true,
     "rootDir": ".",
     "baseUrl": ".",
-    "lib": ["esnext"],
     "strict": true,
-    "sourceMap": true,
-    "declaration": true,
+    "sourceMap": false,
+    "declaration": false,
     "paths": {
       "*": ["packages/*"]
     }

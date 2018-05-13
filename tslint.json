@@ -9,6 +9,19 @@
     "type-literal-delimiter": false,
     "arrow-parens": false,
     "no-console": false,
-    "object-literal-key-quotes": [true, "as-needed"]
+    "object-literal-key-quotes": [true, "as-needed"],
+    "no-unused-variable": [
+      true,
+      {
+        "ignore-pattern": "^_"
+      }
+    ],
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "lowercase-last",
+        "named-imports-order": "lowercase-last"
+      }
+    ]
   }
 }
