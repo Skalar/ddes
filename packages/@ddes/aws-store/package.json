@@ -24,7 +24,7 @@
     "fast-deep-equal": "^2.0.1"
   },
   "repository": "skalar/ddes",
-  "homepage": "http://ddes.io",
+  "homepage": "https://ddes.io",
   "keywords": [
     "aws",
     "dynamodb",
