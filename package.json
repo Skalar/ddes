@@ -53,6 +53,7 @@
   "useWorkspaces": true,
   "workspaces": [
     "packages/@ddes/core",
+    "packages/@ddes/cli",
     "packages/@ddes/aws-store",
     "packages/@ddes/event-streaming"
   ],
