@@ -107,8 +107,8 @@ export type StoreCursor = string
 export interface StoreQueryResultSet {
   items: any[]
   commits: AsyncIterableIterator<Commit>
-  scannedCount?: number
-  consumedCapacity?: any
+  scannedCount: number
+  consumedCapacity: any
   throttleCount: number
   cursor?: StoreCursor
 }
