@@ -33,6 +33,7 @@ const log = debug('@ddes/store-transformations:CommitTransformation')
 class CommitTransformation extends Transformation {
   public aggregateTypes?: AggregateType[]
   public marshalled?: boolean
+  public marshalledKeyProps?: [string, string]
   public transform!: (
     commit: MarshalledCommit | Commit
   ) => Promise<Array<MarshalledCommit | Commit>>
@@ -50,6 +51,7 @@ class CommitTransformation extends Transformation {
     transformerConfig?: any
     aggregateTypes?: AggregateType[]
     marshalled?: boolean
+    marshalledKeyProps?: [string, string]
     softInternalDeadline?: number
     hardInternalDeadline?: number
   }) {
@@ -59,12 +61,19 @@ class CommitTransformation extends Transformation {
       transform,
       softInternalDeadline = 10000,
       hardInternalDeadline = 1000,
+      marshalledKeyProps,
       ...superParams
     } = transformationSpec
     super(superParams)
 
+    if (marshalled && !marshalledKeyProps) {
+      throw new Error(
+        'You need to specify marshalledKeyProps when marshalled= true'
+      )
+    }
     this.aggregateTypes = aggregateTypes
     this.marshalled = marshalled
+    this.marshalledKeyProps = marshalledKeyProps
     this.transform = transform
     this.softInternalDeadline = softInternalDeadline
     this.hardInternalDeadline = hardInternalDeadline
@@ -125,7 +134,12 @@ class CommitTransformation extends Transformation {
 
         await targetMutator.put(outputCommits)
 
-        newState = commit.key
+        if (commit instanceof Commit) {
+          newState = commit.storeKey
+        } else {
+          const [p, s] = this.marshalledKeyProps!
+          newState = {[p]: commit[p], [s]: commit[s]}
+        }
 
         if (deadline - Date.now() < this.hardInternalDeadline) {
           completed = false
