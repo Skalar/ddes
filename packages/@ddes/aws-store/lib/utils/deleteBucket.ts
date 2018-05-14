@@ -7,7 +7,7 @@ import {S3} from 'aws-sdk'
 /**
  * @hidden
  */
-export async function deleteBucket(
+export default async function deleteBucket(
   name: string,
   options: {
     s3ClientConfiguration?: S3.ClientConfiguration

@@ -3,22 +3,19 @@
  */
 
 import * as debug from 'debug'
-import {Commit} from './Commit'
-import {Store} from './Store'
+import Commit from './Commit'
+import Store from './Store'
+import {
+  AggregateEventUpcasters,
+  AggregateType,
+  StorePollerParams,
+} from './types'
+import upcastCommits from './upcastCommits'
 import * as utils from './utils'
 
-import {AggregateType} from './types'
-
-export interface StorePollerParams {
-  store: Store
-  sortKeyCursor?: string
-  initalSleepPeriod?: number
-  maxSleepPeriod?: number
-  sleepPeriodBackoffExponent?: number
-}
-
-export abstract class StorePoller {
+export default class StorePoller {
   public store: Store
+  public sortKeyCursor!: string | Date
 
   protected debug: debug.IDebugger
 
@@ -47,10 +44,9 @@ export abstract class StorePoller {
 
   protected isPolling: boolean = false
 
-  protected sortKeyCursor?: string
-
+  protected chronologicalGroup: string = 'default'
   protected filterAggregateTypes?: AggregateType[]
-
+  protected upcasters?: AggregateEventUpcasters
   protected initialPoll: boolean = true
 
   constructor(params: StorePollerParams) {
@@ -58,10 +54,28 @@ export abstract class StorePoller {
 
     this.store = store
     Object.assign(this, rest)
+
+    if (params.sortKeyCursor) {
+      this.sortKeyCursor = params.sortKeyCursor
+    }
+    if (params.chronologicalGroup) {
+      this.chronologicalGroup = params.chronologicalGroup
+    }
+
+    this.filterAggregateTypes = params.filterAggregateTypes
+
+    if (params.processCommit) {
+      this.processCommit = params.processCommit
+    }
+
     this.debug = debug(`DDES.${this.constructor.name}`)
   }
 
   public start() {
+    if (!this.sortKeyCursor) {
+      throw new Error('sortKeyCursor not set')
+    }
+
     this.stopRequested = false
     this.pollingLoop()
   }
@@ -83,27 +97,23 @@ export abstract class StorePoller {
 
       while (this.shouldPoll) {
         let commitsCount = 0
-        const params: {
-          from?: string
-          after?: string
-          filterAggregateTypes?: AggregateType[]
-        } = {
-          ...(this.filterAggregateTypes && {
-            filterAggregateTypes: this.filterAggregateTypes,
-          }),
-        }
+        for await (const resultSet of this.store.chronologicalQuery({
+          min: this.sortKeyCursor,
+          exclusiveMin: true,
+          group: this.chronologicalGroup,
+          filterAggregateTypes: this.filterAggregateTypes,
+        })) {
+          for await (const commit of this.upcasters
+            ? upcastCommits(resultSet.commits, this.upcasters)
+            : resultSet.commits) {
+            commitsCount++
+            await this.processCommit(commit)
+            this.sortKeyCursor = commit.sortKey
+          }
 
-        if (this.initialPoll) {
-          params.from = this.sortKeyCursor
-          this.initialPoll = false
-        } else {
-          params.after = this.sortKeyCursor
-        }
-
-        for await (const commit of this.store.chronologicalCommits(params)) {
-          commitsCount++
-          await this.processCommit(commit)
-          this.sortKeyCursor = commit.sortKey
+          if (resultSet.cursor && resultSet.cursor > this.sortKeyCursor) {
+            this.sortKeyCursor = resultSet.cursor
+          }
         }
 
         if (commitsCount === 0) {
@@ -134,5 +144,7 @@ export abstract class StorePoller {
     this.debug('shouldPoll is false, pollingLoop halted')
   }
 
-  public abstract processCommit(commit: Commit): Promise<void>
+  public async processCommit(commit: Commit) {
+    // void
+  }
 }

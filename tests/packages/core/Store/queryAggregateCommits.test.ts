@@ -1,5 +1,4 @@
-import {MarshalledCommit} from '@ddes/aws-store'
-import {Commit, utils} from '@ddes/core'
+import {Commit} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'support'
 
 describeWithResources('Stores', {stores: true}, context => {
@@ -49,23 +48,16 @@ describeWithResources('Stores', {stores: true}, context => {
       await store.commit(commit)
     }
 
-    // only type specified
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits({type: 'Test'})
+        store.queryAggregateCommits('Test', 'a').commits
       )
-      expect(result).toMatchObject([
-        commits.a1,
-        commits.a2,
-        commits.a3,
-        commits.b1,
-      ])
+      expect(result).toMatchObject([commits.a1, commits.a2, commits.a3])
     }
 
-    // key
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits({type: 'Test', key: 'b'})
+        store.queryAggregateCommits('Test', 'b').commits
       )
       expect(result).toMatchObject([commits.b1])
     }
@@ -73,11 +65,9 @@ describeWithResources('Stores', {stores: true}, context => {
     // maxVersion
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits({
-          type: 'Test',
-          key: 'a',
+        store.queryAggregateCommits('Test', 'a', {
           maxVersion: 2,
-        })
+        }).commits
       )
       expect(result).toMatchObject([commits.a1, commits.a2])
     }
@@ -85,11 +75,9 @@ describeWithResources('Stores', {stores: true}, context => {
     // minVersion
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits({
-          type: 'Test',
-          key: 'a',
+        store.queryAggregateCommits('Test', 'a', {
           minVersion: 2,
-        })
+        }).commits
       )
       expect(result).toMatchObject([commits.a2, commits.a3])
     }
@@ -97,11 +85,9 @@ describeWithResources('Stores', {stores: true}, context => {
     // key + maxTime
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits({
-          type: 'Test',
-          key: 'a',
-          maxTime: utils.toIso8601Timestamp('2018-01-02'),
-        })
+        store.queryAggregateCommits('Test', 'a', {
+          maxTime: new Date('2018-01-02'),
+        }).commits
       )
       expect(result).toMatchObject([commits.a1, commits.a2])
     }

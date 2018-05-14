@@ -3,82 +3,91 @@
  */
 
 import {DynamoDB, S3} from 'aws-sdk'
-
-// TYPE ALIASES
-
-export type CommitKey = string
-
-// INTERFACES
+import {ConfigurationOptions} from 'aws-sdk/lib/config'
 
 export interface AutoscalingConfig {
-  readMin: number
-  readMax: number
-  writeMin: number
-  writeMax: number
-  indexReadMin: number
-  indexReadMax: number
-  indexWriteMin: number
-  indexWriteMax: number
+  tableReadMin: number
+  tableReadMax: number
+  tableWriteMin: number
+  tableWriteMax: number
   tableScaleInCooldown: number
   tableScaleOutCooldown: number
-  indexScaleInCooldown: number
-  indexScaleOutCooldown: number
+  chronologicalReadMin: number
+  chronologicalReadMax: number
+  chronologicalWriteMin: number
+  chronologicalWriteMax: number
+  chronologicalScaleInCooldown: number
+  chronologicalScaleOutCooldown: number
+  instancesReadMin: number
+  instancesReadMax: number
+  instancesWriteMin: number
+  instancesWriteMax: number
+  instancesScaleInCooldown: number
+  instancesScaleOutCooldown: number
   utilizationTargetInPercent: number
 }
 
 export interface AwsStoreConfig {
   tableName: string
-  initialCapacity?: CapacityConfig
+  initialCapacity?: StoreCapacityConfig
   autoscaling?: AutoscalingConfig
   snapshots?: SnapshotsConfig
+  awsConfig?: ConfigurationOptions
   s3ClientConfiguration?: S3.ClientConfiguration
   dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
-  maxVersionDigits?: number
+  createdAt?: Date
 }
 
-export interface CapacityConfig {
-  read: number
-  write: number
-  indexRead: number
-  indexWrite: number
+export interface StoreCapacityConfig {
+  tableRead: number
+  tableWrite: number
+  chronologicalRead: number
+  chronologicalWrite: number
+  instancesRead: number
+  instancesWrite: number
 }
 
 export interface MarshalledCommit extends DynamoDB.AttributeMap {
   /**
-   * Aggregate type e.g. 'Order' (primary partition key)
+   * Aggregate stream id type e.g. 'Order:123' (table partition key)
+   */
+  s: {
+    S: string
+  }
+
+  /**
+   * Aggregate version (table sort key)
+   */
+  v: {
+    N: string
+  }
+
+  /**
+   * Chronological sort key (chronological index sort key)
+   */
+  g: {
+    S: string
+  }
+
+  /**
+   * Aggregate type
    */
   a: {
     S: string
   }
 
   /**
-   * Aggregate key and version (primary range key)
+   * Aggregate root commit key (only set for version = 1 commits)
    */
-  k: {
+  r: {
     S: string
   }
 
   /**
-   * Whether or not commit should be considered active 't' | 'f'
-   *
-   * allAggregates secondary index parition key
-   */
-  z: {
-    S: string
-  }
-
-  /**
-   * Commit sort key (allAggregates secondary index range key)
-   */
-  c: {
-    S: string
-  }
-
-  /**
-   * Commit timestamp (ISO 8601)
+   * Commit timestamp
    */
   t: {
-    S: string
+    N: string
   }
 
   /**
@@ -87,6 +96,21 @@ export interface MarshalledCommit extends DynamoDB.AttributeMap {
   e: {
     B: string
   }
+
+  /**
+   * TTL timestamp (commit will be deleted at the set time)
+   */
+  x: {
+    N: string
+  }
+
+  /**
+   * Chronological index partition key
+   *
+   */
+  p: {
+    S: string
+  }
 }
 
 export interface SnapshotsConfig {
@@ -94,4 +118,28 @@ export interface SnapshotsConfig {
   keyPrefix?: string
   snapshotFrequency?: number
   manageBucket?: boolean
+}
+
+export interface StoreQueryParams {
+  startKey?: DynamoDB.Key
+  keyExpressions?: string[]
+  filterExpressions?: string[]
+  filterAggregateTypes?: string[]
+  queryVariables?: object
+  limit?: number
+  capacityLimit?: number
+}
+
+/**
+ * @hidden
+ */
+export interface AwsStoreBatchMutatorQueueItem {
+  startedPromise: Promise<any>
+  startedResolver: () => void
+  processedPromise: Promise<any>
+  processedResolver: () => void
+  capacityUnits: number
+  processing: boolean
+  item: any
+  throttleCount: number
 }

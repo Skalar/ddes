@@ -4,31 +4,33 @@
 
 import {createHash} from 'crypto'
 import {inspect} from 'util'
-import {Commit} from './Commit'
+import Commit from './Commit'
+import KeySchema from './KeySchema'
+import Store from './Store'
 import {AlreadyCommittingError, VersionConflictError} from './errors'
-import {KeySchema} from './KeySchema'
-import {Store} from './Store'
-import {jitteredBackoff, jitteredRetry, toIso8601Timestamp} from './utils'
-
 import {
+  AggregateEventUpcasters,
   AggregateKey,
   AggregateKeyProps,
-  AggregateKeyString,
   AggregateType,
-  Event,
   EventInput,
   EventWithMetadata,
   HydrateOptions,
   InternalState,
-  Iso8601Timestamp,
-  JitteredRetryOptions,
+  RetryConfig,
+  Timestamp,
 } from './types'
+import upcastCommits from './upcastCommits'
+import {jitteredRetry, toTimestamp} from './utils'
 
+/**
+ * @hidden
+ */
 export type AggregateStatic<T> = {
   new (): T
 } & typeof Aggregate
 
-export class Aggregate {
+export default class Aggregate {
   /**
    * For multi-instance aggregates, a schema defining how to construct
    * an aggregate key from props.
@@ -50,6 +52,16 @@ export class Aggregate {
    */
   public static snapshotsFrequency: number
 
+  /**
+   * Event upcasters to use for this aggregate
+   */
+  public static upcasters?: AggregateEventUpcasters
+
+  /**
+   * Whether to perform in-place store transformation of upcasted commits
+   */
+  public static lazyTransformation: boolean = false
+
   public static defaultRetryOptions = {
     backoffExponent: 2,
     initialDelay: 1,
@@ -60,14 +72,14 @@ export class Aggregate {
   /**
    * Calculates and returns checksum based on store upcasters and code compatibility
    */
-  static get snapshotCompatibilityChecksum(): string {
+  static get snapshotCompatChecksum(): string {
     const components = []
 
-    if (this.store.upcasters && this.store.upcasters[this.name]) {
+    if (this.upcasters && this.upcasters[this.name]) {
       components.push(
-        Object.keys(this.store.upcasters[this.name]).map(eventType => ({
+        Object.keys(this.upcasters[this.name]).map(eventType => ({
           eventType,
-          versions: Object.keys(this.store.upcasters![eventType]),
+          versions: Object.keys(this.upcasters![eventType]),
         }))
       )
     }
@@ -84,9 +96,9 @@ export class Aggregate {
    */
   public static async load<T extends Aggregate>(
     this: AggregateStatic<T>,
-    loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKeyString
+    loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKey
   ): Promise<T | null> {
-    let key: AggregateKeyString | undefined
+    let key: AggregateKey | undefined
     let hydrateOptions: HydrateOptions | undefined
 
     switch (typeof loadSpecification) {
@@ -164,7 +176,7 @@ export class Aggregate {
 
   public static async getState<T extends Aggregate>(
     this: AggregateStatic<T>,
-    loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKeyString
+    loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKey
   ) {
     const instance = await this.load(loadSpecification)
 
@@ -176,17 +188,17 @@ export class Aggregate {
    */
   public static async commit(
     events: EventInput[],
-    retryOptions?: JitteredRetryOptions
+    retryOptions?: RetryConfig
   ): Promise<Commit>
   public static async commit(
-    aggregateKey: AggregateKey,
+    aggregateKey: AggregateKey | AggregateKeyProps,
     events: EventInput[],
-    retryOptions?: JitteredRetryOptions
+    retryOptions?: RetryConfig
   ): Promise<Commit>
   public static async commit(...args: any[]): Promise<Commit> {
     let events: EventInput[]
     let retryOptions
-    let key: AggregateKeyString
+    let key: AggregateKey
 
     if (Array.isArray(args[0])) {
       events = args[0]
@@ -218,15 +230,11 @@ export class Aggregate {
 
     let currentAggregate = null
 
-    const commits = this.store.upcastCommits(
-      this.store.queryAggregateCommits({
-        type: this.name,
-      })
-    )
+    const commits = this.store.scanAggregateInstances(this.name, {}).commits
 
     let aggregateCount = 0
 
-    for await (const commit of commits) {
+    for await (const commit of this.upcastCommits(commits)) {
       const thisAggregateKey = commit.aggregateKey
       if (!currentAggregate || currentAggregate.key !== thisAggregateKey) {
         if (currentAggregate) {
@@ -248,7 +256,20 @@ export class Aggregate {
     }
   }
 
-  protected static singletonKeyString: AggregateKeyString = '@'
+  protected static singletonKeyString: AggregateKey = '@'
+
+  protected static upcastCommits(commits: AsyncIterableIterator<Commit>) {
+    const {upcasters, lazyTransformation} = this.constructor as typeof Aggregate
+
+    if (upcasters) {
+      return upcastCommits(commits, upcasters, {
+        lazyTransformation,
+        batchMutator: this.store.createBatchMutator(),
+      })
+    } else {
+      return commits
+    }
+  }
 
   /**
    * Function that reduces events to the desireable aggregate state
@@ -261,13 +282,13 @@ export class Aggregate {
   }
 
   private static async commitEvents(
-    aggregateKey: AggregateKeyString,
+    aggregateKey: AggregateKey,
     events: EventInput[]
   ) {
-    const headCommit = await this.store.getAggregateHeadCommit!({
-      type: this.name,
-      key: aggregateKey,
-    })
+    const headCommit = await this.store.getAggregateHeadCommit(
+      this.name,
+      aggregateKey
+    )
     const aggregateVersion = headCommit ? headCommit.aggregateVersion + 1 : 1
 
     const commit = new Commit({
@@ -283,9 +304,9 @@ export class Aggregate {
   }
 
   public readonly type: AggregateType
-  public readonly key: AggregateKeyString
+  public readonly key: AggregateKey
   public version: number = 0
-  public timestamp?: Iso8601Timestamp
+  public timestamp?: Timestamp
   public store: Store
 
   protected internalState: InternalState
@@ -297,7 +318,7 @@ export class Aggregate {
    * @param type
    * defaults to `this.constructor.name`
    */
-  constructor(key?: AggregateKeyString, type?: AggregateType) {
+  constructor(key?: AggregateKey, type?: AggregateType) {
     const klass = this.constructor as typeof Aggregate
     this.type = type || klass.name
     this.key = key || klass.singletonKeyString
@@ -308,6 +329,9 @@ export class Aggregate {
     return this.convertFromInternalState(this.internalState)
   }
 
+  /**
+   * @hidden
+   */
   public [inspect.custom]() {
     return this.toJSON()
   }
@@ -338,19 +362,14 @@ export class Aggregate {
     let shouldRewriteSnapshot = false
 
     if (useSnapshots) {
-      const snapshot = await this.store.readSnapshot({
-        type: this.type,
-        key: this.key,
-      })
+      const snapshot = await this.store.readSnapshot(this.type, this.key)
 
       if (snapshot) {
         let snapshotIsUsable = false
 
         const klass = this.constructor as typeof Aggregate
 
-        if (
-          snapshot.compatibilityChecksum !== klass.snapshotCompatibilityChecksum
-        ) {
+        if (snapshot.compatibilityChecksum !== klass.snapshotCompatChecksum) {
           shouldRewriteSnapshot = true
         } else if (options.version) {
           snapshotIsUsable = options.version >= snapshot.version
@@ -368,20 +387,19 @@ export class Aggregate {
     }
 
     if (!options.version || options.version > this.version) {
-      const commits = this.store.queryAggregateCommits({
-        type: this.type,
-        key: this.key,
+      const commits = this.store.queryAggregateCommits(this.type, this.key, {
         minVersion: this.version + 1,
         ...(options.version && {maxVersion: options.version}),
         ...(options.time && {
-          maxTime: toIso8601Timestamp(options.time),
+          maxTime: toTimestamp(options.time),
         }),
         ...(typeof options.consistentRead !== 'undefined' && {
           consistentRead: options.consistentRead,
         }),
-      })
+      }).commits
 
-      for await (const commit of this.store.upcastCommits(commits)) {
+      for await (const commit of (this
+        .constructor as typeof Aggregate).upcastCommits(commits)) {
         await this.processCommit(commit)
       }
     }
@@ -398,14 +416,12 @@ export class Aggregate {
 
     const {type, key, version, state, timestamp} = this
 
-    await this.store.writeSnapshot({
-      type,
-      key,
+    await this.store.writeSnapshot(type, key, {
       version,
       state,
       timestamp: timestamp!,
       compatibilityChecksum: (this.constructor as typeof Aggregate)
-        .snapshotCompatibilityChecksum,
+        .snapshotCompatChecksum,
     })
   }
 
@@ -463,7 +479,7 @@ export class Aggregate {
   public async executeCommand(
     params: {
       name: string
-      retryOptions?: Partial<JitteredRetryOptions>
+      retryConfig?: Partial<RetryConfig>
     },
     ...commandArgs: any[]
   ) {
@@ -474,7 +490,7 @@ export class Aggregate {
       () => (this as any)[params.name](...commandArgs),
       {
         ...(this.constructor as typeof Aggregate).defaultRetryOptions,
-        ...params.retryOptions,
+        ...params.retryConfig,
         errorIsRetryable: error => error instanceof VersionConflictError,
         beforeRetry: () => this.hydrate(),
       }
@@ -531,5 +547,3 @@ export class Aggregate {
 }
 
 Object.defineProperty(Aggregate.prototype, 'state', {enumerable: true})
-
-export default Aggregate

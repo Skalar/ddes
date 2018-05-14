@@ -5,10 +5,12 @@ describeWithResources('AwsStore', {}, context => {
   test.concurrent('setup() [withServices]', async () => {
     const store = AwsTestStore(context, {
       initialCapacity: {
-        read: 1,
-        write: 2,
-        indexRead: 3,
-        indexWrite: 4,
+        tableRead: 1,
+        tableWrite: 2,
+        chronologicalRead: 3,
+        chronologicalWrite: 4,
+        instancesRead: 5,
+        instancesWrite: 6,
       },
     })
 
@@ -29,24 +31,43 @@ describeWithResources('AwsStore', {}, context => {
 
     expect(GlobalSecondaryIndexes).toMatchObject([
       {
-        IndexName: 'chronologicalCommits',
+        IndexName: 'chronological',
+        IndexSizeBytes: 0,
         IndexStatus: 'ACTIVE',
         ItemCount: 0,
         KeySchema: [
-          {AttributeName: 'z', KeyType: 'HASH'},
-          {AttributeName: 'c', KeyType: 'RANGE'},
+          {AttributeName: 'p', KeyType: 'HASH'},
+          {AttributeName: 'g', KeyType: 'RANGE'},
         ],
-        Projection: {ProjectionType: 'ALL'},
+        Projection: {
+          NonKeyAttributes: ['t', 'e', 'x', 'a'],
+          ProjectionType: 'INCLUDE',
+        },
         ProvisionedThroughput: {
           ReadCapacityUnits: 3,
           WriteCapacityUnits: 4,
         },
       },
+      {
+        IndexName: 'instances',
+        IndexSizeBytes: 0,
+        IndexStatus: 'ACTIVE',
+        ItemCount: 0,
+        KeySchema: [
+          {AttributeName: 'a', KeyType: 'HASH'},
+          {AttributeName: 'r', KeyType: 'RANGE'},
+        ],
+        Projection: {ProjectionType: 'KEYS_ONLY'},
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 6,
+        },
+      },
     ])
 
     expect(KeySchema).toMatchObject([
-      {AttributeName: 'a', KeyType: 'HASH'},
-      {AttributeName: 'k', KeyType: 'RANGE'},
+      {AttributeName: 's', KeyType: 'HASH'},
+      {AttributeName: 'v', KeyType: 'RANGE'},
     ])
 
     await store.teardown()

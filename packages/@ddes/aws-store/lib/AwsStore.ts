@@ -3,49 +3,50 @@
  */
 
 import {
-  Aggregate,
-  AggregateKeyString,
+  AggregateKey,
   AggregateSnapshot,
+  AggregateType,
   Commit,
-  Event,
-  Iso8601Timestamp,
   Store,
+  Timestamp,
+  VersionConflictError,
   utils as coreutils,
 } from '@ddes/core'
-import {VersionConflictError} from '@ddes/core'
 import {DynamoDB, S3} from 'aws-sdk'
-import {promisify} from 'util'
-import {gunzip as gunzipCb, gzip as gzipCb} from 'zlib'
-import {AwsStoreBatchMutator} from './AwsStoreBatchMutator'
-import * as utils from './utils'
-
-import {VersioningConfiguration} from 'aws-sdk/clients/s3'
 import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import AwsStoreBatchMutator from './AwsStoreBatchMutator'
+import AwsStoreQueryResponse from './AwsStoreQueryResponse'
 import {
   AutoscalingConfig,
   AwsStoreConfig,
-  CapacityConfig,
-  CommitKey,
-  MarshalledCommit,
   SnapshotsConfig,
+  StoreCapacityConfig,
+  StoreQueryParams,
 } from './types'
+import * as utils from './utils'
+import chronologicalPartitionIterator from './utils/chronologicalPartitionIterator'
 
-const gzip = promisify(gzipCb)
-const gunzip = promisify(gunzipCb)
-
-export class AwsStore extends Store {
+/**
+ * Class representing an Event Store based on AWS DynamoDB and S3
+ *
+ * ```typescript
+ * const eventStore = new AwsStore({tableName: 'my-table'})
+ * ```
+ */
+export default class AwsStore extends Store {
   public tableName!: string
 
-  public initialCapacity: CapacityConfig = {
-    read: 2,
-    write: 2,
-    indexRead: 2,
-    indexWrite: 2,
+  public initialCapacity: StoreCapacityConfig = {
+    tableRead: 2,
+    tableWrite: 2,
+    chronologicalRead: 2,
+    chronologicalWrite: 2,
+    instancesRead: 1,
+    instancesWrite: 1,
   }
 
   public autoscaling?: AutoscalingConfig
   public snapshots?: SnapshotsConfig
-  public maxVersionDigits: number = 9
   public s3ClientConfiguration?: S3.ClientConfiguration
   public dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
   public awsConfig?: ConfigurationOptions
@@ -59,16 +60,24 @@ export class AwsStore extends Store {
     }
 
     Object.assign(this, config)
-
-    this.dynamodb = new DynamoDB({
-      ...this.dynamodbClientConfiguration,
+    this.dynamodbClientConfiguration = {
       ...this.awsConfig,
-    })
+      ...config.dynamodbClientConfiguration,
+    }
+    this.dynamodb = new DynamoDB(this.dynamodbClientConfiguration)
   }
 
+  public toString() {
+    return `AwsStore:${this.tableName}`
+  }
+
+  /**
+   * Create and configure DynamoDB table, S3 bucket and DynamoDB auto-scaling
+   */
   public async setup() {
     await utils.createTable(this.tableSpecification, {
       dynamodbClientConfiguration: this.dynamodbClientConfiguration,
+      ttl: true,
     })
 
     if (this.snapshots && this.snapshots.manageBucket) {
@@ -84,7 +93,14 @@ export class AwsStore extends Store {
     }
   }
 
+  /**
+   * Remove DynamoDB auto-scaling, S3 Bucket and DynamoDB table
+   */
   public async teardown() {
+    if (this.autoscaling) {
+      await utils.removeAutoScaling(this.tableName, this.awsConfig)
+    }
+
     await utils.deleteTable(this.tableName, {
       dynamodbClientConfiguration: this.dynamodbClientConfiguration,
     })
@@ -94,19 +110,33 @@ export class AwsStore extends Store {
         s3ClientConfiguration: this.s3ClientConfiguration,
       })
     }
-
-    if (this.autoscaling) {
-      await utils.removeAutoScaling(this.tableName, this.awsConfig)
-    }
   }
 
+  /**
+   * Get commit count (can be up to 6 hours out of date)
+   */
+  public async bestEffortCount() {
+    const {Table} = await this.dynamodb
+      .describeTable({TableName: this.tableName})
+      .promise()
+
+    if (!Table) {
+      throw new Error('table does not exist')
+    }
+
+    return Table.ItemCount || 0
+  }
+
+  /**
+   * Store commit in DynamoDB table
+   */
   public async commit(commit: Commit) {
     try {
       await this.dynamodb
         .putItem({
           TableName: this.tableName,
-          Item: await this.marshallCommit(commit),
-          ConditionExpression: 'attribute_not_exists(k)',
+          Item: await utils.marshallCommit(commit),
+          ConditionExpression: 'attribute_not_exists(v)',
           ReturnValues: 'NONE',
         })
         .promise()
@@ -123,224 +153,304 @@ export class AwsStore extends Store {
     }
   }
 
-  public async getHeadCommit() {
-    for await (const commit of this.chronologicalCommits({
+  /**
+   * Get most recent commit for an [[Aggregate]] instance
+   */
+  public async getAggregateHeadCommit(type: string, key: AggregateKey) {
+    for await (const resultSet of this.queryAggregateCommits(type, key, {
       descending: true,
       limit: 1,
     })) {
-      return commit
+      for await (const commit of resultSet.commits) {
+        return commit
+      }
     }
     return null
-  }
-
-  public async getAggregateHeadCommit(params: {
-    type: string
-    key: AggregateKeyString
-  }) {
-    const {type, key} = params
-
-    for await (const commit of this.queryAggregateCommits({
-      descending: true,
-      type,
-      key,
-      limit: 1,
-    })) {
-      return commit
-    }
-
-    return null
-  }
-
-  public chronologicalCommits(
-    options: {
-      from?: string
-      after?: string
-      before?: string
-      descending?: boolean
-      filterAggregateTypes?: string[]
-      limit?: number
-    } = {}
-  ): AsyncIterableIterator<Commit> {
-    const keyExpressions = ['z = :z']
-    const queryVariables: {[key: string]: string} = {
-      ':z': 't',
-    }
-    const filterExpressions: string[] = []
-
-    // query index
-    // (ProductCategory IN (:cat1, :cat2))
-
-    if (options.after) {
-      keyExpressions.push('c > :after')
-      queryVariables[':after'] = options.after
-    } else if (options.from) {
-      keyExpressions.push('c >= :from')
-      queryVariables[':from'] = options.from
-    } else if (options.before) {
-      keyExpressions.push('c < :before')
-      queryVariables[':before'] = options.before
-    }
-
-    if (options.filterAggregateTypes) {
-      const variableList = options.filterAggregateTypes.map(
-        (aggregateType, i) => `:a${i}`
-      )
-      filterExpressions.push(`a IN (${variableList.join(',')})`)
-      options.filterAggregateTypes.forEach((aggregateType, i) => {
-        queryVariables[`:a${i}`] = aggregateType
-      })
-    }
-
-    return this.queryCommits({
-      queryParams: {
-        IndexName: 'chronologicalCommits',
-        ScanIndexForward: !options.descending,
-      },
-      keyExpressions,
-      queryVariables,
-      filterExpressions,
-    })
   }
 
   /**
-   * Query commits for an aggregate type
+   * Get the most recent commit in the given chronological group
    */
+  public async getHeadCommit(chronologicalGroup?: string, startDate?: Date) {
+    const min = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    for await (const commit of this.chronologicalQuery({
+      group: chronologicalGroup || 'default',
+      min,
+      descending: true,
+    }).commits) {
+      return commit
+    }
 
-  public queryAggregateCommits(params: {
-    type: string
-    key?: AggregateKeyString
-    consistentRead?: boolean
-    minVersion?: number
-    maxVersion?: number
-    maxTime?: Iso8601Timestamp
+    return null
+  }
+
+  /**
+   * Retrieve commits from the store chronologically
+   */
+  public chronologicalQuery(params: {
+    group?: string
+    min: string | Date
+    max?: string | Date
+    exclusiveMin?: boolean
+    exclusiveMax?: boolean
     descending?: boolean
     limit?: number
-  }): AsyncIterableIterator<Commit> {
+    timeDriftCompensation?: number
+    filterAggregateTypes?: AggregateType[]
+  }) {
+    const store = this
+
     const {
-      type,
-      key,
+      group = 'default',
+      min,
+      descending,
+      limit,
+      exclusiveMin,
+      exclusiveMax,
+      timeDriftCompensation = 500,
+    } = params
+    const {max = new Date(Date.now() + timeDriftCompensation)} = params
+
+    if (!min) {
+      throw new Error('You must specify the "min" parameter')
+    }
+
+    const maxDate =
+      max instanceof Date
+        ? max
+        : new Date(max.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
+    const maxSortKey =
+      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') + ';' : max
+
+    const minDate =
+      min instanceof Date
+        ? min
+        : new Date(min.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
+
+    const minSortKey =
+      min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
+
+    return new AwsStoreQueryResponse(
+      this,
+      (async function*() {
+        let commitCount = 0
+
+        for (const partition of chronologicalPartitionIterator({
+          start: minDate,
+          end: maxDate,
+          group,
+          descending,
+        })) {
+          const queryParams = {
+            IndexName: 'chronological',
+            keyExpressions: ['p = :p', 'g BETWEEN :min AND :max'],
+            filterExpressions: params.filterAggregateTypes
+              ? [
+                  `a IN (${params.filterAggregateTypes.map(
+                    (aggregateType, i) => `:a${i}`
+                  )})`,
+                ]
+              : undefined,
+            queryVariables: {
+              ':p': partition.key,
+              ':min': exclusiveMin
+                ? utils.stringcrementor(minSortKey)
+                : minSortKey,
+              ':max': exclusiveMax
+                ? utils.stringcrementor(maxSortKey, -1)
+                : maxSortKey,
+              ...(params.filterAggregateTypes &&
+                params.filterAggregateTypes.reduce(
+                  (vars: object, type: string, i: number) => ({
+                    ...vars,
+                    [`:a${i}`]: type,
+                  }),
+                  {}
+                )),
+            },
+            ScanIndexForward: !descending,
+            ...(limit && {Limit: limit - commitCount}),
+          }
+          for await (const queryResult of store.request('query', queryParams)) {
+            commitCount += queryResult.Items ? queryResult.Items.length : 0
+
+            yield {
+              ...queryResult,
+              cursor:
+                queryResult.Items && queryResult.Items.length
+                  ? queryResult.Items[0].g.S
+                  : new Date(
+                      partition.endsAt.valueOf() + timeDriftCompensation <
+                      Date.now()
+                        ? partition.endsAt
+                        : partition.startsAt
+                    )
+                      .toISOString()
+                      .replace(/[^0-9]/g, ''),
+            }
+            if (limit && commitCount >= limit) {
+              return
+            }
+          }
+        }
+      })()
+    )
+  }
+
+  /**
+   * Retrieve ordered commits for each aggregate instance of [[AggregateType]]
+   */
+  public scanAggregateInstances(
+    type: string,
+    options: {
+      instanceLimit?: number
+    } = {}
+  ): AwsStoreQueryResponse {
+    const keyExpressions = ['a = :a']
+    const queryVariables: {[key: string]: string} = {
+      ':a': type,
+    }
+    const filterExpressions: string[] = []
+    const store = this
+
+    return new AwsStoreQueryResponse(
+      this,
+      (async function*() {
+        let instanceCount = 0
+        for await (const instanceQueryResult of store.request('query', {
+          IndexName: 'instances',
+          keyExpressions,
+          queryVariables,
+          filterExpressions,
+          limit: options.instanceLimit,
+        })) {
+          instanceCount++
+          if (instanceQueryResult.Items) {
+            for (const rawItem of instanceQueryResult.Items) {
+              const {a, r} = DynamoDB.Converter.unmarshall(rawItem)
+
+              for await (const rawQueryResult of store.request('query', {
+                keyExpressions: ['s = :s'],
+                queryVariables: {':s': [a, r].join(':')},
+              })) {
+                yield rawQueryResult
+              }
+            }
+          }
+
+          if (options.instanceLimit && instanceCount >= options.instanceLimit) {
+            return
+          }
+        }
+      })()
+    )
+  }
+
+  /**
+   * Query the commits of an [[Aggregate]] instance
+   */
+  public queryAggregateCommits(
+    type: AggregateType,
+    key: AggregateKey,
+    options: {
+      consistentRead?: boolean
+      minVersion?: number
+      maxVersion?: number
+      maxTime?: Date | number
+      descending?: boolean
+      limit?: number
+    } = {}
+  ): AwsStoreQueryResponse {
+    const {
       consistentRead = true,
       minVersion = 1,
-      maxVersion = 10 ** this.maxVersionDigits - 1,
+      maxVersion = Number.MAX_SAFE_INTEGER,
       maxTime,
       descending,
       limit,
-    } = params
+    } = options
 
-    if (!type) {
-      throw new Error('You need to specify "type"')
+    if (!type || !key) {
+      throw new Error('You need to specify "type" and "key"')
     }
 
-    const keyExpressions = ['a = :aggregateType']
-    const queryVariables: {[key: string]: string} = {
-      ':aggregateType': type,
+    const keyExpressions = [
+      's = :streamId',
+      'v BETWEEN :minVersion and :maxVersion',
+    ]
+    const queryVariables: {[key: string]: string | number} = {
+      ':streamId': [type, key].join(':'),
+      ':minVersion': minVersion,
+      ':maxVersion': maxVersion,
     }
+
     const filterExpressions: string[] = []
-
-    if (key) {
-      Object.assign(queryVariables, {
-        ':fromKeyAndVersion': this.commitKeyString(key, minVersion),
-        ':toKeyAndVersion': this.commitKeyString(key, maxVersion),
-      })
-      keyExpressions.push('k BETWEEN :fromKeyAndVersion AND :toKeyAndVersion')
-    }
 
     if (maxTime) {
       filterExpressions.push('t <= :maxTime')
-      queryVariables[':maxTime'] = maxTime
+      queryVariables[':maxTime'] = maxTime.valueOf()
     }
 
     const queryParams = {
+      limit,
       ConsistentRead: consistentRead,
-      ...(limit && {Limit: limit}),
       ...(descending && {ScanIndexForward: false}),
     }
 
-    return this.queryCommits({
-      keyExpressions,
-      filterExpressions,
-      queryVariables,
-      queryParams,
-    })
-  }
-
-  public async marshallCommit(commit: Commit): Promise<MarshalledCommit> {
-    const {
-      aggregateType,
-      aggregateKey,
-      sortKey,
-      events,
-      timestamp,
-      aggregateVersion,
-      active,
-    } = commit
-
-    return DynamoDB.Converter.marshall({
-      a: aggregateType,
-      t: timestamp,
-      k: this.commitKeyString(aggregateKey, aggregateVersion),
-      c: sortKey,
-      e: await gzip(
-        JSON.stringify(
-          events.map(({type: t, version: v, properties: p}) => ({
-            ...(v && {v}),
-            p,
-            t,
-          }))
-        )
-      ),
-      z: active ? 't' : 'f',
-    }) as MarshalledCommit
-  }
-
-  public async unmarshallCommit(
-    marshalledCommit: MarshalledCommit
-  ): Promise<Commit> {
-    const unmarshalled = DynamoDB.Converter.unmarshall(marshalledCommit)
-    const [, aggregateKeyString, aggregateVersionString] = unmarshalled.k.match(
-      /^(.*):([^:]*)$/
+    return new AwsStoreQueryResponse(
+      this,
+      this.request('query', {
+        keyExpressions,
+        filterExpressions,
+        queryVariables,
+        ...queryParams,
+      })
     )
-
-    const commit = new Commit({
-      aggregateType: unmarshalled.a,
-      aggregateKey: aggregateKeyString ? aggregateKeyString : undefined,
-      aggregateVersion: parseInt(aggregateVersionString, 10),
-      active: unmarshalled.z === 't',
-      timestamp: unmarshalled.t,
-      events: JSON.parse((await gunzip(unmarshalled.e)) as string).map(
-        ({
-          t: type,
-          v: version = 1,
-          p: properties,
-        }: {
-          t: string
-          v: number
-          p: object
-        }) =>
-          ({
-            type,
-            version,
-            properties,
-          } as Event)
-      ),
-    })
-
-    return commit
   }
 
-  public async writeSnapshot(params: {
-    type: string
-    key: string
-    version: number
-    state: object
-    timestamp: Iso8601Timestamp
-    compatibilityChecksum: string
-  }) {
+  /**
+   * Scan store commits
+   */
+  public scan(
+    params?: {
+      totalSegments?: number
+      segment?: number
+      capacityLimit?: number
+    } & StoreQueryParams
+  ): AwsStoreQueryResponse {
+    const {segment = 0, totalSegments = 1, ...rest} = params || {}
+
+    return new AwsStoreQueryResponse(
+      this,
+      this.request('scan', {
+        TotalSegments: totalSegments,
+        Segment: segment,
+        ...rest,
+      })
+    )
+  }
+
+  /**
+   * Write an aggregate instance snapshot to AWS S3 bucket
+   *
+   * @param type e.g. 'Account'
+   * @param key  e.g. '1234'
+   */
+  public async writeSnapshot(
+    type: string,
+    key: string,
+    payload: {
+      version: number
+      state: object
+      timestamp: Timestamp
+      compatibilityChecksum: string
+    }
+  ) {
     if (!this.snapshots) {
       throw new Error('Snapshots are not configured')
     }
 
-    const {type, key, version, state, timestamp, compatibilityChecksum} = params
+    const {version, state, timestamp, compatibilityChecksum} = payload
 
     await this.s3
       .putObject({
@@ -356,13 +466,16 @@ export class AwsStore extends Store {
       .promise()
   }
 
-  public async readSnapshot({
-    type,
-    key,
-  }: {
-    type: string
-    key: string
-  }): Promise<AggregateSnapshot | null> {
+  /**
+   * Read an aggregate instance snapshot from AWS S3
+   *
+   * @param type e.g. 'Account'
+   * @param key  e.g. '1234'
+   */
+  public async readSnapshot(
+    type: AggregateType,
+    key: AggregateKey
+  ): Promise<AggregateSnapshot | null> {
     if (!this.snapshots) {
       throw new Error('Snapshots are not configured')
     }
@@ -389,7 +502,7 @@ export class AwsStore extends Store {
       return {
         version,
         state,
-        timestamp: coreutils.toIso8601Timestamp(timestampString),
+        timestamp: coreutils.toTimestamp(timestampString),
         compatibilityChecksum,
       }
     } catch (error) {
@@ -401,6 +514,9 @@ export class AwsStore extends Store {
     }
   }
 
+  /**
+   * Delete snapshots from AWS S3 bucket
+   */
   public async deleteSnapshots() {
     if (!this.snapshots) {
       throw new Error('Snapshots are not configured')
@@ -434,138 +550,168 @@ export class AwsStore extends Store {
     } while (listResult.NextContinuationToken)
   }
 
-  public createBatchMutator() {
-    return new AwsStoreBatchMutator({store: this})
+  /**
+   * Get a [[AwsBatchMutator]] for the store
+   */
+  public createBatchMutator(params: {capacityLimit?: number} = {}) {
+    const {capacityLimit} = params
+    return new AwsStoreBatchMutator({store: this, capacityLimit})
   }
 
-  protected async *queryCommits(params: {
-    keyExpressions: string[]
-    filterExpressions: string[]
-    queryVariables: object
-    queryParams: Partial<DynamoDB.QueryInput>
-  }): AsyncIterableIterator<Commit> {
-    const {
-      keyExpressions,
-      filterExpressions,
-      queryVariables,
-      queryParams: additionalQueryParams,
-    } = params
+  //
+  // PROTECTED
+  //
 
-    const queryParams = {
-      TableName: this.tableName,
-      KeyConditionExpression: keyExpressions.join(' AND '),
-      ...(filterExpressions.length && {
-        FilterExpression: filterExpressions.join(' AND '),
-      }),
-      ExpressionAttributeValues: DynamoDB.Converter.marshall(queryVariables),
-      ...additionalQueryParams,
-    }
-
-    let lastEvaluatedKey
-
-    do {
-      const queryResult: DynamoDB.QueryOutput = await this.dynamodb
-        .query({
-          ...queryParams,
-          ...(lastEvaluatedKey ? {ExclusiveStartKey: lastEvaluatedKey} : {}),
-        })
-        .promise()
-
-      if (queryResult.Items) {
-        for (const marshalledCommit of queryResult.Items) {
-          const commit = await this.unmarshallCommit(
-            marshalledCommit as MarshalledCommit
-          )
-          yield commit
-        }
-      }
-
-      lastEvaluatedKey = queryResult.LastEvaluatedKey
-    } while (lastEvaluatedKey)
-  }
-
-  private commitKeyString(
-    aggregateKey: string,
-    aggregateVersion: number,
-    versionDigits = this.maxVersionDigits
-  ): CommitKey {
-    return [
-      aggregateKey,
-      `${'0'.repeat(
-        versionDigits - aggregateVersion.toString().length
-      )}${aggregateVersion}`,
-    ].join(':')
-  }
-
-  get s3() {
+  protected get s3() {
     return new S3(this.s3ClientConfiguration)
   }
 
-  private get tableSpecification() {
+  protected get tableSpecification() {
     return {
       TableName: this.tableName,
       AttributeDefinitions: [
-        {
-          AttributeName: 'a', // aggregateType
-          AttributeType: 'S',
-        },
-        {
-          AttributeName: 'k', // keyAndVersion
-          AttributeType: 'S',
-        },
-        {
-          AttributeName: 'c', // commitId
-          AttributeType: 'S',
-        },
-        {
-          AttributeName: 'z', // active
-          AttributeType: 'S',
-        },
+        {AttributeName: 's', AttributeType: 'S'},
+        {AttributeName: 'v', AttributeType: 'N'},
+        {AttributeName: 'g', AttributeType: 'S'},
+        {AttributeName: 'p', AttributeType: 'S'},
+        {AttributeName: 'a', AttributeType: 'S'},
+        {AttributeName: 'r', AttributeType: 'S'},
       ],
 
       KeySchema: [
-        {
-          AttributeName: 'a',
-          KeyType: 'HASH',
-        },
-        {
-          AttributeName: 'k',
-          KeyType: 'RANGE',
-        },
+        {AttributeName: 's', KeyType: 'HASH'},
+        {AttributeName: 'v', KeyType: 'RANGE'},
       ],
 
       ProvisionedThroughput: {
-        ReadCapacityUnits: this.initialCapacity.read,
-        WriteCapacityUnits: this.initialCapacity.write,
+        ReadCapacityUnits: this.initialCapacity.tableRead,
+        WriteCapacityUnits: this.initialCapacity.tableWrite,
       },
 
       GlobalSecondaryIndexes: [
         {
-          IndexName: 'chronologicalCommits',
+          IndexName: 'chronological',
 
           KeySchema: [
-            {
-              AttributeName: 'z',
-              KeyType: 'HASH',
-            },
-            {
-              AttributeName: 'c',
-              KeyType: 'RANGE',
-            },
+            {AttributeName: 'p', KeyType: 'HASH'},
+            {AttributeName: 'g', KeyType: 'RANGE'},
           ],
 
           Projection: {
-            ProjectionType: 'ALL',
+            ProjectionType: 'INCLUDE',
+            NonKeyAttributes: ['t', 'e', 'x', 'a'],
           },
 
           ProvisionedThroughput: {
-            ReadCapacityUnits: this.initialCapacity.indexRead,
-            WriteCapacityUnits: this.initialCapacity.indexWrite,
+            ReadCapacityUnits: this.initialCapacity.chronologicalRead,
+            WriteCapacityUnits: this.initialCapacity.chronologicalWrite,
+          },
+        },
+        {
+          IndexName: 'instances',
+
+          KeySchema: [
+            {AttributeName: 'a', KeyType: 'HASH'},
+            {AttributeName: 'r', KeyType: 'RANGE'},
+          ],
+
+          Projection: {
+            ProjectionType: 'KEYS_ONLY',
+          },
+
+          ProvisionedThroughput: {
+            ReadCapacityUnits: this.initialCapacity.instancesRead,
+            WriteCapacityUnits: this.initialCapacity.instancesWrite,
           },
         },
       ],
     }
   }
-}
 
-export default AwsStore
+  protected async *request(
+    type: 'scan' | 'query',
+    params: StoreQueryParams &
+      (Partial<DynamoDB.QueryInput> | Partial<DynamoDB.ScanInput>) = {}
+  ): AsyncIterableIterator<DynamoDB.QueryOutput & {throttleCount: number}> {
+    const {
+      startKey,
+      keyExpressions = [],
+      filterExpressions = [],
+      filterAggregateTypes,
+      queryVariables = {},
+      limit,
+      capacityLimit,
+      ...additionalQueryParams
+    } = params
+
+    const queryParams = {
+      TableName: this.tableName,
+      ReturnConsumedCapacity: 'TOTAL',
+      ...(keyExpressions.length && {
+        KeyConditionExpression: keyExpressions.join(' AND '),
+      }),
+      ...(filterExpressions.length && {
+        FilterExpression: filterExpressions.join(' AND '),
+      }),
+      ...(Object.keys(queryVariables).length && {
+        ExpressionAttributeValues: DynamoDB.Converter.marshall(queryVariables),
+      }),
+      ...(limit && {Limit: limit}),
+      ...additionalQueryParams,
+    }
+
+    let lastEvaluatedKey: DynamoDB.Key | undefined = startKey
+    let readCapacityLimiter
+
+    if (capacityLimit) {
+      readCapacityLimiter = new utils.ReadCapacityLimiter(
+        capacityLimit,
+        additionalQueryParams.ConsistentRead ? 0.25 : 0.125
+      )
+    }
+
+    do {
+      let request = null
+      let throttleCount = 0
+      if (readCapacityLimiter) {
+        queryParams.Limit = await readCapacityLimiter.getPermittedItemCount()
+      }
+
+      if (type === 'scan') {
+        request = await this.dynamodb.scan({
+          ...(queryParams as DynamoDB.ScanInput),
+          ...(lastEvaluatedKey ? {ExclusiveStartKey: lastEvaluatedKey} : {}),
+        })
+      } else {
+        request = await this.dynamodb.query({
+          ...(queryParams as DynamoDB.QueryInput),
+          ...(lastEvaluatedKey ? {ExclusiveStartKey: lastEvaluatedKey} : {}),
+        })
+      }
+
+      request.on('retry', response => {
+        if (
+          response.error &&
+          response.error.code === 'ProvisionedThroughputExceededException'
+        ) {
+          throttleCount++
+        }
+      })
+
+      const result:
+        | DynamoDB.QueryOutput
+        | DynamoDB.ScanOutput = await request.promise()
+
+      if (result.Count && result.ConsumedCapacity && readCapacityLimiter) {
+        readCapacityLimiter.registerConsumption(
+          result.ConsumedCapacity.CapacityUnits!,
+          result.Count
+        )
+      }
+
+      yield {...result, throttleCount}
+
+      lastEvaluatedKey = result.LastEvaluatedKey
+    } while (lastEvaluatedKey)
+  }
+}

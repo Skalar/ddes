@@ -3,9 +3,11 @@
  *
  */
 
-import {VersionConflictError} from './errors'
-import {Iso8601Timestamp, JitteredRetryOptions} from './types'
+import {RetryConfig, Timestamp} from './types'
 
+/**
+ * @hidden
+ */
 function randomIntInRange(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1) + min)
 }
@@ -35,16 +37,18 @@ export function jitteredBackoff(params: {
 /**
  * @hidden
  */
-export function toIso8601Timestamp(
-  obj: string | Date | undefined
-): Iso8601Timestamp {
+export function toTimestamp(
+  obj: string | Date | undefined | number
+): Timestamp {
   if (!obj) {
-    return new Date().toISOString()
+    return new Date().valueOf()
+  } else if (obj instanceof Date) {
+    return obj.valueOf()
+  } else if (typeof obj === 'number') {
+    return obj
+  } else {
+    return new Date(obj as string).valueOf()
   }
-
-  return obj instanceof Date
-    ? obj.toISOString()
-    : new Date(obj as string).toISOString()
 }
 
 /**
@@ -52,7 +56,7 @@ export function toIso8601Timestamp(
  */
 export async function jitteredRetry(
   fn: () => Promise<any>,
-  options: JitteredRetryOptions
+  options: RetryConfig
 ) {
   const startedAt = Date.now()
   let attempt = 0

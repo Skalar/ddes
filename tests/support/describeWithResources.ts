@@ -1,6 +1,3 @@
-// import {Aggregate, Commit, EventWithMetadata, KeySchema} from '@ddes/core'
-// import testEachStore from './testEachStore'
-import {AwsStore} from '@ddes/aws-store'
 import {MetaStore, Store} from '@ddes/core'
 import {randomBytes} from 'crypto'
 import * as Resources from './resources'
@@ -31,9 +28,14 @@ export function describeWithResources( // describe with resources
     metaStore?: MetaStore
   ) => {
     const testId = randomBytes(8).toString('hex')
-    const testContext = {store, metaStore, testId} as TestWithResourcesContext
     const createdResources: {[resourceName: string]: any} = {}
     const teardownFunctions: Array<() => Promise<void>> = []
+    const testContext = {
+      store,
+      metaStore,
+      testId,
+      teardownFunctions,
+    } as TestWithResourcesContext
 
     describe(description, () => {
       beforeAll(async () => {

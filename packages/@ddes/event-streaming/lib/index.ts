@@ -2,6 +2,7 @@
  * @module @ddes/event-streaming
  */
 
-export * from './EventSubscriber'
-export * from './EventStreamer'
+export {default as EventSubscriber} from './EventSubscriber'
+export {default as EventStreamer} from './EventStreamer'
+
 export * from './types'

@@ -7,7 +7,7 @@ import {DynamoDB} from 'aws-sdk'
 /**
  * @hidden
  */
-export async function deleteTable(
+export default async function deleteTable(
   tableName: string,
   options: {
     waitTimeout?: number

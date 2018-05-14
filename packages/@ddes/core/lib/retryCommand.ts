@@ -2,9 +2,9 @@
  * @module @ddes/core
  */
 
-import {Aggregate} from './Aggregate'
+import Aggregate from './Aggregate'
 import {VersionConflictError} from './errors'
-import {JitteredRetryOptions} from './types'
+import {RetryConfig} from './types'
 import {jitteredRetry} from './utils'
 
 /**
@@ -13,7 +13,7 @@ import {jitteredRetry} from './utils'
  *
  * By default retries on VersionConflictError
  */
-export function retryCommand(options?: Partial<JitteredRetryOptions>) {
+export default function retryCommand(options?: Partial<RetryConfig>) {
   return (
     target: Aggregate,
     propertyKey: string,

@@ -7,7 +7,7 @@ import {S3} from 'aws-sdk'
 /**
  * @hidden
  */
-export async function createBucket(
+export default async function createBucket(
   name: string,
   options: {
     configuration?: S3.CreateBucketConfiguration

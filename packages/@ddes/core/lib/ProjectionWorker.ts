@@ -2,10 +2,10 @@
  * @module @ddes/core
  */
 
-import {Projection} from './Projection'
+import Projection from './Projection'
 import {EventWithMetadata} from './types'
 
-export class ProjectionWorker {
+export default class ProjectionWorker {
   public projection: Projection
   private queue: Set<EventWithMetadata>
   private maxSize: number

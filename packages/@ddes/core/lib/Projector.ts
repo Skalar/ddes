@@ -2,23 +2,16 @@
  * @module @ddes/core
  */
 
-import {Commit} from './Commit'
-import {Projection} from './Projection'
-import {ProjectionWorker} from './ProjectionWorker'
-import {Store} from './Store'
-import {StorePoller, StorePollerParams} from './StorePoller'
-import {EventWithMetadata} from './types'
-
-interface ProjectorConstructorParams {
-  projections: Projection[]
-}
+import Commit from './Commit'
+import Projection from './Projection'
+import ProjectionWorker from './ProjectionWorker'
+import StorePoller from './StorePoller'
+import {StorePollerParams} from './types'
 
 /**
  * The Projector polls a store and passes events to the given projections.
  */
-export class Projector extends StorePoller {
-  protected sortKeyCursor = '0'
-
+export default class Projector extends StorePoller {
   private projections: Projection[]
   private queues: Set<ProjectionWorker>
 

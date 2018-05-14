@@ -1,4 +1,3 @@
-import {MarshalledCommit} from '@ddes/aws-store'
 import {Commit} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'support'
 
@@ -18,7 +17,7 @@ describeWithResources('Stores', {stores: true}, context => {
 
     await store.commit(commit)
     await expect(
-      iterableToArray(store.chronologicalCommits())
+      iterableToArray(store.queryAggregateCommits('Test', 'test').commits)
     ).resolves.toMatchObject([commit])
   })
 })

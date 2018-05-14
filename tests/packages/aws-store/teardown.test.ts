@@ -2,16 +2,17 @@ import {describeWithResources} from 'support'
 import {aws as AwsTestStore} from 'support/stores'
 
 describeWithResources('AwsStore', {}, context => {
-  test.concurrent('teardown() [withServices]', async () => {
+  test('teardown() [withServices]', async () => {
     const store = AwsTestStore(context, {
       initialCapacity: {
-        read: 1,
-        write: 2,
-        indexRead: 3,
-        indexWrite: 4,
+        tableRead: 1,
+        tableWrite: 2,
+        chronologicalRead: 3,
+        chronologicalWrite: 4,
+        instancesRead: 5,
+        instancesWrite: 6,
       },
     })
-
     await store.setup()
     await store.teardown()
 

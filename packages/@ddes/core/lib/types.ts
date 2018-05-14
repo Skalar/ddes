@@ -2,13 +2,10 @@
  * @module @ddes/core
  */
 
-import {Commit} from './Commit'
-
-export type CommitOrCommits =
-  | Commit[]
-  | AsyncIterable<Commit>
-  | Iterable<Commit>
-  | Commit
+import Aggregate from './Aggregate'
+import Commit from './Commit'
+import MetaStore from './MetaStore'
+import Store from './Store'
 
 export interface Event {
   type: string
@@ -21,7 +18,7 @@ export interface Event {
 
 export type EventInput = Partial<Event> & Pick<Event, 'type'>
 
-export interface JitteredRetryOptions {
+export interface RetryConfig {
   timeout: number
   initialDelay: number
   maxDelay: number
@@ -36,19 +33,17 @@ export type EventWithMetadata = Event &
     'aggregateType' | 'aggregateKey' | 'aggregateVersion' | 'timestamp'
   >
 
-export type Iso8601Timestamp = string
+export type Timestamp = number
 
 /**
- * Object with properties that can be used by a [[KeySchema]] to produce an [[AggregateKeyString]]
+ * Object with properties that can be used by a [[KeySchema]] to produce an [[AggregateKey]]
  */
 export type AggregateKeyProps = any
 
 /**
  * A key that, within the scope of an aggregateType, uniquely identifies an aggregate.
  */
-export type AggregateKeyString = string
-
-export type AggregateKey = AggregateKeyString | AggregateKeyProps
+export type AggregateKey = string
 
 export interface KeySchemaProperty {
   name: string
@@ -83,7 +78,7 @@ export interface AggregateEventUpcasters {
 
 export interface HydrateOptions {
   version?: number
-  time?: string | Iso8601Timestamp
+  time?: string | Timestamp
   consistentRead?: boolean
   useSnapshots?: boolean
   rewriteInvalidSnapshots?: boolean
@@ -104,5 +99,60 @@ export interface AggregateSnapshot {
   version: number
   state: object
   compatibilityChecksum: string
-  timestamp: Iso8601Timestamp
+  timestamp: Timestamp
 }
+
+export type StoreCursor = string
+
+export interface StoreQueryResultSet {
+  items: any[]
+  commits: AsyncIterableIterator<Commit>
+  scannedCount?: number
+  consumedCapacity?: any
+  throttleCount: number
+  cursor?: StoreCursor
+}
+
+export interface StoreQueryResponse {
+  commits: AsyncIterableIterator<Commit>
+  events: AsyncIterableIterator<Event>
+
+  /**
+   * @hidden
+   */
+  [Symbol.asyncIterator](): AsyncIterableIterator<StoreQueryResultSet>
+}
+
+export type MarshalledCommit = any
+
+export interface StorePollerParams {
+  store: Store
+  chronologicalGroup?: string
+  sortKeyCursor?: string | Date
+  initalSleepPeriod?: number
+  maxSleepPeriod?: number
+  sleepPeriodBackoffExponent?: number
+  filterAggregateTypes?: AggregateType[]
+  processCommit?: (commit: Commit) => Promise<void>
+  upcasters?: AggregateEventUpcasters
+}
+
+export interface ProjectionParams {
+  name: string
+  metaStore: MetaStore
+
+  dependencies?: {
+    [dependerType: string]: {
+      [dependeeType: string]: (
+        dependerEvent: EventWithMetadata,
+        dependeeEvent: EventWithMetadata
+      ) => boolean
+    }
+  }
+
+  aggregateClasses: {[aggregateType: string]: typeof Aggregate}
+
+  processEvents(events: Set<EventWithMetadata>): Promise<void>
+}
+
+export type MetaStoreKey = [string, string]
