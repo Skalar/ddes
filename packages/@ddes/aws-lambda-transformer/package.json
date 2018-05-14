@@ -1,0 +1,46 @@
+{
+  "name": "@ddes/aws-lambda-transformer",
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "description": "AWS Lambda based Store Mutator for DDES, a framework for distributed Event Sourcing & CQRS",
+  "author": "Trym Skaar <trym.skaar@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "index.js",
+    "package.json",
+    "README.md"
+  ],
+  "types": "./dist/node-10/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ddes/core": "^1.0.1",
+    "@ddes/store-transformations": "^1.0.1",
+    "archiver": "^2.1.1",
+    "aws-sdk": "^2.217.1",
+    "debug": "^3.1.0",
+    "semver": "^5.5.0"
+  },
+  "repository": "skalar/ddes",
+  "homepage": "http://ddes.io",
+  "keywords": [
+    "aws",
+    "dynamodb",
+    "distributed",
+    "event store",
+    "event sourcing",
+    "cqrs",
+    "lambda"
+  ],
+  "devDependencies": {
+    "@types/archiver": "^2.1.1",
+    "@types/blessed": "^0.1.10",
+    "@types/debug": "^0.0.30",
+    "@types/glob": "^5.0.35",
+    "typescript": "^2.8.3"
+  }
+}

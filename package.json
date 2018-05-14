@@ -55,6 +55,7 @@
     "packages/@ddes/core",
     "packages/@ddes/cli",
     "packages/@ddes/aws-store",
+    "packages/@ddes/aws-lambda-transformer",
     "packages/@ddes/store-transformations",
     "packages/@ddes/event-streaming"
   ],
