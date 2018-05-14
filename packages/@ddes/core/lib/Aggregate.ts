@@ -174,6 +174,13 @@ export default class Aggregate {
     return instance as T
   }
 
+  public static async loadOrCreate<T extends Aggregate>(
+    this: AggregateStatic<T>,
+    props: object
+  ): Promise<T> {
+    return ((await this.load(props)) as T) || ((await this.create(props)) as T)
+  }
+
   public static async getState<T extends Aggregate>(
     this: AggregateStatic<T>,
     loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKey
