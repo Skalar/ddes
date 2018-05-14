@@ -3,14 +3,13 @@
  */
 
 import {ApplicationAutoScaling, IAM} from 'aws-sdk'
-
 import {ConfigurationOptions} from 'aws-sdk/lib/config'
 import {AutoscalingConfig} from '../types'
 
 /**
  * @hidden
  */
-export async function setupAutoScaling(
+export default async function setupAutoScaling(
   tableName: string,
   autoscalingConfig: AutoscalingConfig,
   options: {awsConfig?: ConfigurationOptions} = {}
@@ -88,20 +87,30 @@ export async function setupAutoScaling(
       ScaleInCooldown: autoscalingConfig.tableScaleInCooldown,
       ScaleOutCooldown: autoscalingConfig.tableScaleOutCooldown,
       type: 'table',
-      readMin: autoscalingConfig.readMin,
-      readMax: autoscalingConfig.readMax,
-      writeMin: autoscalingConfig.writeMin,
-      writeMax: autoscalingConfig.writeMax,
+      readMin: autoscalingConfig.tableReadMin,
+      readMax: autoscalingConfig.tableReadMax,
+      writeMin: autoscalingConfig.tableWriteMin,
+      writeMax: autoscalingConfig.tableWriteMax,
     },
     {
-      ResourceId: `table/${tableName}/index/chronologicalCommits`,
-      ScaleInCooldown: autoscalingConfig.indexScaleInCooldown,
-      ScaleOutCooldown: autoscalingConfig.indexScaleOutCooldown,
+      ResourceId: `table/${tableName}/index/chronological`,
+      ScaleInCooldown: autoscalingConfig.chronologicalScaleInCooldown,
+      ScaleOutCooldown: autoscalingConfig.chronologicalScaleOutCooldown,
       type: 'index',
-      readMin: autoscalingConfig.indexReadMin,
-      readMax: autoscalingConfig.indexReadMax,
-      writeMin: autoscalingConfig.indexWriteMin,
-      writeMax: autoscalingConfig.indexWriteMax,
+      readMin: autoscalingConfig.chronologicalReadMin,
+      readMax: autoscalingConfig.chronologicalReadMax,
+      writeMin: autoscalingConfig.chronologicalWriteMin,
+      writeMax: autoscalingConfig.chronologicalWriteMax,
+    },
+    {
+      ResourceId: `table/${tableName}/index/instances`,
+      ScaleInCooldown: autoscalingConfig.instancesScaleInCooldown,
+      ScaleOutCooldown: autoscalingConfig.instancesScaleOutCooldown,
+      type: 'index',
+      readMin: autoscalingConfig.instancesReadMin,
+      readMax: autoscalingConfig.instancesReadMax,
+      writeMin: autoscalingConfig.instancesWriteMin,
+      writeMax: autoscalingConfig.instancesWriteMax,
     },
   ]
 

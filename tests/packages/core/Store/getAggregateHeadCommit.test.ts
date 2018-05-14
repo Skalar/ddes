@@ -1,9 +1,8 @@
-import {MarshalledCommit} from '@ddes/aws-store'
-import {Commit, utils} from '@ddes/core'
-import {describeWithResources, iterableToArray} from 'support'
+import {Commit} from '@ddes/core'
+import {describeWithResources} from 'support'
 
 describeWithResources('Stores', {stores: true}, context => {
-  test('getHeadCommit()', async () => {
+  test('getAggregateHeadCommit()', async () => {
     const {store} = context
 
     const commits = {
@@ -49,6 +48,11 @@ describeWithResources('Stores', {stores: true}, context => {
       await store.commit(commit)
     }
 
-    await expect(store.getHeadCommit()).resolves.toMatchObject(commits.a3)
+    await expect(
+      store.getAggregateHeadCommit('Test', 'a')
+    ).resolves.toMatchObject(commits.a3)
+    await expect(
+      store.getAggregateHeadCommit('Test', 'b')
+    ).resolves.toMatchObject(commits.b1)
   })
 })

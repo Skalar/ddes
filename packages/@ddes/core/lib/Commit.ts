@@ -2,26 +2,29 @@
  * @module @ddes/core
  */
 
-import {
-  AggregateKeyString,
-  AggregateType,
-  Event,
-  Iso8601Timestamp,
-} from './types'
-import {toIso8601Timestamp} from './utils'
+import {AggregateKey, AggregateType, Event, Timestamp} from './types'
+import {toTimestamp} from './utils'
 
 /**
  * Represents an aggregate changeset consisting of one or more events
  *
  */
-export class Commit {
-  public aggregateType: AggregateType
-  public aggregateKey: AggregateKeyString
-  public aggregateVersion: number
-  public timestamp: Iso8601Timestamp
+export default class Commit {
+  public static hasSameKey(a: Commit, b: Commit) {
+    return (
+      a.aggregateType === b.aggregateType &&
+      a.aggregateKey === b.aggregateKey &&
+      a.aggregateVersion === b.aggregateVersion
+    )
+  }
 
+  public aggregateType: AggregateType
+  public aggregateKey: AggregateKey
+  public aggregateVersion: number
+  public timestamp: Timestamp
+  public chronologicalGroup: string
   public events: Event[]
-  public active: boolean = true
+  public expiresAt?: number
 
   /**
    *
@@ -30,21 +33,34 @@ export class Commit {
    */
   constructor(attributes: {
     aggregateType: AggregateType
-    aggregateKey: AggregateKeyString
+    aggregateKey: AggregateKey
     aggregateVersion: number
-    timestamp?: Iso8601Timestamp | Date
-    active?: boolean
+    timestamp?: Timestamp | string | Date
+    sortKey?: string
     events: Event[]
+    expiresAt?: number
+    chronologicalGroup?: string
+    storeKey?: {}
   }) {
-    this.timestamp = toIso8601Timestamp(attributes.timestamp)
+    this.timestamp = toTimestamp(attributes.timestamp)
     this.events = attributes.events.map(event => ({version: 1, ...event}))
     this.aggregateType = attributes.aggregateType
     this.aggregateKey = attributes.aggregateKey
     this.aggregateVersion = attributes.aggregateVersion
+    this.chronologicalGroup = attributes.chronologicalGroup || 'default'
 
-    if (typeof attributes.active !== 'undefined') {
-      this.active = attributes.active
+    Object.defineProperty(this, 'storeKey', {
+      enumerable: false,
+      value: attributes.storeKey,
+    })
+
+    if (typeof attributes.expiresAt !== 'undefined') {
+      this.expiresAt = attributes.expiresAt
     }
+  }
+
+  get storeKey(): {} | undefined {
+    return
   }
 
   /**
@@ -52,9 +68,10 @@ export class Commit {
    */
   get sortKey() {
     return [
-      this.timestamp.replace(/[^0-9]/g, ''),
+      new Date(this.timestamp).toISOString().replace(/[^0-9]/g, ''),
       this.aggregateType,
       this.aggregateKey,
+      this.aggregateVersion,
     ].join(':')
   }
 
@@ -64,16 +81,18 @@ export class Commit {
       aggregateKey,
       aggregateVersion,
       timestamp,
-      active,
+      expiresAt,
       events,
+      chronologicalGroup,
     } = this
     return {
       aggregateType,
       aggregateKey,
       aggregateVersion,
       timestamp,
-      active,
+      expiresAt,
       events,
+      chronologicalGroup,
     }
   }
 }

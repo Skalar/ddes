@@ -2,22 +2,21 @@
  * @module @ddes/core
  */
 
-import Aggregate from './Aggregate'
-import {BatchMutator} from './BatchMutator'
-import {Commit} from './Commit'
+import BatchMutator from './BatchMutator'
+import Commit from './Commit'
 import {
-  AggregateEventUpcasters,
-  AggregateKeyString,
+  AggregateKey,
   AggregateSnapshot,
-  Iso8601Timestamp,
+  AggregateType,
+  MarshalledCommit,
+  StoreQueryResponse,
+  Timestamp,
 } from './types'
 
-export abstract class Store {
-  public upcasters?: AggregateEventUpcasters
-  public lazyTransformation = false
-
-  public lazyTransformationMutator?: BatchMutator
-
+/**
+ * Abstract class representing an Event Store
+ */
+export default abstract class Store {
   /**
    * Performs necessary orchestration to ready the store
    */
@@ -29,139 +28,124 @@ export abstract class Store {
   public abstract teardown(): Promise<void>
 
   /**
-   * Get the most recent commit from the store
+   * Unreliable, probably outdated, best effort commit count
    */
-  public abstract getHeadCommit(): Promise<Commit | null>
+  public abstract bestEffortCount(): Promise<number>
 
   /**
-   * DANGER: Delete ALL commits in the store
-   */
-  // public abstract deleteAllCommits?(): Promise<void>
-
-  // /**
-  //  * Write commits efficiently to store, without consistency guarantees and automatic versioning
-  //  */
-  // batchWriteCommits?(): Promise<void>
-
-  /**
-   * Commit to the store
+   * Write a commit to the Store
    */
   public abstract commit(commit: Commit): Promise<void>
 
   /**
-   * Converts a Commit into an object suited for communicating with store
+   * Query the commits of an [[Aggregate]] instance
    */
-  public abstract marshallCommit(commit: Commit): Promise<any>
+  public abstract queryAggregateCommits(
+    type: AggregateType,
+    key: AggregateKey,
+    options?: {
+      consistentRead?: boolean
+      minVersion?: number
+      maxVersion?: number
+      maxTime?: Date | number
+      limit?: number
+      descending?: boolean
+    }
+  ): StoreQueryResponse
 
   /**
-   * Converts a marshalled commit into Commit
+   * Retrieve ordered commits for each aggregate instance of [[AggregateType]]
    */
-  public abstract unmarshallCommit(marshalledCommit: any): Promise<Commit>
-
-  public abstract chronologicalCommits(options: {
-    from?: string
-    after?: string
-    before?: string
-    descending?: boolean
-    filterAggregateTypes?: string[]
-    limit?: number
-  }): AsyncIterableIterator<Commit>
-
-  public abstract queryAggregateCommits(params: {
-    type: string
-    key?: AggregateKeyString
-    consistentRead?: boolean
-    minVersion?: number
-    maxVersion?: number
-    maxTime?: Iso8601Timestamp
-    limit?: number
-    descending?: boolean
-  }): AsyncIterableIterator<Commit>
-
-  public abstract getAggregateHeadCommit(params: {
-    type: string
-    key: AggregateKeyString
-  }): Promise<Commit | null>
-
-  public abstract writeSnapshot(params: {
-    type: string
-    key: string
-    version: number
-    state: object
-    timestamp: Iso8601Timestamp
-    compatibilityChecksum: string
-  }): Promise<void>
-
-  public abstract readSnapshot(params: {
-    type: string
-    key: string
-  }): Promise<AggregateSnapshot | null>
-
-  public abstract deleteSnapshots(aggregateNames?: string[]): Promise<void>
-
-  public abstract createBatchMutator(): any
-
-  public async *upcastCommits(
-    commits: AsyncIterableIterator<Commit>
-  ): AsyncIterableIterator<Commit> {
-    const {upcasters = {}} = this
-    for await (const commit of commits) {
-      let upcasted = false
-      const aggregateUpcasters = upcasters[commit.aggregateType] || {}
-
-      const upcastedEvents = commit.events.map(event => {
-        let processedEvent = event
-        let upcaster
-        while (true) {
-          const version = processedEvent.version || 1
-          upcaster =
-            aggregateUpcasters[processedEvent.type] &&
-            aggregateUpcasters[processedEvent.type][version]
-
-          if (upcaster) {
-            upcasted = true
-            processedEvent = {
-              ...processedEvent,
-              properties: upcaster(processedEvent.properties),
-              version: version + 1,
-            }
-          } else {
-            break
-          }
-        }
-
-        return processedEvent
-      })
-
-      if (upcasted) {
-        const {
-          aggregateType,
-          aggregateKey,
-          aggregateVersion,
-          timestamp,
-          active,
-        } = commit
-        const upcastedCommit = new Commit({
-          aggregateType,
-          aggregateKey,
-          aggregateVersion,
-          timestamp,
-          active,
-          events: upcastedEvents,
-        })
-
-        if (this.lazyTransformation) {
-          if (!this.lazyTransformationMutator) {
-            this.lazyTransformationMutator = this.createBatchMutator()
-          }
-
-          await this.lazyTransformationMutator!.put(upcastedCommit)
-        }
-
-        yield upcastedCommit
-      } else {
-        yield commit
-      }
+  public abstract scanAggregateInstances(
+    type: AggregateType,
+    options?: {
+      instanceLimit?: number
     }
-  }
+  ): StoreQueryResponse
+
+  /**
+   * Get most recent commit for an [[Aggregate]] instance
+   */
+  public abstract getAggregateHeadCommit(
+    type: AggregateType,
+    key: AggregateKey
+  ): Promise<Commit | null>
+
+  /**
+   * Get the most recent commit in the given chronological group
+   */
+  public abstract getHeadCommit(
+    chronologicalGroup?: string
+  ): Promise<Commit | null>
+
+  /**
+   * Scan store commits
+   */
+  public abstract scan(options?: {
+    totalSegments?: number
+    segment?: number
+    filterAggregateTypes?: string[]
+    startKey?: any
+    limit?: number
+    capacityLimit?: number
+  }): StoreQueryResponse
+
+  /**
+   * Write an aggregate instance snapshot to the store
+   *
+   * @param type e.g. 'Account'
+   * @param key  e.g. '1234'
+   */
+  public abstract writeSnapshot(
+    type: string,
+    key: string,
+    payload: {
+      version: number
+      state: object
+      timestamp: Timestamp
+      compatibilityChecksum: string
+    }
+  ): Promise<void>
+
+  /**
+   * Read an aggregate instance snapshot from store
+   *
+   * @param type e.g. 'Account'
+   * @param key  e.g. '1234'
+   */
+  public abstract readSnapshot(
+    type: AggregateType,
+    key: AggregateKey
+  ): Promise<AggregateSnapshot | null>
+
+  /**
+   * Delete store snapshots
+   */
+  public abstract deleteSnapshots(): Promise<void>
+
+  /**
+   * Get a [[BatchMutator]] for the store
+   */
+  public abstract createBatchMutator(params?: {
+    capacityLimit?: number
+  }): BatchMutator<MarshalledCommit>
+
+  /**
+   * Retrieve commits from the store chronologically
+   */
+  public abstract chronologicalQuery(params: {
+    group?: string
+    min: string | Date
+    max?: string | Date
+    descending?: boolean
+    limit?: number
+    exclusiveMin?: boolean
+    exclusiveMax?: boolean
+    filterAggregateTypes?: AggregateType[]
+  }): StoreQueryResponse
+
+  /**
+   * Human readable representation of the store instance
+   */
+  public abstract toString(): string
 }

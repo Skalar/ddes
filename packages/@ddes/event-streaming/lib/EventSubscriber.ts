@@ -6,7 +6,7 @@ import {EventEmitter} from 'events'
 import * as WebSocket from 'ws'
 import {FilterSet} from './types'
 
-export class EventSubscriber extends EventEmitter {
+export default class EventSubscriber extends EventEmitter {
   public maxQueueSize: number = 1000
 
   private socket?: WebSocket

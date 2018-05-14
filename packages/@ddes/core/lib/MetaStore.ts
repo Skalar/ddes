@@ -2,9 +2,9 @@
  * @module @ddes/core
  */
 
-export type MetaStoreKey = [string, string]
+import {MetaStoreKey} from './types'
 
-export abstract class MetaStore {
+export default abstract class MetaStore {
   public abstract async get(key: MetaStoreKey): Promise<any>
   public abstract async put(
     key: MetaStoreKey,

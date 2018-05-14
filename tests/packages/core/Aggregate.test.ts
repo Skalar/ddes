@@ -2,17 +2,10 @@
 
 import {
   Aggregate,
-  AggregateKeyString,
-  AggregateSnapshot,
-  AggregateType,
-  Commit,
-  Event,
   EventWithMetadata,
   KeySchema,
-  Store,
   VersionConflictError,
 } from '@ddes/core'
-
 import {randomBytes} from 'crypto'
 import {commitYielder} from 'support'
 
@@ -60,11 +53,9 @@ describe('Aggregate [unit]', () => {
     const store = {
       readSnapshot: jest.fn(async => null),
       commit: jest.fn(async => undefined),
-      queryAggregateCommits: jest
-        .fn()
-        .mockReturnValueOnce(
-          commitYielder([], {aggregateType: 'TestAggregate'})
-        ),
+      queryAggregateCommits: jest.fn().mockReturnValueOnce({
+        commits: commitYielder([], {aggregateType: 'TestAggregate'}),
+      }),
     }
 
     const TestAggregate = createTestAggregateClass({
@@ -76,7 +67,6 @@ describe('Aggregate [unit]', () => {
     expect(aggregate.key).toBeDefined()
 
     expect(store.commit.mock.calls[0][0]).toMatchObject({
-      active: true,
       aggregateType: 'TestAggregate',
       aggregateVersion: 1,
       events: [{properties: {name: 'My item'}, type: 'Created', version: 1}],
@@ -98,8 +88,8 @@ describe('Aggregate [unit]', () => {
       store: {
         readSnapshot: jest.fn().mockReturnValueOnce(Promise.resolve(null)),
         upcastCommits: jest.fn(commits => commits),
-        queryAggregateCommits: jest.fn().mockReturnValueOnce(
-          commitYielder(
+        queryAggregateCommits: jest.fn().mockReturnValueOnce({
+          commits: commitYielder(
             [
               {
                 aggregateKey: '1',
@@ -116,26 +106,28 @@ describe('Aggregate [unit]', () => {
               },
             ],
             {aggregateType: 'TestAggregate'}
-          )
-        ),
+          ),
+        }),
       },
     })
 
     const firstItem = await TestAggregate.load('1')
 
     expect(TestAggregate.store.readSnapshot).toHaveBeenCalledTimes(1)
-    expect(TestAggregate.store.readSnapshot).toHaveBeenCalledWith({
-      key: '1',
-      type: 'TestAggregate',
-    })
+    expect(TestAggregate.store.readSnapshot).toHaveBeenCalledWith(
+      'TestAggregate',
+      '1'
+    )
 
     expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledTimes(1)
-    expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledWith({
-      type: 'TestAggregate',
-      key: '1',
-      minVersion: 1,
-      consistentRead: true,
-    })
+    expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledWith(
+      'TestAggregate',
+      '1',
+      {
+        minVersion: 1,
+        consistentRead: true,
+      }
+    )
 
     expect(firstItem).toBeTruthy()
     expect(firstItem).toBeInstanceOf(TestAggregate)
@@ -154,8 +146,8 @@ describe('Aggregate [unit]', () => {
   test('static scanInstances()', async () => {
     const TestAggregate = createTestAggregateClass()
     TestAggregate.store.upcastCommits = jest.fn(commits => commits)
-    TestAggregate.store.queryAggregateCommits = jest.fn().mockReturnValueOnce(
-      commitYielder(
+    TestAggregate.store.scanAggregateInstances = jest.fn().mockReturnValueOnce({
+      commits: commitYielder(
         [
           {
             aggregateKey: '1',
@@ -175,8 +167,8 @@ describe('Aggregate [unit]', () => {
           },
         ],
         {aggregateType: 'TestAggregate'}
-      )
-    )
+      ),
+    })
 
     const usersYielded = []
 
@@ -202,10 +194,11 @@ describe('Aggregate [unit]', () => {
       state: {name: 'Second user'},
     })
 
-    expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledTimes(1)
-    expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledWith({
-      type: 'TestAggregate',
-    })
+    expect(TestAggregate.store.scanAggregateInstances).toHaveBeenCalledTimes(1)
+    expect(TestAggregate.store.scanAggregateInstances).toHaveBeenCalledWith(
+      'TestAggregate',
+      {}
+    )
   })
 
   test('executeCommand()', async () => {

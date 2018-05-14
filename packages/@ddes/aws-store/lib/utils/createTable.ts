@@ -7,7 +7,7 @@ import {DynamoDB} from 'aws-sdk'
 /**
  * @hidden
  */
-export async function createTable(
+export default async function createTable(
   tableSpecification: DynamoDB.CreateTableInput,
   options: {
     waitTimeout?: number
@@ -46,7 +46,6 @@ export async function createTable(
         TableName: tableSpecification.TableName,
       })
       .promise()
-
     if (Table) {
       switch (Table.TableStatus) {
         case 'ACTIVE':
@@ -59,7 +58,7 @@ export async function createTable(
                   TableName: tableSpecification.TableName,
                   TimeToLiveSpecification: {
                     Enabled: !!options.ttl,
-                    AttributeName: 'e',
+                    AttributeName: 'x',
                   },
                 })
                 .promise()

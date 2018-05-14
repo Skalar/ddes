@@ -1,17 +1,17 @@
-import {AggregateKeyString, AggregateType, Commit} from '@ddes/core'
+import {AggregateKey, AggregateType, Commit} from '@ddes/core'
 import {inspect} from 'util'
 
 async function* commitYielder(
   commitPartials: any[],
   defaults: {
     aggregateType?: AggregateType
-    aggregateKey?: AggregateKeyString
+    aggregateKey?: AggregateKey
   } = {},
   options: {
     delay?: number
     neverEnding?: boolean
   } = {}
-): AsyncIterable<Commit> {
+): AsyncIterableIterator<Commit> {
   if (options.delay) {
     await new Promise(resolve => setTimeout(resolve, options.delay!))
   }

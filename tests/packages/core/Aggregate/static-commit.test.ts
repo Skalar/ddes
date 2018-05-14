@@ -1,12 +1,6 @@
 // tslint:disable:max-classes-per-file
 
-import {
-  Aggregate,
-  AlreadyCommittingError,
-  Commit,
-  KeySchema,
-  VersionConflictError,
-} from '@ddes/core'
+import {Aggregate, KeySchema} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'support'
 
 describeWithResources('Aggregate', {stores: true}, context => {
@@ -25,11 +19,11 @@ describeWithResources('Aggregate', {stores: true}, context => {
     ])
 
     const [commitA, commitB] = await Promise.all([a, b])
+
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits({
-        type: 'TestAggregate',
-      })
+      TestAggregate.store.queryAggregateCommits('TestAggregate', '@').commits
     )
+
     expect(commitsInStore).toContainEqual(commitA)
     expect(commitsInStore).toContainEqual(commitB)
   })
@@ -53,10 +47,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
     const [commitA, commitB] = await Promise.all([a, b])
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits({
-        type: 'TestAggregate',
-        key: 'myid',
-      })
+      TestAggregate.store.queryAggregateCommits('TestAggregate', 'myid').commits
     )
     expect(commitsInStore).toContainEqual(commitA)
     expect(commitsInStore).toContainEqual(commitB)

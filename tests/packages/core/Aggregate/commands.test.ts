@@ -3,10 +3,10 @@
 import {
   Aggregate,
   EventWithMetadata,
-  retryCommand as retry,
   VersionConflictError,
+  retryCommand as retry,
 } from '@ddes/core'
-import {describeWithResources, iterableToArray} from 'support'
+import {describeWithResources} from 'support'
 
 describe('Aggregate', () => {
   describeWithResources('executeCommand()', {stores: true}, context => {

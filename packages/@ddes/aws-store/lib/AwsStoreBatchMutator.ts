@@ -2,97 +2,284 @@
  * @module @ddes/aws-store
  */
 
-import {BatchMutator, Commit, CommitOrCommits, Store} from '@ddes/core'
-import {AwsStore} from './AwsStore'
+import {BatchMutator, Commit} from '@ddes/core'
+import * as debug from 'debug'
+import * as equal from 'fast-deep-equal'
+import AwsStore from './AwsStore'
+import {AwsStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
+import {marshallCommit} from './utils'
 
-export class AwsStoreBatchMutator extends BatchMutator {
-  public drained: Promise<void> = Promise.resolve()
+/**
+ * @hidden
+ */
+const log = debug('@ddes/aws-store:AwsStoreBatchMutator')
 
+export default class AwsStoreBatchMutator extends BatchMutator<
+  MarshalledCommit
+> {
   protected store: AwsStore
-  protected queue: object[] = []
-  protected maxItemsPerRequest: number
-  protected queueSize: number
-  protected pendingAddToQueuePromises: Array<() => void> = []
-  protected workerLoopRunning: boolean = false
+  protected queue: Set<AwsStoreBatchMutatorQueueItem> = new Set()
+  protected maxItemsPerRequest: number = 25
+  protected processQueueRunning: boolean = false
+  protected capacityLimit?: number
+  protected bufferSize: number = 100
+  protected remainingCapacity?: {
+    second: number
+    units: number
+  }
 
-  constructor(params: {
-    store: AwsStore
-    maxItemsPerRequest?: number
-    queueSize?: number
-  }) {
+  constructor(params: {store: AwsStore; capacityLimit?: number}) {
     super()
-    const {store, maxItemsPerRequest = 25, queueSize = 50} = params
+    const {store, capacityLimit} = params
     this.store = store
-    this.maxItemsPerRequest = maxItemsPerRequest
-    this.queueSize = queueSize
-  }
 
-  public async delete(commits: CommitOrCommits) {
-    for await (const commit of this.asIterable(commits)) {
-      const {a, k} = await this.store.marshallCommit(commit)
-      await this.addToQueue({DeleteRequest: {Key: {a, k}}})
+    if (capacityLimit) {
+      this.capacityLimit = capacityLimit
+      this.bufferSize = capacityLimit
     }
   }
 
-  public async put(commits: CommitOrCommits): Promise<void> {
-    for await (const commit of this.asIterable(commits)) {
-      await this.addToQueue({
-        PutRequest: {Item: await this.store.marshallCommit(commit)},
-      })
-    }
-  }
+  public get saturated() {
+    let pendingCount = 0
 
-  public async addToQueue(item: object) {
-    if (this.queue.length >= this.queueSize) {
-      await new Promise(resolve => this.pendingAddToQueuePromises.push(resolve))
-    }
-
-    this.queue.push(item)
-
-    if (!this.workerLoopRunning) {
-      this.workerLoop()
-    }
-  }
-
-  public async workerLoop() {
-    if (this.workerLoopRunning) {
-      return
-    }
-    this.workerLoopRunning = true
-
-    let resolveFn: () => void
-
-    this.drained = new Promise(resolve => (resolveFn = resolve))
-
-    while (this.queue.length) {
-      const items = this.queue.splice(0, this.maxItemsPerRequest)
-
-      while (
-        this.queue.length <= this.queueSize &&
-        this.pendingAddToQueuePromises.length
-      ) {
-        this.pendingAddToQueuePromises.shift()!()
+    for (const item of this.queue) {
+      if (!item.processing) {
+        pendingCount++
       }
+      if (pendingCount >= this.bufferSize) {
+        return true
+      }
+    }
 
-      const {UnprocessedItems} = await this.store.dynamodb
-        .batchWriteItem({
-          RequestItems: {
-            [this.store.tableName]: items,
+    return false
+  }
+
+  public async delete(
+    commits: Array<Commit | MarshalledCommit> | Commit | MarshalledCommit
+  ) {
+    for await (const commit of this.asIterable(commits)) {
+      const marshalledCommit =
+        commit instanceof Commit ? await marshallCommit(commit) : commit
+
+      const {s, v} = marshalledCommit
+
+      await this.addToQueue(
+        {DeleteRequest: {Key: {s, v}}},
+        this.capacityUnitsForItem(marshalledCommit)
+      )
+    }
+  }
+
+  public async put(
+    commits: Array<Commit | MarshalledCommit> | Commit | MarshalledCommit
+  ): Promise<void> {
+    for await (const commit of this.asIterable(commits)) {
+      const marshalledCommit =
+        commit instanceof Commit ? await marshallCommit(commit) : commit
+
+      await this.addToQueue(
+        {
+          PutRequest: {
+            Item: marshalledCommit,
           },
-        })
-        .promise()
+        },
+        this.capacityUnitsForItem(marshalledCommit)
+      )
+    }
+  }
 
+  public get drained() {
+    return Promise.all(
+      [...this.queue.values()].map(queueItem => queueItem.processedPromise)
+    ).then(res => undefined)
+  }
+
+  public get itemsBeingProcessed() {
+    return [...this.queue].filter(i => i.processing)
+  }
+
+  public get pendingItems() {
+    return [...this.queue].filter(i => !i.processing)
+  }
+
+  private addToQueue(item: object, capacityUnits: number) {
+    let startedResolver!: () => void
+    const startedPromise = new Promise(resolve => {
+      startedResolver = resolve
+    })
+    let processedResolver!: () => void
+    const processedPromise = new Promise(resolve => {
+      processedResolver = resolve
+    })
+
+    this.queue.add({
+      startedPromise,
+      startedResolver,
+      processedPromise,
+      processedResolver,
+      item,
+      throttleCount: 0,
+      processing: false,
+      capacityUnits,
+    })
+
+    let promise
+    if (this.queue.size >= this.bufferSize) {
+      promise = [...this.queue.values()][this.queue.size - this.bufferSize]
+        .startedPromise
+    } else {
+      promise = Promise.resolve()
+    }
+
+    this.processQueue()
+
+    return promise
+  }
+
+  private async processQueue() {
+    if (this.processQueueRunning || !this.queue.size) {
+      return
+    } else {
+      this.processQueueRunning = true
+    }
+
+    if (this.pendingItems.length < this.maxItemsPerRequest) {
+      await new Promise(resolve => setTimeout(resolve, 20))
+    }
+
+    try {
+      let capacityLeft = Infinity
+      const thisSecond = Math.floor(Date.now() / 1000)
+
+      if (this.capacityLimit) {
+        if (
+          !this.remainingCapacity ||
+          this.remainingCapacity.second !== thisSecond
+        ) {
+          this.remainingCapacity = {
+            second: thisSecond,
+            units: this.capacityLimit,
+          }
+        }
+
+        capacityLeft = this.remainingCapacity.units
+      }
+
+      let queueItemsToProcess: AwsStoreBatchMutatorQueueItem[] = []
+
+      let processingCount = 0
+      log(`pending items ${this.pendingItems.length}`)
+      for (const queueItem of this.queue) {
+        if (queueItem.processing) {
+          processingCount++
+          continue
+        }
+
+        if (queueItemsToProcess.length >= this.maxItemsPerRequest) {
+          this.sendRequest(queueItemsToProcess)
+          queueItemsToProcess = []
+        }
+
+        if (capacityLeft >= queueItem.capacityUnits) {
+          queueItem.startedResolver()
+          capacityLeft -= queueItem.capacityUnits
+          queueItemsToProcess.push(queueItem)
+          queueItem.processing = true
+        } else {
+          if (
+            this.capacityLimit &&
+            queueItem.capacityUnits > this.capacityLimit
+          ) {
+            throw new Error(
+              `Commit required ${
+                queueItem.capacityUnits
+              } which is higher than the capacity consumption target`
+            )
+          }
+          if (queueItemsToProcess.length === 0) {
+            // we didn't have capacity for anything, wait remainder of window
+            setTimeout(
+              () => this.processQueue(),
+              1000 - (Date.now() - thisSecond * 1000)
+            )
+            return
+          }
+        }
+      }
+
+      if (queueItemsToProcess.length) {
+        this.sendRequest(queueItemsToProcess)
+      }
+
+      this.remainingCapacity = {
+        second: thisSecond,
+        units: capacityLeft,
+      }
+
+      // here was send request
+    } finally {
+      this.processQueueRunning = false
+    }
+  }
+
+  private sendRequest(queueItemsToSend: AwsStoreBatchMutatorQueueItem[]) {
+    log(`Sending request with ${queueItemsToSend.length} items`)
+    const requestPromise = this.store.dynamodb
+      .batchWriteItem({
+        RequestItems: {
+          [this.store.tableName]: queueItemsToSend.map(i => i.item),
+        },
+      })
+      .promise()
+
+    requestPromise.then(({UnprocessedItems}) => {
       const itemsToRequeue =
-        UnprocessedItems && UnprocessedItems[this.store.tableName]
+        (UnprocessedItems && UnprocessedItems[this.store.tableName]) || []
 
-      if (itemsToRequeue) {
-        this.queue.splice(0, 0, ...itemsToRequeue)
+      for (const queueItem of queueItemsToSend) {
+        if (itemsToRequeue.find(item => equal(item, queueItem.item))) {
+          this.throttleCount++
+          queueItem.processing = false
+        } else {
+          switch (Object.keys(queueItem.item)[0]) {
+            case 'DeleteRequest': {
+              this.deleteCount++
+              break
+            }
+            case 'PutRequest': {
+              this.writeCount++
+              break
+            }
+          }
+          queueItem.processedResolver()
+          this.queue.delete(queueItem)
+        }
+      }
+      this.processQueue()
+    })
+  }
+
+  private capacityUnitsForItem(item: MarshalledCommit) {
+    let bytes = 0
+    for (const [key, val] of Object.entries(item)) {
+      bytes += Buffer.from(key, 'utf8').length
+      const valueType = Object.keys(val)[0]
+      switch (valueType) {
+        case 'S': {
+          bytes += Buffer.from(val.S!, 'utf8').length
+          break
+        }
+        case 'B': {
+          bytes += (val.B as Buffer).length
+          break
+        }
+        case 'N': {
+          bytes += Math.min(parseFloat(val.N!).toString(2).length, 38)
+          break
+        }
       }
     }
-    this.workerLoopRunning = false
 
-    if (resolveFn!) {
-      resolveFn!()
-    }
+    return Math.ceil(bytes / 1024)
   }
 }

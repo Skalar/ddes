@@ -5,7 +5,6 @@
 import {
   Commit,
   EventWithMetadata,
-  Store,
   StorePoller,
   StorePollerParams,
 } from '@ddes/core'
@@ -15,11 +14,15 @@ import {get} from 'lodash'
 import {Server as WebSocketServer} from 'ws'
 import {FilterSet} from './types'
 
-export class EventStreamer extends StorePoller {
+export default class EventStreamer {
   public wss: WebSocketServer
+  protected debug: debug.IDebugger
+  protected chronologicalGroups: string[]
+  protected storePollers: StorePoller[] = []
 
   constructor(
     params: StorePollerParams & {
+      chronologicalGroups?: string[]
       port: number
       authenticateClient?: (
         info: {
@@ -30,34 +33,27 @@ export class EventStreamer extends StorePoller {
       ) => boolean
     }
   ) {
-    const {authenticateClient: verifyClient, port = 80, ...rest} = params
-    super(rest)
+    const {
+      authenticateClient: verifyClient,
+      port = 80,
+      chronologicalGroups = ['default'],
+      ...storePollerParams
+    } = params
 
     this.wss = new WebSocketServer({verifyClient, port})
-    this.wss.on('connection', this.handleConnection.bind(this))
-    this.debug = debug('DDES.EventStreamer.Server')
-  }
+    this.wss.on('connection', this.onClientConnected.bind(this))
+    this.chronologicalGroups = chronologicalGroups
 
-  public handleConnection(client: any) {
-    const clientAddress = client._socket.remoteAddress
-    this.debug(`new client (${clientAddress})`)
-
-    if (!this.sortKeyCursor) {
-      this.sortKeyCursor = new Date().toISOString().replace(/[^0-9]/g, '')
+    for (const chronologicalGroup of chronologicalGroups) {
+      this.storePollers.push(
+        new StorePoller({
+          ...storePollerParams,
+          processCommit: this.processCommit.bind(this),
+        })
+      )
     }
 
-    this.pollingLoop()
-
-    client.filterSets = []
-
-    client.on('message', (json: string) => {
-      this.debug(`filter sets for ${clientAddress} set to ${json}`)
-      client.filterSets = JSON.parse(json)
-    })
-
-    client.on('close', () => {
-      this.debug(`client disconnected (${clientAddress})`)
-    })
+    this.debug = debug('DDES.EventStreamer.Server')
   }
 
   public close() {
@@ -65,7 +61,9 @@ export class EventStreamer extends StorePoller {
       this.wss.close()
     }
 
-    this.stop()
+    for (const storePoller of this.storePollers) {
+      storePoller.stop()
+    }
   }
 
   public async processCommit(commit: Commit) {
@@ -87,10 +85,6 @@ export class EventStreamer extends StorePoller {
         timestamp,
       })
     }
-  }
-
-  protected get shouldPoll() {
-    return this.wss && this.wss.clients.size > 0 && super.shouldPoll
   }
 
   public publishEventToSubscribers(eventWithMetadata: EventWithMetadata) {
@@ -126,6 +120,35 @@ export class EventStreamer extends StorePoller {
       }
       if (client.OPEN) {
         client.send(JSON.stringify(eventWithMetadata))
+      }
+    }
+  }
+
+  protected onClientConnected(client: any) {
+    const clientAddress = client._socket.remoteAddress
+    this.debug(`new client (${clientAddress})`)
+
+    client.filterSets = []
+
+    client.on('message', (json: string) => {
+      this.debug(`filter sets for ${clientAddress} set to ${json}`)
+      client.filterSets = JSON.parse(json)
+    })
+
+    client.on('close', this.onClientDisconnected.bind(this))
+
+    if (this.wss.clients.size === 1) {
+      for (const storePoller of this.storePollers) {
+        storePoller.sortKeyCursor = new Date()
+        storePoller.start()
+      }
+    }
+  }
+
+  protected onClientDisconnected() {
+    if (this.wss.clients.size === 0) {
+      for (const storePoller of this.storePollers) {
+        storePoller.stop()
       }
     }
   }

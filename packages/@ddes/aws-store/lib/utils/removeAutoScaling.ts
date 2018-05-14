@@ -8,7 +8,7 @@ import {ConfigurationOptions} from 'aws-sdk/lib/config'
 /**
  * @hidden
  */
-export async function removeAutoScaling(
+export default async function removeAutoScaling(
   tableName: string,
   awsConfig?: ConfigurationOptions
 ) {

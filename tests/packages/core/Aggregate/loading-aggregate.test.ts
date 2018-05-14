@@ -1,11 +1,4 @@
-import {AwsStore} from '@ddes/aws-store'
-import {
-  Aggregate,
-  Commit,
-  EventWithMetadata,
-  KeySchema,
-  Store,
-} from '@ddes/core'
+import {Aggregate, Commit, EventWithMetadata, Store, utils} from '@ddes/core'
 import {describeWithResources} from 'support'
 
 class TestAggregate extends Aggregate {
@@ -59,7 +52,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(instance!.toJSON()).toMatchObject({
       key: 'a',
       state: {myProperty: 'changed'},
-      timestamp: '2018-01-02T00:00:00.000Z',
+      timestamp: utils.toTimestamp('2018-01-02T00:00:00.000Z'),
       type: 'TestAggregate',
       version: 2,
     })
@@ -72,7 +65,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(instanceWithSnapshot!.toJSON()).toMatchObject({
       key: 'a',
       state: {myProperty: 'changed'},
-      timestamp: '2018-01-02T00:00:00.000Z',
+      timestamp: utils.toTimestamp('2018-01-02T00:00:00.000Z'),
       type: 'TestAggregate',
       version: 2,
     })
@@ -87,15 +80,13 @@ describeWithResources('Aggregate', {stores: true}, context => {
       await TestAggregate.store.commit(commit)
     }
 
-    await TestAggregate.store.writeSnapshot({
-      type: 'TestAggregate',
-      key: 'a',
+    await TestAggregate.store.writeSnapshot('TestAggregate', 'a', {
       version: 2,
-      compatibilityChecksum: TestAggregate.snapshotCompatibilityChecksum,
+      compatibilityChecksum: TestAggregate.snapshotCompatChecksum,
       state: {
         myProperty: 'snapshotstate',
       },
-      timestamp: '2018-01-02',
+      timestamp: utils.toTimestamp('2018-01-02'),
     })
 
     expect(
@@ -106,7 +97,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
     ).toMatchObject({
       key: 'a',
       state: {myProperty: 'snapshotstate'},
-      timestamp: '2018-01-02T00:00:00.000Z',
+      timestamp: utils.toTimestamp('2018-01-02T00:00:00.000Z'),
       type: 'TestAggregate',
       version: 2,
     })
@@ -119,7 +110,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
     ).toMatchObject({
       key: 'a',
       state: {myProperty: 'changed'},
-      timestamp: '2018-01-02T00:00:00.000Z',
+      timestamp: utils.toTimestamp('2018-01-02T00:00:00.000Z'),
       type: 'TestAggregate',
       version: 2,
     })
@@ -140,7 +131,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(aggregate.toJSON()).toMatchObject({
       key: 'a',
       state: {myProperty: 'changed'},
-      timestamp: '2018-01-02T00:00:00.000Z',
+      timestamp: utils.toTimestamp('2018-01-02T00:00:00.000Z'),
       type: 'TestAggregate',
       version: 2,
     })

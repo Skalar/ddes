@@ -2,20 +2,18 @@ import {Commit, Store} from '@ddes/core'
 import {EventSubscriber} from '@ddes/event-streaming'
 import {describeWithResources, iterableToArray} from 'support'
 
-const testCommits = [
-  new Commit({
+function* getTestCommits() {
+  yield new Commit({
     aggregateType: 'OldAggregate',
     aggregateKey: 'a',
     aggregateVersion: 1,
-    timestamp: new Date('2000-01-01'),
     events: [{type: 'Created', version: 1, properties: {myProperty: 'test'}}],
-  }),
+  })
 
-  new Commit({
+  yield new Commit({
     aggregateType: 'TestAggregate',
     aggregateKey: 'a',
     aggregateVersion: 1,
-    timestamp: new Date('2030-01-01'),
     events: [
       {
         type: 'Created',
@@ -23,12 +21,12 @@ const testCommits = [
         properties: {myProperty: 'test', deep: {property: 4}},
       },
     ],
-  }),
-  new Commit({
+  })
+
+  yield new Commit({
     aggregateType: 'OtherAggregate',
     aggregateKey: 'a',
     aggregateVersion: 1,
-    timestamp: new Date('2030-01-02'),
     events: [
       {
         type: 'Created',
@@ -36,20 +34,19 @@ const testCommits = [
         properties: {myProperty: 'somevalue'},
       },
     ],
-  }),
-  new Commit({
+  })
+  yield new Commit({
     aggregateType: 'TestAggregate',
     aggregateKey: 'a',
     aggregateVersion: 2,
-    timestamp: new Date('2030-01-03'),
     events: [
       {type: 'Updated', version: 1, properties: {myProperty: 'changed'}},
     ],
-  }),
-]
+  })
+}
 
 describeWithResources(
-  'Event streaming',
+  'scenarios/event-streaming: basic event streaming',
   {eventStreamServer: true, stores: true},
   context => {
     test('single client with no filter', async () => {
@@ -63,19 +60,20 @@ describeWithResources(
 
       const iterator = subscriptionStream[Symbol.asyncIterator]()
 
-      for (const commit of testCommits) {
+      for (const commit of getTestCommits()) {
         await store.commit(commit)
       }
 
       await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 50})
+        iterableToArray(subscriptionStream, {
+          maxWaitTime: 50,
+        })
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
           aggregateVersion: 1,
           properties: {myProperty: 'test'},
-          timestamp: '2030-01-01T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },
@@ -84,7 +82,6 @@ describeWithResources(
           aggregateType: 'OtherAggregate',
           aggregateVersion: 1,
           properties: {myProperty: 'somevalue'},
-          timestamp: '2030-01-02T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },
@@ -93,7 +90,6 @@ describeWithResources(
           aggregateType: 'TestAggregate',
           aggregateVersion: 2,
           properties: {myProperty: 'changed'},
-          timestamp: '2030-01-03T00:00:00.000Z',
           type: 'Updated',
           version: 1,
         },
@@ -105,7 +101,7 @@ describeWithResources(
 )
 
 describeWithResources(
-  'Event subscription streams',
+  'scenarios/event-streaming: basic event streaming',
   {eventStreamServer: true, stores: true},
   context => {
     test('single client with filter on aggregateType', async () => {
@@ -119,7 +115,7 @@ describeWithResources(
 
       const iterator = subscriptionStream[Symbol.asyncIterator]()
 
-      for (const commit of testCommits) {
+      for (const commit of getTestCommits()) {
         await store.commit(commit)
       }
 
@@ -131,7 +127,6 @@ describeWithResources(
           aggregateType: 'TestAggregate',
           aggregateVersion: 1,
           properties: {myProperty: 'test'},
-          timestamp: '2030-01-01T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },
@@ -140,7 +135,6 @@ describeWithResources(
           aggregateType: 'TestAggregate',
           aggregateVersion: 2,
           properties: {myProperty: 'changed'},
-          timestamp: '2030-01-03T00:00:00.000Z',
           type: 'Updated',
           version: 1,
         },
@@ -152,7 +146,7 @@ describeWithResources(
 )
 
 describeWithResources(
-  'Event subscription streams',
+  'scenarios/event-streaming: basic event streaming',
   {eventStreamServer: true, stores: true},
   context => {
     test('deep property filter', async () => {
@@ -166,7 +160,7 @@ describeWithResources(
 
       const iterator = subscriptionStream[Symbol.asyncIterator]()
 
-      for (const commit of testCommits) {
+      for (const commit of getTestCommits()) {
         await store.commit(commit)
       }
 
@@ -177,9 +171,7 @@ describeWithResources(
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
           aggregateVersion: 1,
-
           properties: {deep: {property: 4}, myProperty: 'test'},
-          timestamp: '2030-01-01T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },
@@ -191,7 +183,7 @@ describeWithResources(
 )
 
 describeWithResources(
-  'Event subscription streams',
+  'scenarios/event-streaming: basic event streaming',
   {eventStreamServer: true, stores: true},
   context => {
     test('multiple clients', async () => {
@@ -208,7 +200,7 @@ describeWithResources(
         events: [{type: 'Created'}],
       })
 
-      for (const commit of testCommits) {
+      for (const commit of getTestCommits()) {
         await store.commit(commit)
       }
 
@@ -220,7 +212,6 @@ describeWithResources(
           aggregateType: 'TestAggregate',
           aggregateVersion: 1,
           properties: {myProperty: 'test'},
-          timestamp: '2030-01-01T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },
@@ -229,7 +220,6 @@ describeWithResources(
           aggregateType: 'TestAggregate',
           aggregateVersion: 2,
           properties: {myProperty: 'changed'},
-          timestamp: '2030-01-03T00:00:00.000Z',
           type: 'Updated',
           version: 1,
         },
@@ -243,7 +233,6 @@ describeWithResources(
           aggregateType: 'TestAggregate',
           aggregateVersion: 1,
           properties: {myProperty: 'test'},
-          timestamp: '2030-01-01T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },
@@ -252,7 +241,6 @@ describeWithResources(
           aggregateType: 'OtherAggregate',
           aggregateVersion: 1,
           properties: {myProperty: 'somevalue'},
-          timestamp: '2030-01-02T00:00:00.000Z',
           type: 'Created',
           version: 1,
         },

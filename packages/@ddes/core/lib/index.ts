@@ -2,20 +2,21 @@
  * @module @ddes/core
  */
 
-import * as utils from './utils'
-
-export * from './Aggregate'
-export * from './Store'
-export * from './Commit'
-export * from './BatchMutator'
-export * from './KeySchema'
-export * from './errors'
-export * from './Projection'
-export * from './Projector'
-export * from './ProjectionWorker'
-export * from './StorePoller'
-export * from './MetaStore'
+export {default as Aggregate} from './Aggregate'
+export {default as Store} from './Store'
+export {default as Commit} from './Commit'
+export {default as BatchMutator} from './BatchMutator'
+export {default as KeySchema} from './KeySchema'
+export {default as Projection} from './Projection'
+export {default as Projector} from './Projector'
+export {default as ProjectionWorker} from './ProjectionWorker'
+export {default as StorePoller} from './StorePoller'
+export {default as MetaStore} from './MetaStore'
+export {default as retryCommand} from './retryCommand'
+export {default as upcastCommits} from './upcastCommits'
 export * from './types'
-export * from './retryCommand'
+export * from './errors'
+
+import * as utils from './utils'
 
 export {utils}

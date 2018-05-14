@@ -5,27 +5,25 @@
 import {MetaStore, MetaStoreKey} from '@ddes/core'
 import {DynamoDB} from 'aws-sdk'
 import {ConfigurationOptions} from 'aws-sdk/lib/config'
-import {AutoscalingConfig, CapacityConfig} from './types'
+import {AutoscalingConfig, StoreCapacityConfig} from './types'
 import * as utils from './utils'
 
-export class AwsMetaStore extends MetaStore {
+export default class AwsMetaStore extends MetaStore {
   public tableName!: string
 
-  public initialCapacity: CapacityConfig = {
-    read: 2,
-    write: 2,
-    indexRead: 2,
-    indexWrite: 2,
+  public initialCapacity: {tableRead: number; tableWrite: number} = {
+    tableRead: 2,
+    tableWrite: 2,
   }
+
   public autoscaling?: AutoscalingConfig
   public awsConfig?: ConfigurationOptions
   public dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
-
   private dynamodb: DynamoDB
 
   constructor(config: {
     tableName: string
-    initialCapacity?: CapacityConfig
+    initialCapacity?: StoreCapacityConfig
     autoscaling?: AutoscalingConfig
     awsConfig?: ConfigurationOptions
     dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
@@ -56,7 +54,7 @@ export class AwsMetaStore extends MetaStore {
           p: {S: key[0]},
           s: {S: key[1]},
         },
-        AttributesToGet: ['v', 'e'],
+        AttributesToGet: ['v', 'x'],
         ConsistentRead: true,
       })
       .promise()
@@ -67,7 +65,7 @@ export class AwsMetaStore extends MetaStore {
 
     const item = DynamoDB.Converter.unmarshall(marshalledItem)
 
-    if (item.e && item.e <= Math.floor(Date.now() / 1000)) {
+    if (item.x && item.x <= Math.floor(Date.now() / 1000)) {
       return null
     }
 
@@ -87,7 +85,7 @@ export class AwsMetaStore extends MetaStore {
           s: {S: key[1]},
           v: {S: JSON.stringify(value)},
           ...(options.expiresAt && {
-            e: {N: Math.floor(options.expiresAt.valueOf() / 1000).toString()},
+            x: {N: Math.floor(options.expiresAt.valueOf() / 1000).toString()},
           }),
         },
       })
@@ -127,9 +125,9 @@ export class AwsMetaStore extends MetaStore {
 
       if (queryResult.Items) {
         for (const item of queryResult.Items) {
-          const {s, v, e} = DynamoDB.Converter.unmarshall(item)
+          const {s, v, x} = DynamoDB.Converter.unmarshall(item)
 
-          if (e && e <= Math.floor(Date.now() / 1000)) {
+          if (x && x <= Math.floor(Date.now() / 1000)) {
             continue
           }
 
@@ -168,30 +166,18 @@ export class AwsMetaStore extends MetaStore {
     return {
       TableName: this.tableName,
       AttributeDefinitions: [
-        {
-          AttributeName: 'p', // "primaryKey"
-          AttributeType: 'S',
-        },
-        {
-          AttributeName: 's', // "secondaryKey"
-          AttributeType: 'S',
-        },
+        {AttributeName: 'p', AttributeType: 'S'}, // "primaryKey"
+        {AttributeName: 's', AttributeType: 'S'}, // "secondaryKey"
       ],
 
       KeySchema: [
-        {
-          AttributeName: 'p',
-          KeyType: 'HASH',
-        },
-        {
-          AttributeName: 's',
-          KeyType: 'RANGE',
-        },
+        {AttributeName: 'p', KeyType: 'HASH'},
+        {AttributeName: 's', KeyType: 'RANGE'},
       ],
 
       ProvisionedThroughput: {
-        ReadCapacityUnits: this.initialCapacity.read,
-        WriteCapacityUnits: this.initialCapacity.write,
+        ReadCapacityUnits: this.initialCapacity.tableRead,
+        WriteCapacityUnits: this.initialCapacity.tableWrite,
       },
     }
   }

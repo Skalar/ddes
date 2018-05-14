@@ -2,8 +2,9 @@
  * @module @ddes/core
  */
 
-import {AggregateKeyProps, AggregateKeyString, KeySchemaProperty} from './types'
-export class KeySchema {
+import {AggregateKey, AggregateKeyProps, KeySchemaProperty} from './types'
+
+export default class KeySchema {
   protected properties: Array<KeySchemaProperty | string>
   protected separator: string
 
@@ -44,13 +45,13 @@ export class KeySchema {
     return Object.values(keyProps).join(this.separator)
   }
 
-  public keyStringFromObject(object: any): AggregateKeyString {
+  public keyStringFromObject(object: any): AggregateKey {
     const keyProps = this.keyPropsFromObject(object)
 
     return this.keyStringFromKeyProps(keyProps)
   }
 
-  public keyPropsFromString(keyString: AggregateKeyString) {
+  public keyPropsFromString(keyString: AggregateKey) {
     return keyString.split(this.separator).reduce(
       (props, value, i) => ({
         ...props,

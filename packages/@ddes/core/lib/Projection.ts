@@ -2,31 +2,13 @@
  * @module @ddes/core
  */
 
-import {Commit, MetaStore, Store} from './'
-import {Aggregate} from './Aggregate'
-import {AggregateType, EventWithMetadata} from './types'
+import Aggregate from './Aggregate'
+import Commit from './Commit'
+import MetaStore from './MetaStore'
+import {EventWithMetadata, ProjectionParams} from './types'
 import {jitteredBackoff} from './utils'
 
-type ProjectionGroup = AggregateType[]
-
-export interface ProjectionParams {
-  name: string
-  metaStore: MetaStore
-
-  dependencies?: {
-    [dependerType: string]: {
-      [dependeeType: string]: (
-        dependerEvent: EventWithMetadata,
-        dependeeEvent: EventWithMetadata
-      ) => boolean
-    }
-  }
-
-  aggregateClasses: {[aggregateType: string]: typeof Aggregate}
-
-  processEvents(events: Set<EventWithMetadata>): Promise<void>
-}
-export class Projection {
+export default class Projection {
   public metaStore!: MetaStore
   public name!: string
   public maxBatchSize = 50
@@ -115,22 +97,41 @@ export class Projection {
     )
   }
 
-  public async getHeadSortKey() {
-    return (
-      (await this.metaStore.get([`Projection:${this.name}`, 'headSortKey'])) ||
-      '0'
-    )
+  public async getHeadSortKey(fail = true) {
+    const sortKey = await this.metaStore.get([
+      `Projection:${this.name}`,
+      'headSortKey',
+    ])
+
+    if (!sortKey && fail) {
+      throw new Error('Projection has not been setup')
+    }
+
+    return sortKey
   }
 
   /**
-   * Make projection target ready (e.g. create elasticsearch index)
+   * Ready projection target and set initial headSortKey in MetaStore
    */
+  public async setup(params: {startsAt: Date | string}) {
+    const {startsAt} = params
 
-  public async setup() {
-    // noop
+    if (!(await this.getHeadSortKey(false))) {
+      await this.setHeadSortKey(
+        startsAt instanceof Date
+          ? startsAt.toISOString().replace(/[^0-9]/g, '')
+          : startsAt
+      )
+    }
   }
 
   public async teardown() {
-    await this.metaStore.delete([`Projection:${this.name}`, 'headSortKey'])
+    try {
+      await this.metaStore.delete([`Projection:${this.name}`, 'headSortKey'])
+    } catch (error) {
+      if (error.code !== 'ResourceNotFoundException') {
+        throw error
+      }
+    }
   }
 }
