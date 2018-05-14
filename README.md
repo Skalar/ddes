@@ -9,7 +9,7 @@
 [![Build Status](https://travis-ci.org/Skalar/ddes.svg?branch=master)](https://travis-ci.org/Skalar/ddes)
 ## Usage
 
-See [website](http://ddes.io) for documentation.
+See [website](https://ddes.io) for documentation.
 
 ## Development
 

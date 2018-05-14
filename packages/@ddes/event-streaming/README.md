@@ -4,4 +4,4 @@
 
 ## [API Docs](https://s3-eu-west-1.amazonaws.com/ddes-docs/latest/index.html)
 
-## [DDES website](http://ddes.io)
+## [DDES website](https://ddes.io)
