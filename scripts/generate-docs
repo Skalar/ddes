@@ -5,7 +5,6 @@ npx typedoc \
   --name 'ddes' \
   --target ESNEXT \
   --exclude '**/+(tests|test-support)/**/*.ts' \
-  --tsconfig tsconfig.typedoc.json \
   --readme none \
   --theme support/typedoc-theme \
   --mode modules \

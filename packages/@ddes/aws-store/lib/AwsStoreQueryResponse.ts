@@ -70,7 +70,7 @@ export default class AwsStoreQueryResponse implements StoreQueryResponse {
       yield {
         throttleCount: rawQueryResult.throttleCount,
         items: rawQueryResult.Items,
-        scannedCount: rawQueryResult.ScannedCount,
+        scannedCount: rawQueryResult.ScannedCount || 0,
         ...(rawQueryResult.ConsumedCapacity && {
           consumedCapacity: {
             table: rawQueryResult.ConsumedCapacity.Table
