@@ -12,6 +12,7 @@ import {
   AggregateEventUpcasters,
   AggregateKey,
   AggregateKeyProps,
+  AggregateStatic,
   AggregateType,
   EventInput,
   EventWithMetadata,
@@ -22,13 +23,6 @@ import {
 } from './types'
 import upcastCommits from './upcastCommits'
 import {jitteredRetry, toTimestamp} from './utils'
-
-/**
- * @hidden
- */
-export type AggregateStatic<T> = {
-  new (): T
-} & typeof Aggregate
 
 export default class Aggregate {
   /**

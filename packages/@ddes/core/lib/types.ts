@@ -156,3 +156,10 @@ export interface ProjectionParams {
 }
 
 export type MetaStoreKey = [string, string]
+
+/**
+ * @hidden
+ */
+export type AggregateStatic<T> = {
+  new (): T
+} & typeof Aggregate
