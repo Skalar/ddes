@@ -10,6 +10,7 @@
   "files": [
     "dist",
     "index.js",
+    "gui.js",
     "package.json",
     "README.md"
   ],
