@@ -37,9 +37,8 @@ const cli = {
         const {transformationPath, transformerOptions} = params
 
         // Load at runtime to avoid dependencies in lambda package
-        const {
-          TransformerGui,
-        } = require('@ddes/store-transformations/gui').default
+        const TransformerGui = require('@ddes/store-transformations/gui')
+          .default
 
         const transformationModule = require(join(
           process.cwd(),
