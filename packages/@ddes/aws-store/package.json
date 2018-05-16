@@ -1,6 +1,6 @@
 {
   "name": "@ddes/aws-store",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "engines": {
     "node": ">=8.10"
   },
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^2.0.3",
+    "@ddes/core": "^2.0.4",
     "aws-sdk": "^2.217.1",
     "debug": "^3.1.0",
     "fast-deep-equal": "^2.0.1"
