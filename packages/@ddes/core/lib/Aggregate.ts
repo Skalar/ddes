@@ -265,7 +265,7 @@ export default class Aggregate {
   protected static singletonKeyString: AggregateKey = '@'
 
   protected static upcastCommits(commits: AsyncIterableIterator<Commit>) {
-    const {upcasters, lazyTransformation} = this.constructor as typeof Aggregate
+    const {upcasters, lazyTransformation} = this
 
     if (upcasters) {
       return upcastCommits(commits, upcasters, {
