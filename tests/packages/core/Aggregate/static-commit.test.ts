@@ -53,3 +53,33 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(commitsInStore).toContainEqual(commitB)
   })
 })
+
+describeWithResources('Aggregate', {stores: true}, context => {
+  test('static commit() - custom chronological group', async () => {
+    const {store} = context
+    //
+    class TestAggregate extends Aggregate {
+      public static keySchema = new KeySchema(['id'])
+      public static store = store
+      public static chronologicalGroup = 'custom'
+    }
+
+    const a = TestAggregate.commit('myid', [
+      {type: 'SomeEvent', properties: {myProperty: 'a'}},
+    ])
+    const b = TestAggregate.commit({id: 'myid'}, [
+      {type: 'SomeEvent', properties: {myProperty: 'b'}},
+    ])
+
+    const [commitA, commitB] = await Promise.all([a, b])
+
+    expect(commitA).toHaveProperty('chronologicalGroup', 'custom')
+    expect(commitB).toHaveProperty('chronologicalGroup', 'custom')
+
+    const commitsInStore = await iterableToArray(
+      TestAggregate.store.queryAggregateCommits('TestAggregate', 'myid').commits
+    )
+    expect(commitsInStore).toContainEqual(commitA)
+    expect(commitsInStore).toContainEqual(commitB)
+  })
+})
