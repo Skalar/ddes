@@ -211,10 +211,16 @@ export default class Aggregate {
       retryOptions = args[1]
       key = this.singletonKeyString
     } else {
+      if (!this.keySchema) {
+        throw new Error(
+          'You cannot specify aggregateKey when Aggregate has no keySchema'
+        )
+      }
+
       key =
         typeof args[0] === 'string'
           ? args[0]
-          : this.keySchema!.keyStringFromObject(args[0])
+          : this.keySchema.keyStringFromObject(args[0])
       events = args[1]
       retryOptions = args[2]
     }
