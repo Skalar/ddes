@@ -116,7 +116,6 @@ export interface MarshalledCommit extends DynamoDB.AttributeMap {
 export interface SnapshotsConfig {
   s3BucketName: string
   keyPrefix?: string
-  snapshotFrequency?: number
   manageBucket?: boolean
 }
 
