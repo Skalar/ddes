@@ -37,6 +37,11 @@ export default class Aggregate {
   public static readonly store: Store
 
   /**
+   * Which chronological group to place commits in
+   */
+  public static chronologicalGroup: string = 'default'
+
+  /**
    * Whether or not snapshots should be used for instances of this aggregate.
    */
   public static useSnapshots: boolean
@@ -297,6 +302,7 @@ export default class Aggregate {
       aggregateKey,
       aggregateVersion,
       events: events.map(event => ({version: 1, properties: {}, ...event})),
+      chronologicalGroup: this.chronologicalGroup,
     })
 
     await this.store.commit(commit)
@@ -440,7 +446,7 @@ export default class Aggregate {
 
     try {
       const {type, key, version} = this
-      const {store} = this.constructor as typeof Aggregate
+      const {store, chronologicalGroup} = this.constructor as typeof Aggregate
 
       const commit = new Commit({
         aggregateType: type,
@@ -451,6 +457,7 @@ export default class Aggregate {
           properties: {},
           ...event,
         })),
+        chronologicalGroup,
       })
 
       this.commitInFlight = commit

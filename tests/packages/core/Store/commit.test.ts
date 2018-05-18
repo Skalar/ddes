@@ -13,6 +13,7 @@ describeWithResources('Stores', {stores: true}, context => {
         {type: 'TestEvent', version: 1, properties: {testProperty: true}},
       ],
       timestamp: '2018-01-01',
+      chronologicalGroup: 'default',
     })
 
     await store.commit(commit)
