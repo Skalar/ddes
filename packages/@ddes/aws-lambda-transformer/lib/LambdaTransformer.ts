@@ -21,8 +21,6 @@ const log = debug('@ddes/aws-store-lambda-transformer:LambdaTransformer')
 /**
  * Used to execute [[Transformation]]s using AWS Lambda workers.
  *
- * This is a basic transformer that performs all the work locally.
- *
  * ```typescript
  * const transformer = new LamdaTransformer(
  *   transformation,
@@ -143,6 +141,10 @@ export default class LambdaTransformer extends Transformer {
         )
 
         this.bumpCounters(counters as any)
+
+        if (newState) {
+          await this.updateWorkerState(index, newState)
+        }
 
         if (completed) {
           this.activeWorkers--
