@@ -163,6 +163,10 @@ export default class Transformer {
     this.terminationRequestedTimestamp = Date.now()
   }
 
+  public async writeStateFile(path: string) {
+    await writeFile(path, JSON.stringify(this.workerStates))
+  }
+
   protected async setup() {
     this.sourceStatus = StoreState.Preparing
     this.targetStatus = StoreState.Preparing
@@ -247,7 +251,7 @@ export default class Transformer {
   protected async updateWorkerState(index: number, state: any) {
     this.workerStates[index] = state
     if (this.stateFilePath) {
-      await writeFile(this.stateFilePath, JSON.stringify(this.workerStates))
+      await this.writeStateFile(this.stateFilePath)
     }
   }
 }
