@@ -5,6 +5,9 @@
 import * as blessed from 'blessed'
 import chalk from 'chalk'
 import {on} from 'cluster'
+import {randomBytes} from 'crypto'
+import {tmpdir} from 'os'
+import {join} from 'path'
 import Transformer from './Transformer'
 import {StoreState} from './types'
 
@@ -70,6 +73,10 @@ export default class TransformerGui {
 
     this.screen.destroy()
 
+    const stateFilePath = join(tmpdir(), randomBytes(8).toString('hex'))
+
+    await this.transformer.writeStateFile(stateFilePath)
+    console.log(`Wrote state to ${stateFilePath}`)
     console.log('Waiting for transformer termination...')
 
     await this.transformer.terminate()
