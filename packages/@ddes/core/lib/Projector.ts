@@ -15,8 +15,11 @@ export default class Projector extends StorePoller {
   private projections: Projection[]
   private queues: Set<ProjectionWorker>
 
-  constructor(projections: Projection[], storePollerParams: StorePollerParams) {
-    super(storePollerParams)
+  constructor(
+    projections: Projection[],
+    params: StorePollerParams & {maxQueueSize?: number}
+  ) {
+    super(params)
 
     this.projections = projections
 
@@ -32,7 +35,12 @@ export default class Projector extends StorePoller {
 
     this.queues = this.projections.reduce(
       (queues, projection) =>
-        queues.add(new ProjectionWorker({projection, maxSize: 100})),
+        queues.add(
+          new ProjectionWorker({
+            projection,
+            maxQueueSize: params.maxQueueSize || 100,
+          })
+        ),
       new Set()
     )
   }

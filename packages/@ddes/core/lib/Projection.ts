@@ -11,8 +11,7 @@ import {jitteredBackoff} from './utils'
 export default class Projection {
   public metaStore!: MetaStore
   public name!: string
-  public maxBatchSize = 50
-  public maxConcurrency = 1
+  public maxBatchSize = Infinity
   public processEvents!: (events: Set<EventWithMetadata>) => Promise<void>
 
   /**
