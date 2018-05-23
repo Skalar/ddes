@@ -8,18 +8,18 @@ import {EventWithMetadata} from './types'
 export default class ProjectionWorker {
   public projection: Projection
   private queue: Set<EventWithMetadata>
-  private maxSize: number
+  private maxQueueSize: number
   private addToQueueWaitResolvers: Array<() => void> = []
   private workerLoopRunning = false
 
-  constructor(params: {projection: Projection; maxSize: number}) {
+  constructor(params: {projection: Projection; maxQueueSize: number}) {
     this.projection = params.projection
-    this.maxSize = params.maxSize
+    this.maxQueueSize = params.maxQueueSize
     this.queue = new Set()
   }
 
   public async addToQueue(eventWithMetadata: EventWithMetadata) {
-    if (this.queue.size >= this.maxSize) {
+    if (this.queue.size >= this.maxQueueSize) {
       await new Promise(resolve => this.addToQueueWaitResolvers.push(resolve))
     }
 
@@ -122,7 +122,7 @@ export default class ProjectionWorker {
         await this.projection.setHeadSortKey(pessimisticHeadSortKey)
 
         while (
-          this.queue.size <= this.maxSize &&
+          this.queue.size <= this.maxQueueSize &&
           this.addToQueueWaitResolvers.length
         ) {
           this.addToQueueWaitResolvers.shift()!()
