@@ -9,6 +9,7 @@ import {
   Projector,
 } from '@ddes/core'
 import {describeWithResources} from 'support'
+import projectorBatchMap from 'support/projectorBatchMap'
 
 function* getTestCommits() {
   yield new Commit({
@@ -119,22 +120,7 @@ describeWithResources('Projections', {stores: true}, context => {
     await projectionA.commitIsProcessed(testCommits[testCommits.length - 1])
     projector.stop()
 
-    const batchMap: {[key: string]: number} = {}
-    const {dependencies} = projectionA
-
-    let batchNumber = 0
-    for (const batch of processedEvents) {
-      for (const event of batch) {
-        const key = [
-          event.aggregateType,
-          event.aggregateKey,
-          event.aggregateVersion,
-          event.type,
-        ].join('.')
-        batchMap[key] = batchNumber
-      }
-      batchNumber++
-    }
+    const batchMap = projectorBatchMap(processedEvents)
 
     expect(
       batchMap['ForumThread.forumId1.threadId1.1.Created']
