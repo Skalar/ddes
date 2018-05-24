@@ -5,10 +5,10 @@ import {describeWithResources, iterableToArray} from 'support'
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('commit()', async () => {
-    const {store} = context
+    const {eventStore} = context
     //
     class TestAggregate extends Aggregate {
-      public static store = store
+      public static eventStore = eventStore
     }
     const aggregate = new TestAggregate()
 
@@ -23,7 +23,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(commitB).toHaveProperty('chronologicalGroup', 'default')
 
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits('TestAggregate', '@').commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@')
+        .commits
     )
 
     expect(commitsInStore).toContainEqual(commitA)
@@ -33,10 +34,10 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('commit() - custom chronologicalGroup', async () => {
-    const {store} = context
+    const {eventStore} = context
     //
     class TestAggregate extends Aggregate {
-      public static store = store
+      public static eventStore = eventStore
       public static chronologicalGroup = 'custom'
     }
     const aggregate = new TestAggregate()
@@ -52,7 +53,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(commitB).toHaveProperty('chronologicalGroup', 'custom')
 
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits('TestAggregate', '@').commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@')
+        .commits
     )
 
     expect(commitsInStore).toContainEqual(commitA)

@@ -1,4 +1,4 @@
-import {Commit, Store} from '@ddes/core'
+import {Commit, EventStore} from '@ddes/core'
 import {EventSubscriber} from '@ddes/event-streaming'
 import {describeWithResources, iterableToArray} from 'support'
 
@@ -51,7 +51,7 @@ describeWithResources(
   context => {
     test('single client with no filter', async () => {
       const {eventStreamServer} = context
-      const store = context.store as Store
+      const eventStore = context.eventStore
 
       const subscriptionStream = new EventSubscriber({
         wsUrl: `ws://localhost:${eventStreamServer.port}`,
@@ -61,7 +61,7 @@ describeWithResources(
       const iterator = subscriptionStream[Symbol.asyncIterator]()
 
       for (const commit of getTestCommits()) {
-        await store.commit(commit)
+        await eventStore.commit(commit)
       }
 
       await expect(
@@ -106,7 +106,7 @@ describeWithResources(
   context => {
     test('single client with filter on aggregateType', async () => {
       const {eventStreamServer} = context
-      const store = context.store as Store
+      const eventStore = context.eventStore
 
       const subscriptionStream = new EventSubscriber({
         wsUrl: `ws://localhost:${eventStreamServer.port}`,
@@ -116,7 +116,7 @@ describeWithResources(
       const iterator = subscriptionStream[Symbol.asyncIterator]()
 
       for (const commit of getTestCommits()) {
-        await store.commit(commit)
+        await eventStore.commit(commit)
       }
 
       await expect(
@@ -151,7 +151,7 @@ describeWithResources(
   context => {
     test('deep property filter', async () => {
       const {eventStreamServer} = context
-      const store = context.store as Store
+      const eventStore = context.eventStore
 
       const subscriptionStream = new EventSubscriber({
         wsUrl: `ws://localhost:${eventStreamServer.port}`,
@@ -161,7 +161,7 @@ describeWithResources(
       const iterator = subscriptionStream[Symbol.asyncIterator]()
 
       for (const commit of getTestCommits()) {
-        await store.commit(commit)
+        await eventStore.commit(commit)
       }
 
       await expect(
@@ -188,7 +188,7 @@ describeWithResources(
   context => {
     test('multiple clients', async () => {
       const {eventStreamServer} = context
-      const store = context.store as Store
+      const eventStore = context.eventStore
 
       const subscriptionStream1 = new EventSubscriber({
         wsUrl: `ws://localhost:${eventStreamServer.port}`,
@@ -201,7 +201,7 @@ describeWithResources(
       })
 
       for (const commit of getTestCommits()) {
-        await store.commit(commit)
+        await eventStore.commit(commit)
       }
 
       await expect(

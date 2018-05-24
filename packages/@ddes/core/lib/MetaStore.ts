@@ -9,7 +9,7 @@ export default abstract class MetaStore {
   public abstract async put(
     key: MetaStoreKey,
     value: any,
-    options?: {expiresAt?: Date}
+    options?: {expiresAt?: Date | number}
   ): Promise<void>
 
   public abstract async delete(key: MetaStoreKey): Promise<void>

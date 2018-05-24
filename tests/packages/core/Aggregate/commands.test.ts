@@ -11,10 +11,10 @@ import {describeWithResources} from 'support'
 describe('Aggregate', () => {
   describeWithResources('executeCommand()', {stores: true}, context => {
     it('hydrates and retries on VersionConflictError', async () => {
-      const {store} = context
+      const {eventStore} = context
 
       class TestAggregate extends Aggregate {
-        public static store = store
+        public static eventStore = eventStore
 
         public async myCommand() {
           return await this.commit({
@@ -37,10 +37,10 @@ describe('Aggregate', () => {
 
   describeWithResources('executeCommand()', {stores: true}, context => {
     it('allows you to ensure consistency', async () => {
-      const {store} = context
+      const {eventStore} = context
 
       class TestAggregate extends Aggregate {
-        public static store = store
+        public static eventStore = eventStore
         public static stateReducer(state = {}, event: EventWithMetadata) {
           switch (event.type) {
             case 'Submitted': {
@@ -76,10 +76,10 @@ describe('Aggregate', () => {
 
   describeWithResources('commands', {stores: true}, context => {
     test('retryCommand decorator', async () => {
-      const {store} = context
+      const {eventStore} = context
 
       class TestAggregate extends Aggregate {
-        public static store = store
+        public static eventStore = eventStore
         public static stateReducer(state = {}, event: EventWithMetadata) {
           switch (event.type) {
             case 'Submitted': {

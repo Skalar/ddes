@@ -5,20 +5,20 @@
 import {BatchMutator, Commit} from '@ddes/core'
 import * as debug from 'debug'
 import * as equal from 'fast-deep-equal'
-import AwsStore from './AwsStore'
-import {AwsStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
+import AwsEventStore from './AwsEventStore'
+import {AwsEventStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
 import {marshallCommit} from './utils'
 
 /**
  * @hidden
  */
-const log = debug('@ddes/aws-store:AwsStoreBatchMutator')
+const log = debug('@ddes/aws-store:AwsEventStoreBatchMutator')
 
-export default class AwsStoreBatchMutator extends BatchMutator<
+export default class AwsEventStoreBatchMutator extends BatchMutator<
   MarshalledCommit
 > {
-  protected store: AwsStore
-  protected queue: Set<AwsStoreBatchMutatorQueueItem> = new Set()
+  protected store: AwsEventStore
+  protected queue: Set<AwsEventStoreBatchMutatorQueueItem> = new Set()
   protected maxItemsPerRequest: number = 25
   protected processQueueRunning: boolean = false
   protected capacityLimit?: number
@@ -28,7 +28,7 @@ export default class AwsStoreBatchMutator extends BatchMutator<
     units: number
   }
 
-  constructor(params: {store: AwsStore; capacityLimit?: number}) {
+  constructor(params: {store: AwsEventStore; capacityLimit?: number}) {
     super()
     const {store, capacityLimit} = params
     this.store = store
@@ -165,7 +165,7 @@ export default class AwsStoreBatchMutator extends BatchMutator<
         capacityLeft = this.remainingCapacity.units
       }
 
-      let queueItemsToProcess: AwsStoreBatchMutatorQueueItem[] = []
+      let queueItemsToProcess: AwsEventStoreBatchMutatorQueueItem[] = []
 
       let processingCount = 0
       log(`pending items ${this.pendingItems.length}`)
@@ -222,7 +222,7 @@ export default class AwsStoreBatchMutator extends BatchMutator<
     }
   }
 
-  private sendRequest(queueItemsToSend: AwsStoreBatchMutatorQueueItem[]) {
+  private sendRequest(queueItemsToSend: AwsEventStoreBatchMutatorQueueItem[]) {
     log(`Sending request with ${queueItemsToSend.length} items`)
     const requestPromise = this.store.dynamodb
       .batchWriteItem({

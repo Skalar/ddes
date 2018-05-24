@@ -101,7 +101,7 @@ describeWithResources('Projections', {stores: true}, context => {
     await projectionB.setup({startsAt: new Date()})
 
     const projector = new Projector([projectionA, projectionB], {
-      store: context.store,
+      eventStore: context.eventStore,
     })
 
     projector.start()
@@ -109,7 +109,7 @@ describeWithResources('Projections', {stores: true}, context => {
     const testCommits = []
 
     for (const commit of getTestCommits()) {
-      await context.store.commit(commit)
+      await context.eventStore.commit(commit)
       testCommits.push(commit)
     }
 

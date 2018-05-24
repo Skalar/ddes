@@ -4,7 +4,7 @@
 
 import * as debug from 'debug'
 import Commit from './Commit'
-import Store from './Store'
+import EventStore from './EventStore'
 import {
   AggregateEventUpcasters,
   AggregateType,
@@ -14,7 +14,7 @@ import upcastCommits from './upcastCommits'
 import * as utils from './utils'
 
 export default class StorePoller {
-  public store: Store
+  public eventStore: EventStore
   public sortKeyCursor!: string | Date
 
   protected debug: debug.IDebugger
@@ -50,9 +50,9 @@ export default class StorePoller {
   protected initialPoll: boolean = true
 
   constructor(params: StorePollerParams) {
-    const {store, ...rest} = params
+    const {eventStore, ...rest} = params
 
-    this.store = store
+    this.eventStore = eventStore
     Object.assign(this, rest)
 
     if (params.sortKeyCursor) {
@@ -97,7 +97,7 @@ export default class StorePoller {
 
       while (this.shouldPoll) {
         let commitsCount = 0
-        for await (const resultSet of this.store.chronologicalQuery({
+        for await (const resultSet of this.eventStore.chronologicalQuery({
           min: this.sortKeyCursor,
           exclusiveMin: true,
           group: this.chronologicalGroup,

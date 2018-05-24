@@ -45,7 +45,7 @@ export default class TransformerGui {
       useBCE: true,
       autoPadding: true,
       warnings: true,
-      title: 'DDES Store Transformer',
+      title: 'DDES EventStore Transformer',
     })
 
     this.setupUI()
@@ -104,7 +104,7 @@ export default class TransformerGui {
       .append(
         blessed.text({
           left: 'center',
-          content: 'DDES Store Transformer',
+          content: 'DDES EventStore Transformer',
           style: {fg: 'blue'},
         })
       )

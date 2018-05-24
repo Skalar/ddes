@@ -4,7 +4,7 @@
   "engines": {
     "node": ">=8.10"
   },
-  "description": "Store transformations for DDES, a framework for distributed Event Sourcing & CQRS",
+  "description": "EventStore transformations for DDES, a framework for distributed Event Sourcing & CQRS",
   "author": "Trym Skaar <trym.skaar@gmail.com>",
   "license": "MIT",
   "files": [

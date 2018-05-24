@@ -5,8 +5,9 @@
 import {createHash} from 'crypto'
 import {inspect} from 'util'
 import Commit from './Commit'
+import EventStore from './EventStore'
 import KeySchema from './KeySchema'
-import Store from './Store'
+import SnapshotStore from './SnapshotStore'
 import {AlreadyCommittingError, VersionConflictError} from './errors'
 import {
   AggregateEventUpcasters,
@@ -34,7 +35,7 @@ export default class Aggregate {
   /**
    * The store to use for instances of this aggregate class.
    */
-  public static readonly store: Store
+  public static readonly eventStore: EventStore
 
   /**
    * Which chronological group to place commits in
@@ -42,9 +43,9 @@ export default class Aggregate {
   public static chronologicalGroup: string = 'default'
 
   /**
-   * Whether or not snapshots should be used for instances of this aggregate.
+   * The SnapshotStore to use for instances of this aggregate class.
    */
-  public static useSnapshots: boolean
+  public static snapshotStore?: SnapshotStore
 
   /**
    * Snapshots will be written when aggregate version is a multiple of snapshotsFrequency
@@ -242,7 +243,8 @@ export default class Aggregate {
 
     let currentAggregate = null
 
-    const commits = this.store.scanAggregateInstances(this.name, {}).commits
+    const commits = this.eventStore.scanAggregateInstances(this.name, {})
+      .commits
 
     let aggregateCount = 0
 
@@ -276,7 +278,7 @@ export default class Aggregate {
     if (upcasters) {
       return upcastCommits(commits, upcasters, {
         lazyTransformation,
-        batchMutator: this.store.createBatchMutator(),
+        batchMutator: this.eventStore.createBatchMutator(),
       })
     } else {
       return commits
@@ -297,7 +299,7 @@ export default class Aggregate {
     aggregateKey: AggregateKey,
     events: EventInput[]
   ) {
-    const headCommit = await this.store.getAggregateHeadCommit(
+    const headCommit = await this.eventStore.getAggregateHeadCommit(
       this.name,
       aggregateKey
     )
@@ -311,7 +313,7 @@ export default class Aggregate {
       chronologicalGroup: this.chronologicalGroup,
     })
 
-    await this.store.commit(commit)
+    await this.eventStore.commit(commit)
 
     return commit
   }
@@ -320,7 +322,8 @@ export default class Aggregate {
   public readonly key: AggregateKey
   public version: number = 0
   public timestamp?: Timestamp
-  public store: Store
+  public eventStore: EventStore
+  public snapshotStore?: SnapshotStore
 
   protected internalState: InternalState
   protected commitInFlight?: Commit
@@ -335,7 +338,8 @@ export default class Aggregate {
     const klass = this.constructor as typeof Aggregate
     this.type = type || klass.name
     this.key = key || klass.singletonKeyString
-    this.store = klass.store
+    this.eventStore = klass.eventStore
+    this.snapshotStore = klass.snapshotStore
   }
 
   get state(): any {
@@ -368,14 +372,13 @@ export default class Aggregate {
       throw new Error('You cannot hydrate to an older version')
     }
 
-    const {
-      useSnapshots = (this.constructor as typeof Aggregate).useSnapshots,
-    } = options
-
     let shouldRewriteSnapshot = false
 
-    if (useSnapshots) {
-      const snapshot = await this.store.readSnapshot(this.type, this.key)
+    if (this.snapshotStore && options.useSnapshots) {
+      const snapshot = await this.snapshotStore.readSnapshot(
+        this.type,
+        this.key
+      )
 
       if (snapshot) {
         let snapshotIsUsable = false
@@ -400,16 +403,20 @@ export default class Aggregate {
     }
 
     if (!options.version || options.version > this.version) {
-      const commits = this.store.queryAggregateCommits(this.type, this.key, {
-        minVersion: this.version + 1,
-        ...(options.version && {maxVersion: options.version}),
-        ...(options.time && {
-          maxTime: toTimestamp(options.time),
-        }),
-        ...(typeof options.consistentRead !== 'undefined' && {
-          consistentRead: options.consistentRead,
-        }),
-      }).commits
+      const commits = this.eventStore.queryAggregateCommits(
+        this.type,
+        this.key,
+        {
+          minVersion: this.version + 1,
+          ...(options.version && {maxVersion: options.version}),
+          ...(options.time && {
+            maxTime: toTimestamp(options.time),
+          }),
+          ...(typeof options.consistentRead !== 'undefined' && {
+            consistentRead: options.consistentRead,
+          }),
+        }
+      ).commits
 
       for await (const commit of (this
         .constructor as typeof Aggregate).upcastCommits(commits)) {
@@ -427,9 +434,13 @@ export default class Aggregate {
       throw new Error('Cannot write snapshot for aggregate with version = 0')
     }
 
+    if (!this.snapshotStore) {
+      throw new Error('snapshotStore not specified')
+    }
+
     const {type, key, version, state, timestamp} = this
 
-    await this.store.writeSnapshot(type, key, {
+    await this.snapshotStore.writeSnapshot(type, key, {
       version,
       state,
       timestamp: timestamp!,
@@ -452,7 +463,8 @@ export default class Aggregate {
 
     try {
       const {type, key, version} = this
-      const {store, chronologicalGroup} = this.constructor as typeof Aggregate
+      const {eventStore, chronologicalGroup} = this
+        .constructor as typeof Aggregate
 
       const commit = new Commit({
         aggregateType: type,
@@ -467,14 +479,13 @@ export default class Aggregate {
       })
 
       this.commitInFlight = commit
-      await store.commit(commit)
+      await eventStore.commit(commit)
       this.processCommit(commit)
 
-      const {useSnapshots, snapshotsFrequency} = this
-        .constructor as typeof Aggregate
+      const {snapshotsFrequency} = this.constructor as typeof Aggregate
 
       if (
-        useSnapshots &&
+        this.snapshotStore &&
         !options.skipSnapshot &&
         this.version % snapshotsFrequency === 0
       ) {

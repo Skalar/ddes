@@ -9,9 +9,9 @@ describeWithResources(
   {stores: true},
   context => {
     test(`modifying commit`, async () => {
-      const {store} = context
+      const {eventStore} = context
 
-      await store.commit(
+      await eventStore.commit(
         new Commit({
           aggregateType: 'AggregateB',
           aggregateKey: 'key',
@@ -20,7 +20,7 @@ describeWithResources(
         })
       )
 
-      await store.commit(
+      await eventStore.commit(
         new Commit({
           aggregateType: 'AggregateA',
           aggregateKey: 'key',
@@ -34,8 +34,8 @@ describeWithResources(
 
       const transformation = new CommitTransformation({
         name: 'test',
-        source: store,
-        target: store,
+        source: eventStore,
+        target: eventStore,
 
         async transform(commit: Commit) {
           switch (commit.aggregateType) {
@@ -61,7 +61,7 @@ describeWithResources(
       await transformer.execute()
 
       await expect(
-        iterableToArray(store.scan().commits)
+        iterableToArray(eventStore.scan().commits)
       ).resolves.toMatchObject([
         {
           aggregateKey: 'key',
@@ -85,9 +85,9 @@ describeWithResources(
   {stores: true},
   context => {
     test('deleting commit', async () => {
-      const {store} = context
+      const {eventStore} = context
 
-      await store.commit(
+      await eventStore.commit(
         new Commit({
           aggregateType: 'AggregateA',
           aggregateKey: 'key',
@@ -96,7 +96,7 @@ describeWithResources(
         })
       )
 
-      await store.commit(
+      await eventStore.commit(
         new Commit({
           aggregateType: 'AggregateB',
           aggregateKey: 'key',
@@ -107,8 +107,8 @@ describeWithResources(
 
       const transformation = new CommitTransformation({
         name: 'test',
-        source: store,
-        target: store,
+        source: eventStore,
+        target: eventStore,
 
         async transform(commit: Commit) {
           switch (commit.aggregateType) {
@@ -130,7 +130,7 @@ describeWithResources(
       await transformer.execute()
 
       await expect(
-        iterableToArray(store.scan().commits)
+        iterableToArray(eventStore.scan().commits)
       ).resolves.toMatchObject([
         {
           aggregateKey: 'key',
@@ -148,9 +148,9 @@ describeWithResources(
   {stores: true},
   context => {
     test('creating new commits', async () => {
-      const {store} = context
+      const {eventStore} = context
 
-      await store.commit(
+      await eventStore.commit(
         new Commit({
           aggregateType: 'AggregateA',
           aggregateKey: 'key',
@@ -159,7 +159,7 @@ describeWithResources(
         })
       )
 
-      await store.commit(
+      await eventStore.commit(
         new Commit({
           aggregateType: 'AggregateB',
           aggregateKey: 'key',
@@ -170,8 +170,8 @@ describeWithResources(
 
       const transformation = new CommitTransformation({
         name: 'test',
-        source: store,
-        target: store,
+        source: eventStore,
+        target: eventStore,
 
         async transform(commit: Commit) {
           switch (commit.aggregateType) {
@@ -196,7 +196,7 @@ describeWithResources(
       await transformer.execute()
 
       await expect(
-        iterableToArray(store.scan().commits)
+        iterableToArray(eventStore.scan().commits)
       ).resolves.toMatchObject([
         {
           aggregateKey: 'key',

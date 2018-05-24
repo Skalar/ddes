@@ -9,7 +9,7 @@ import {
 import {randomBytes} from 'crypto'
 import {commitYielder} from 'support'
 
-function createTestAggregateClass(options?: {store?: object}) {
+function createTestAggregateClass(options?: {eventStore?: object}) {
   class TestAggregate extends Aggregate {
     public static keySchema = new KeySchema([
       {
@@ -19,8 +19,7 @@ function createTestAggregateClass(options?: {store?: object}) {
       },
     ])
 
-    public static store = ((options && options.store) || {}) as any
-    public static useSnapshots = true
+    public static eventStore = ((options && options.eventStore) || {}) as any
 
     public static stateReducer(state = {}, event: EventWithMetadata) {
       switch (event.type) {
@@ -50,8 +49,7 @@ function createTestAggregateClass(options?: {store?: object}) {
 
 describe('Aggregate [unit]', () => {
   test('static create()', async () => {
-    const store = {
-      readSnapshot: jest.fn(async => null),
+    const eventStore = {
       commit: jest.fn(async => undefined),
       queryAggregateCommits: jest.fn().mockReturnValueOnce({
         commits: commitYielder([], {aggregateType: 'TestAggregate'}),
@@ -59,14 +57,14 @@ describe('Aggregate [unit]', () => {
     }
 
     const TestAggregate = createTestAggregateClass({
-      store,
+      eventStore,
     })
 
     const aggregate = await TestAggregate.create()
 
     expect(aggregate.key).toBeDefined()
 
-    expect(store.commit.mock.calls[0][0]).toMatchObject({
+    expect(eventStore.commit.mock.calls[0][0]).toMatchObject({
       aggregateType: 'TestAggregate',
       aggregateVersion: 1,
       events: [{properties: {name: 'My item'}, type: 'Created', version: 1}],
@@ -79,14 +77,13 @@ describe('Aggregate [unit]', () => {
     })
 
     expect(aggregate.key).toBe(
-      store.commit.mock.calls[0][0].events[0].properties.id
+      eventStore.commit.mock.calls[0][0].events[0].properties.id
     )
   })
 
   test('static load()', async () => {
     const TestAggregate = createTestAggregateClass({
-      store: {
-        readSnapshot: jest.fn().mockReturnValueOnce(Promise.resolve(null)),
+      eventStore: {
         upcastCommits: jest.fn(commits => commits),
         queryAggregateCommits: jest.fn().mockReturnValueOnce({
           commits: commitYielder(
@@ -113,14 +110,10 @@ describe('Aggregate [unit]', () => {
 
     const firstItem = await TestAggregate.load('1')
 
-    expect(TestAggregate.store.readSnapshot).toHaveBeenCalledTimes(1)
-    expect(TestAggregate.store.readSnapshot).toHaveBeenCalledWith(
-      'TestAggregate',
-      '1'
-    )
-
-    expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledTimes(1)
-    expect(TestAggregate.store.queryAggregateCommits).toHaveBeenCalledWith(
+    expect(
+      TestAggregate.eventStore.queryAggregateCommits
+    ).toHaveBeenCalledTimes(1)
+    expect(TestAggregate.eventStore.queryAggregateCommits).toHaveBeenCalledWith(
       'TestAggregate',
       '1',
       {
@@ -145,30 +138,32 @@ describe('Aggregate [unit]', () => {
 
   test('static scanInstances()', async () => {
     const TestAggregate = createTestAggregateClass()
-    TestAggregate.store.upcastCommits = jest.fn(commits => commits)
-    TestAggregate.store.scanAggregateInstances = jest.fn().mockReturnValueOnce({
-      commits: commitYielder(
-        [
-          {
-            aggregateKey: '1',
-            aggregateVersion: 1,
-            events: [{type: 'Created', properties: {name: 'First user'}}],
-          },
-          {
-            aggregateType: 'User',
-            aggregateKey: '1',
-            aggregateVersion: 2,
-            events: [{type: 'Created', properties: {name: 'Primero user'}}],
-          },
-          {
-            aggregateKey: '2',
-            aggregateVersion: 1,
-            events: [{type: 'Created', properties: {name: 'Second user'}}],
-          },
-        ],
-        {aggregateType: 'TestAggregate'}
-      ),
-    })
+    TestAggregate.eventStore.upcastCommits = jest.fn(commits => commits)
+    TestAggregate.eventStore.scanAggregateInstances = jest
+      .fn()
+      .mockReturnValueOnce({
+        commits: commitYielder(
+          [
+            {
+              aggregateKey: '1',
+              aggregateVersion: 1,
+              events: [{type: 'Created', properties: {name: 'First user'}}],
+            },
+            {
+              aggregateType: 'User',
+              aggregateKey: '1',
+              aggregateVersion: 2,
+              events: [{type: 'Created', properties: {name: 'Primero user'}}],
+            },
+            {
+              aggregateKey: '2',
+              aggregateVersion: 1,
+              events: [{type: 'Created', properties: {name: 'Second user'}}],
+            },
+          ],
+          {aggregateType: 'TestAggregate'}
+        ),
+      })
 
     const usersYielded = []
 
@@ -194,11 +189,12 @@ describe('Aggregate [unit]', () => {
       state: {name: 'Second user'},
     })
 
-    expect(TestAggregate.store.scanAggregateInstances).toHaveBeenCalledTimes(1)
-    expect(TestAggregate.store.scanAggregateInstances).toHaveBeenCalledWith(
-      'TestAggregate',
-      {}
-    )
+    expect(
+      TestAggregate.eventStore.scanAggregateInstances
+    ).toHaveBeenCalledTimes(1)
+    expect(
+      TestAggregate.eventStore.scanAggregateInstances
+    ).toHaveBeenCalledWith('TestAggregate', {})
   })
 
   test('executeCommand()', async () => {

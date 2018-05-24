@@ -14,16 +14,16 @@ import {
 } from './types'
 
 /**
- * Abstract class representing an Event Store
+ * Abstract interface for an Event Store
  */
-export default abstract class Store {
+export default abstract class EventStore {
   /**
    * Performs necessary orchestration to ready the store
    */
   public abstract setup(): Promise<void>
 
   /**
-   * Tears down all resources within namespace created by store
+   * Tears down all resources created by the store
    */
   public abstract teardown(): Promise<void>
 
@@ -89,39 +89,6 @@ export default abstract class Store {
     limit?: number
     capacityLimit?: number
   }): StoreQueryResponse
-
-  /**
-   * Write an aggregate instance snapshot to the store
-   *
-   * @param type e.g. 'Account'
-   * @param key  e.g. '1234'
-   */
-  public abstract writeSnapshot(
-    type: string,
-    key: string,
-    payload: {
-      version: number
-      state: object
-      timestamp: Timestamp
-      compatibilityChecksum: string
-    }
-  ): Promise<void>
-
-  /**
-   * Read an aggregate instance snapshot from store
-   *
-   * @param type e.g. 'Account'
-   * @param key  e.g. '1234'
-   */
-  public abstract readSnapshot(
-    type: AggregateType,
-    key: AggregateKey
-  ): Promise<AggregateSnapshot | null>
-
-  /**
-   * Delete store snapshots
-   */
-  public abstract deleteSnapshots(): Promise<void>
 
   /**
    * Get a [[BatchMutator]] for the store

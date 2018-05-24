@@ -11,7 +11,7 @@ import LambdaTransformer from './LambdaTransformer'
 const cli = {
   commands: {
     'transform:lambda': {
-      description: 'Transform store in using AWS lambda',
+      description: 'Transform EventStore using AWS lambda workers',
 
       usage() {
         return '<path-to-transformation-file> [--transformerOption=value]'

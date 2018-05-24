@@ -4,9 +4,12 @@
 
 import * as utils from './utils'
 
-export {default as AwsStore} from './AwsStore'
+export {default as AwsEventStore} from './AwsEventStore'
 export {default as AwsMetaStore} from './AwsMetaStore'
-export {default as AwsStoreQueryResponse} from './AwsStoreQueryResponse'
+export {default as AwsSnapshotStore} from './AwsSnapshotStore'
+export {
+  default as AwsEventStoreQueryResponse,
+} from './AwsEventStoreQueryResponse'
 
 export * from './types'
 export {utils}

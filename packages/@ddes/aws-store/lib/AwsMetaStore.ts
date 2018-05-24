@@ -8,6 +8,9 @@ import {ConfigurationOptions} from 'aws-sdk/lib/config'
 import {AutoscalingConfig, StoreCapacityConfig} from './types'
 import * as utils from './utils'
 
+/**
+ * Interface for MetaStore powered by AWS DynamoDB
+ */
 export default class AwsMetaStore extends MetaStore {
   public tableName!: string
 
