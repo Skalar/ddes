@@ -27,11 +27,10 @@ export interface AutoscalingConfig {
   utilizationTargetInPercent: number
 }
 
-export interface AwsStoreConfig {
+export interface AwsEventStoreConfig {
   tableName: string
   initialCapacity?: StoreCapacityConfig
   autoscaling?: AutoscalingConfig
-  snapshots?: SnapshotsConfig
   awsConfig?: ConfigurationOptions
   s3ClientConfiguration?: S3.ClientConfiguration
   dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
@@ -113,12 +112,6 @@ export interface MarshalledCommit extends DynamoDB.AttributeMap {
   }
 }
 
-export interface SnapshotsConfig {
-  s3BucketName: string
-  keyPrefix?: string
-  manageBucket?: boolean
-}
-
 export interface StoreQueryParams {
   startKey?: DynamoDB.Key
   keyExpressions?: string[]
@@ -132,7 +125,7 @@ export interface StoreQueryParams {
 /**
  * @hidden
  */
-export interface AwsStoreBatchMutatorQueueItem {
+export interface AwsEventStoreBatchMutatorQueueItem {
   startedPromise: Promise<any>
   startedResolver: () => void
   processedPromise: Promise<any>

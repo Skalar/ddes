@@ -1,8 +1,13 @@
-import {Store} from '@ddes/core'
+import {EventStore} from '@ddes/core'
 import {EventStreamer} from '@ddes/event-streaming'
 
-export async function eventStreamServer(store: Store) {
-  const server = new EventStreamer({store: (store as any) as Store, port: 0})
+export async function eventStreamServer(context: {eventStore: EventStore}) {
+  const {eventStore} = context
+
+  const server = new EventStreamer({
+    eventStore,
+    port: 0,
+  })
   const port = (server.wss as any)._server.address().port
 
   const teardown = async () => {

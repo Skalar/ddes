@@ -3,7 +3,7 @@ import {describeWithResources} from 'support'
 
 describeWithResources('Stores', {stores: true}, context => {
   test('getAggregateHeadCommit()', async () => {
-    const {store} = context
+    const {eventStore} = context
 
     const commits = {
       a1: new Commit({
@@ -45,14 +45,14 @@ describeWithResources('Stores', {stores: true}, context => {
     }
 
     for (const commit of Object.values(commits)) {
-      await store.commit(commit)
+      await eventStore.commit(commit)
     }
 
     await expect(
-      store.getAggregateHeadCommit('Test', 'a')
+      eventStore.getAggregateHeadCommit('Test', 'a')
     ).resolves.toMatchObject(commits.a3)
     await expect(
-      store.getAggregateHeadCommit('Test', 'b')
+      eventStore.getAggregateHeadCommit('Test', 'b')
     ).resolves.toMatchObject(commits.b1)
   })
 })

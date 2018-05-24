@@ -1,9 +1,9 @@
 import {describeWithResources} from 'support'
-import {aws as AwsTestStore} from 'support/stores'
+import {aws} from 'support/stores'
 
-describeWithResources('AwsStore', {}, context => {
+describeWithResources('AwsEventStore', {}, context => {
   test('teardown() [withServices]', async () => {
-    const store = AwsTestStore(context, {
+    const eventStore = aws.eventStore(context, {
       initialCapacity: {
         tableRead: 1,
         tableWrite: 2,
@@ -13,11 +13,13 @@ describeWithResources('AwsStore', {}, context => {
         instancesWrite: 6,
       },
     })
-    await store.setup()
-    await store.teardown()
+    await eventStore.setup()
+    await eventStore.teardown()
 
     expect(
-      store.dynamodb.describeTable({TableName: store.tableName}).promise()
+      eventStore.dynamodb
+        .describeTable({TableName: eventStore.tableName})
+        .promise()
     ).rejects.toMatchObject({code: 'ResourceNotFoundException'})
   })
 })

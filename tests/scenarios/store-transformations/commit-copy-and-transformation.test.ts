@@ -11,8 +11,8 @@ describeWithResources(
   context => {
     // we need to get target store
     test(`modifying commit`, async () => {
-      const {store: source} = context
-      const target = aws({testId: context.testId + '-target'}, {})
+      const {eventStore: source} = context
+      const target = aws.eventStore({testId: context.testId + '-target'}, {})
       context.teardownFunctions.push(() => target.teardown())
       await target.setup()
 
@@ -99,8 +99,8 @@ describeWithResources(
   {stores: true},
   context => {
     test('deleting commit', async () => {
-      const {store: source} = context
-      const target = aws({testId: context.testId + '-target'}, {})
+      const {eventStore: source} = context
+      const target = aws.eventStore({testId: context.testId + '-target'}, {})
       context.teardownFunctions.push(() => target.teardown())
       await target.setup()
 
@@ -170,8 +170,8 @@ describeWithResources(
   {stores: true},
   context => {
     test('creating new commits', async () => {
-      const {store: source} = context
-      const target = aws({testId: context.testId + '-target'}, {})
+      const {eventStore: source} = context
+      const target = aws.eventStore({testId: context.testId + '-target'}, {})
       context.teardownFunctions.push(() => target.teardown())
       await target.setup()
 

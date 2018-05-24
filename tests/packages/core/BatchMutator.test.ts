@@ -30,13 +30,13 @@ const upcasters: AggregateEventUpcasters = {
 describeWithResources('Stores', {stores: true}, context => {
   describe('BatchMutator', () => {
     test('without target capacity', async () => {
-      const {store} = context
+      const {eventStore} = context
 
       for (const commit of commits) {
-        await store.commit(commit)
+        await eventStore.commit(commit)
       }
 
-      const batchMutator = store.createBatchMutator()
+      const batchMutator = eventStore.createBatchMutator()
 
       await batchMutator.delete(commits[1])
       await batchMutator.put(
@@ -49,7 +49,7 @@ describeWithResources('Stores', {stores: true}, context => {
 
       await expect(
         iterableToArray(
-          store.queryAggregateCommits('TestAggregate', 'a').commits
+          eventStore.queryAggregateCommits('TestAggregate', 'a').commits
         )
       ).resolves.toMatchObject([
         {
@@ -73,13 +73,13 @@ describeWithResources('Stores', {stores: true}, context => {
 describeWithResources('Stores', {stores: true}, context => {
   describe('BatchMutator', () => {
     test('with target capacity', async () => {
-      const {store} = context
+      const {eventStore} = context
 
       for (const commit of commits) {
-        await store.commit(commit)
+        await eventStore.commit(commit)
       }
 
-      const batchMutator = store.createBatchMutator({
+      const batchMutator = eventStore.createBatchMutator({
         capacityLimit: 5,
       })
 
@@ -94,7 +94,7 @@ describeWithResources('Stores', {stores: true}, context => {
 
       await expect(
         iterableToArray(
-          store.queryAggregateCommits('TestAggregate', 'a').commits
+          eventStore.queryAggregateCommits('TestAggregate', 'a').commits
         )
       ).resolves.toMatchObject([
         {

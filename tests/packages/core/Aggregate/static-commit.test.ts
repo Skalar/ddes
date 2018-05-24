@@ -5,10 +5,10 @@ import {describeWithResources, iterableToArray} from 'support'
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('static commit() - no keySchema', async () => {
-    const {store} = context
+    const {eventStore} = context
     //
     class TestAggregate extends Aggregate {
-      public static store = store
+      public static eventStore = eventStore
     }
 
     const a = TestAggregate.commit([
@@ -21,7 +21,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
     const [commitA, commitB] = await Promise.all([a, b])
 
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits('TestAggregate', '@').commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@')
+        .commits
     )
 
     expect(commitsInStore).toContainEqual(commitA)
@@ -31,11 +32,11 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('static commit() - with keySchema', async () => {
-    const {store} = context
+    const {eventStore} = context
     //
     class TestAggregate extends Aggregate {
       public static keySchema = new KeySchema(['id'])
-      public static store = store
+      public static eventStore = eventStore
     }
 
     const a = TestAggregate.commit('myid', [
@@ -47,7 +48,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
     const [commitA, commitB] = await Promise.all([a, b])
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits('TestAggregate', 'myid').commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', 'myid')
+        .commits
     )
     expect(commitsInStore).toContainEqual(commitA)
     expect(commitsInStore).toContainEqual(commitB)
@@ -56,11 +58,11 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('static commit() - custom chronological group', async () => {
-    const {store} = context
+    const {eventStore} = context
     //
     class TestAggregate extends Aggregate {
       public static keySchema = new KeySchema(['id'])
-      public static store = store
+      public static eventStore = eventStore
       public static chronologicalGroup = 'custom'
     }
 
@@ -77,7 +79,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(commitB).toHaveProperty('chronologicalGroup', 'custom')
 
     const commitsInStore = await iterableToArray(
-      TestAggregate.store.queryAggregateCommits('TestAggregate', 'myid').commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', 'myid')
+        .commits
     )
     expect(commitsInStore).toContainEqual(commitA)
     expect(commitsInStore).toContainEqual(commitB)

@@ -2,19 +2,19 @@
  * @module @ddes/store-transformations
  */
 
-import {Store} from '@ddes/core'
+import {EventStore} from '@ddes/core'
 import {TransformationWorkerInput, TransformationWorkerResult} from './types'
 
 /**
- * Base transformation class, can be used/extended for custom [[Store]] transformations.
+ * Base transformation class, can be used/extended for custom [[EventStore]] transformations.
  * Is most useful when used in conjunction with a [[Transformer]].
  *
  * ```typescript
  * export default new Transformation({
  *   name: 'My custom transformation',
  *
- *   source: new AwsStore({tableName: 'tableA'}),
- *   target: new AwsStore({tableName: 'tableB'}),
+ *   source: new AwsEventStore({tableName: 'tableA'}),
+ *   target: new AwsEventStore({tableName: 'tableB'}),
  *
  *   async perform(input) {
  *     // do work within deadline
@@ -25,14 +25,14 @@ import {TransformationWorkerInput, TransformationWorkerResult} from './types'
  */
 class Transformation {
   public name: string
-  public source: Store
-  public target: Store
+  public source: EventStore
+  public target: EventStore
   public transformerConfig?: any
 
   constructor(transformationSpec: {
     name: string
-    source: Store
-    target: Store
+    source: EventStore
+    target: EventStore
     perform?: Transformation['perform']
     transformerConfig?: any
   }) {

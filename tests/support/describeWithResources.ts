@@ -1,7 +1,7 @@
-import {MetaStore, Store} from '@ddes/core'
+import {EventStore, MetaStore, SnapshotStore} from '@ddes/core'
 import {randomBytes} from 'crypto'
 import * as Resources from './resources'
-import * as Stores from './stores'
+import * as stores from './stores'
 
 enum ResourceName {
   eventStreamServer = 'eventStreamServer',
@@ -10,7 +10,9 @@ enum ResourceName {
 const storeTypes = ['aws']
 
 export interface TestWithResourcesContext {
-  store: Store
+  eventStore: EventStore
+  snapshotStore: SnapshotStore
+  metaStore: MetaStore
   testId: string
   [resourceName: string]: any
 }
@@ -20,19 +22,21 @@ export function describeWithResources( // describe with resources
   opts: any,
   fn: (context: TestWithResourcesContext) => void
 ) {
-  const {stores, ...resources} = opts || {stores: false}
+  const {stores: requestedStores, ...resources} = opts || {stores: false}
 
   const describeBlock = (
     description: string,
-    store?: Store,
-    metaStore?: MetaStore
+    storeInstances: {
+      eventStore?: EventStore
+      metaStore?: MetaStore
+      snapshotStore?: SnapshotStore
+    } = {}
   ) => {
     const testId = randomBytes(8).toString('hex')
     const createdResources: {[resourceName: string]: any} = {}
     const teardownFunctions: Array<() => Promise<void>> = []
     const testContext = {
-      store,
-      metaStore,
+      ...storeInstances,
       testId,
       teardownFunctions,
     } as TestWithResourcesContext
@@ -44,15 +48,17 @@ export function describeWithResources( // describe with resources
             async ([resourceName, resourceOptions]) => {
               const {teardown, resource} = await (Resources as any)[
                 resourceName
-              ](store, resourceOptions)
+              ](storeInstances, resourceOptions)
               if (teardown) {
                 teardownFunctions.push(teardown)
               }
               createdResources[resourceName] = resource
             }
           ),
-          ...[store ? store.setup() : Promise.resolve()],
-          ...[metaStore ? metaStore.setup() : Promise.resolve()],
+          ...Object.values(storeInstances).map(
+            storeInstance =>
+              storeInstance ? storeInstance.setup() : Promise.resolve()
+          ),
         ])
         Object.assign(testContext, createdResources)
       })
@@ -60,8 +66,10 @@ export function describeWithResources( // describe with resources
       afterAll(async () => {
         await Promise.all([
           ...teardownFunctions.map(teardownFn => teardownFn()),
-          ...[store ? store.teardown() : Promise.resolve()],
-          ...[metaStore ? metaStore.teardown() : Promise.resolve()],
+          ...Object.values(storeInstances).map(
+            storeInstance =>
+              storeInstance ? storeInstance.teardown() : Promise.resolve()
+          ),
         ])
       })
 
@@ -69,19 +77,27 @@ export function describeWithResources( // describe with resources
     })
   }
 
-  if (opts.stores) {
-    const allStores = opts.stores === true
+  if (requestedStores) {
+    const allStores = requestedStores === true
 
     for (const storeTypeName of storeTypes) {
-      if (!allStores && !opts.stores.includes(storeTypeName)) {
+      if (!allStores && !opts.requestedStores.includes(storeTypeName)) {
         continue
       }
 
       const testId = randomBytes(8).toString('hex')
 
-      const store = (Stores as any)[storeTypeName]({testId})
-      const metaStore = (Stores as any)[storeTypeName + 'Meta']({testId})
-      describeBlock(`${what} (store=${storeTypeName})`, store, metaStore)
+      const eventStore = (stores as any)[storeTypeName].eventStore({testId})
+      const metaStore = (stores as any)[storeTypeName].metaStore({testId})
+      const snapshotStore = (stores as any)[storeTypeName].snapshotStore({
+        testId,
+      })
+
+      describeBlock(`${what} (store=${storeTypeName})`, {
+        eventStore,
+        metaStore,
+        snapshotStore,
+      })
     }
   } else {
     describeBlock(what)

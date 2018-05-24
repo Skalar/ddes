@@ -1,15 +1,15 @@
 import {
   Aggregate,
   Commit,
+  EventStore,
   EventWithMetadata,
   KeySchema,
-  Store,
   utils,
 } from '@ddes/core'
 import {describeWithResources} from 'support'
 
 class TestAggregate extends Aggregate {
-  public static store = {} as Store
+  public static eventStore = {} as EventStore
   public static keySchema = new KeySchema(['id'])
 
   public static stateReducer(state: any, event: EventWithMetadata) {
@@ -33,7 +33,7 @@ class TestAggregate extends Aggregate {
 
 describeWithResources('Aggregate.loadOrCreate()', {stores: true}, context => {
   beforeAll(() => {
-    TestAggregate.store = context.store
+    TestAggregate.eventStore = context.eventStore
   })
 
   test('when does not already exist', async () => {
@@ -46,7 +46,7 @@ describeWithResources('Aggregate.loadOrCreate()', {stores: true}, context => {
   })
 
   test('when already exists', async () => {
-    TestAggregate.store = context.store
+    TestAggregate.eventStore = context.eventStore
 
     await TestAggregate.commit('test', [
       {type: 'Created', properties: {id: 'test', name: 'initial'}},

@@ -1,9 +1,17 @@
-import {AwsMetaStore, AwsStore, AwsStoreConfig} from '@ddes/aws-store'
+import {
+  AwsEventStore,
+  AwsMetaStore,
+  AwsSnapshotStore,
+  AwsEventStoreConfig,
+} from '@ddes/aws-store'
 
-export function aws(opts: {testId: string}, config: Partial<AwsStoreConfig>) {
+export function eventStore(
+  opts: {testId: string},
+  config: Partial<AwsEventStoreConfig>
+) {
   const {testId} = opts
 
-  return new AwsStore({
+  return new AwsEventStore({
     tableName: `ddes-${testId}`,
     ...(!process.env.REAL_SERVICES_TEST && {
       s3ClientConfiguration: {
@@ -23,16 +31,11 @@ export function aws(opts: {testId: string}, config: Partial<AwsStoreConfig>) {
         secretAccessKey: 'test',
       },
     }),
-    snapshots: {
-      s3BucketName: `ddess-${testId}`,
-      keyPrefix: 'snapshots/',
-      manageBucket: true,
-    },
     ...config,
   })
 }
 
-export function awsMeta(opts: {testId: string}) {
+export function metaStore(opts: {testId: string}) {
   const {testId} = opts
 
   return new AwsMetaStore({
@@ -45,5 +48,25 @@ export function awsMeta(opts: {testId: string}) {
         secretAccessKey: 'test',
       },
     }),
+  })
+}
+
+export function snapshotStore(opts: {testId: string}) {
+  const {testId} = opts
+
+  return new AwsSnapshotStore({
+    ...(!process.env.REAL_SERVICES_TEST && {
+      s3ClientConfiguration: {
+        endpoint: process.env.LOCAL_S3 || 'http://localhost:5000',
+        sslEnabled: false,
+        s3ForcePathStyle: true,
+        accessKeyId: 'test',
+        secretAccessKey: 'test',
+        region: 'us-east-1',
+      },
+    }),
+    bucketName: `ddes-${testId}`,
+    keyPrefix: 'snapshots/',
+    manageBucket: true,
   })
 }

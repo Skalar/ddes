@@ -1,8 +1,14 @@
-import {Aggregate, Commit, EventWithMetadata, Store, utils} from '@ddes/core'
+import {
+  Aggregate,
+  Commit,
+  EventStore,
+  EventWithMetadata,
+  utils,
+} from '@ddes/core'
 import {describeWithResources} from 'support'
 
 class TestAggregate extends Aggregate {
-  public static store = {} as Store
+  public static eventStore = {} as EventStore
 
   public static stateReducer(state: any, event: EventWithMetadata) {
     switch (event.type) {
@@ -38,16 +44,13 @@ const commits = [
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('load() with no snapshot', async () => {
-    TestAggregate.store = context.store
+    TestAggregate.eventStore = context.eventStore
 
     for (const commit of commits) {
-      await TestAggregate.store.commit(commit)
+      await TestAggregate.eventStore.commit(commit)
     }
 
-    const instance = await TestAggregate.load({
-      key: 'a',
-      useSnapshots: false,
-    })
+    const instance = await TestAggregate.load({key: 'a'})
 
     expect(instance!.toJSON()).toMatchObject({
       key: 'a',
@@ -74,13 +77,14 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('load() with snapshot', async () => {
-    TestAggregate.store = context.store
+    TestAggregate.eventStore = context.eventStore
+    TestAggregate.snapshotStore = context.snapshotStore
 
     for (const commit of commits) {
-      await TestAggregate.store.commit(commit)
+      await TestAggregate.eventStore.commit(commit)
     }
 
-    await TestAggregate.store.writeSnapshot('TestAggregate', 'a', {
+    await TestAggregate.snapshotStore.writeSnapshot('TestAggregate', 'a', {
       version: 2,
       compatibilityChecksum: TestAggregate.snapshotCompatChecksum,
       state: {
@@ -119,10 +123,10 @@ describeWithResources('Aggregate', {stores: true}, context => {
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('loading via manual instantiation and hydrate()', async () => {
-    TestAggregate.store = context.store
+    TestAggregate.eventStore = context.eventStore
 
     for (const commit of commits) {
-      await TestAggregate.store.commit(commit)
+      await TestAggregate.eventStore.commit(commit)
     }
 
     const aggregate = new TestAggregate('a')

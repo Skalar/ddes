@@ -3,7 +3,7 @@ import {describeWithResources, iterableToArray} from 'support'
 
 describeWithResources('Stores', {stores: true}, context => {
   test('*queryAggregateCommits()', async () => {
-    const {store} = context
+    const {eventStore} = context
 
     const commits = {
       a1: new Commit({
@@ -45,19 +45,19 @@ describeWithResources('Stores', {stores: true}, context => {
     }
 
     for (const commit of Object.values(commits)) {
-      await store.commit(commit)
+      await eventStore.commit(commit)
     }
 
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits('Test', 'a').commits
+        eventStore.queryAggregateCommits('Test', 'a').commits
       )
       expect(result).toMatchObject([commits.a1, commits.a2, commits.a3])
     }
 
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits('Test', 'b').commits
+        eventStore.queryAggregateCommits('Test', 'b').commits
       )
       expect(result).toMatchObject([commits.b1])
     }
@@ -65,7 +65,7 @@ describeWithResources('Stores', {stores: true}, context => {
     // maxVersion
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits('Test', 'a', {
+        eventStore.queryAggregateCommits('Test', 'a', {
           maxVersion: 2,
         }).commits
       )
@@ -75,7 +75,7 @@ describeWithResources('Stores', {stores: true}, context => {
     // minVersion
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits('Test', 'a', {
+        eventStore.queryAggregateCommits('Test', 'a', {
           minVersion: 2,
         }).commits
       )
@@ -85,7 +85,7 @@ describeWithResources('Stores', {stores: true}, context => {
     // key + maxTime
     {
       const result = await iterableToArray(
-        store.queryAggregateCommits('Test', 'a', {
+        eventStore.queryAggregateCommits('Test', 'a', {
           maxTime: new Date('2018-01-02'),
         }).commits
       )

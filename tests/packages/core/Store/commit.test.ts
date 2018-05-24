@@ -3,7 +3,7 @@ import {describeWithResources, iterableToArray} from 'support'
 
 describeWithResources('Stores', {stores: true}, context => {
   test('commit()', async () => {
-    const {store} = context
+    const {eventStore} = context
 
     const commit = new Commit({
       aggregateType: 'Test',
@@ -16,9 +16,9 @@ describeWithResources('Stores', {stores: true}, context => {
       chronologicalGroup: 'default',
     })
 
-    await store.commit(commit)
+    await eventStore.commit(commit)
     await expect(
-      iterableToArray(store.queryAggregateCommits('Test', 'test').commits)
+      iterableToArray(eventStore.queryAggregateCommits('Test', 'test').commits)
     ).resolves.toMatchObject([commit])
   })
 })

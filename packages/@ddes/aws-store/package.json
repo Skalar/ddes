@@ -4,7 +4,7 @@
   "engines": {
     "node": ">=8.10"
   },
-  "description": "AWS Store and MetaStore implementations for DDES, a framework for distributed Event Sourcing & CQRS",
+  "description": "AWS powered EventStore, SnapshotStore and MetaStore implementations for DDES, a framework for distributed Event Sourcing & CQRS",
   "author": "Trym Skaar <trym.skaar@gmail.com>",
   "license": "MIT",
   "files": [

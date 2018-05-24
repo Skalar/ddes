@@ -9,21 +9,21 @@ import {
   StoreQueryResultSet,
 } from '@ddes/core'
 import {DynamoDB} from 'aws-sdk'
-import AwsStore from './AwsStore'
+import AwsEventStore from './AwsEventStore'
 import {MarshalledCommit} from './types'
 import {unmarshallCommit} from './utils'
 
-export default class AwsStoreQueryResponse implements StoreQueryResponse {
+export default class AwsEventStoreQueryResponse implements StoreQueryResponse {
   private responseIterator: AsyncIterableIterator<
     DynamoDB.QueryOutput & {
       throttleCount: number
     }
   >
 
-  private store: AwsStore
+  private store: AwsEventStore
 
   constructor(
-    store: AwsStore,
+    store: AwsEventStore,
     responseIterator: AsyncIterableIterator<
       DynamoDB.QueryOutput & {throttleCount: number}
     >

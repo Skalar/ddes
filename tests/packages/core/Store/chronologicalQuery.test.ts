@@ -49,140 +49,144 @@ const commits = {
   }),
 }
 
-describeWithResources('Store.chronologicalQuery()', {stores: true}, context => {
-  beforeAll(async () => {
-    const {store} = context
+describeWithResources(
+  'eventStore.chronologicalQuery()',
+  {stores: true},
+  context => {
+    beforeAll(async () => {
+      const {eventStore} = context
 
-    for (const commit of Object.values(commits)) {
-      await store.commit(commit)
-    }
-  })
+      for (const commit of Object.values(commits)) {
+        await eventStore.commit(commit)
+      }
+    })
 
-  test('inclusive range in ascending order', async () => {
-    const {store} = context
+    test('inclusive range in ascending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: new Date('2018-01-02'),
-          max: new Date('2018-01-05'),
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.b1, commits.c1, commits.a2, commits.a3])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: new Date('2018-01-02'),
+            max: new Date('2018-01-05'),
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.b1, commits.c1, commits.a2, commits.a3])
+    })
 
-  test('inclusive range in descending order', async () => {
-    const {store} = context
+    test('inclusive range in descending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: new Date('2018-01-02'),
-          max: new Date('2018-01-05'),
-          descending: true,
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.a3, commits.a2, commits.c1, commits.b1])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: new Date('2018-01-02'),
+            max: new Date('2018-01-05'),
+            descending: true,
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.a3, commits.a2, commits.c1, commits.b1])
+    })
 
-  test('exclusiveMin = true in ascending order', async () => {
-    const {store} = context
+    test('exclusiveMin = true in ascending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: commits.a2.sortKey,
-          exclusiveMin: true,
-          max: new Date('2018-01-06'),
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.a3])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: commits.a2.sortKey,
+            exclusiveMin: true,
+            max: new Date('2018-01-06'),
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.a3])
+    })
 
-  test('exclusiveMin = true in descending order', async () => {
-    const {store} = context
+    test('exclusiveMin = true in descending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: commits.a2.sortKey,
-          exclusiveMin: true,
-          max: new Date('2018-01-06'),
-          descending: true,
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.a3])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: commits.a2.sortKey,
+            exclusiveMin: true,
+            max: new Date('2018-01-06'),
+            descending: true,
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.a3])
+    })
 
-  test('exclusiveMax = true in ascending order', async () => {
-    const {store} = context
+    test('exclusiveMax = true in ascending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: new Date('2018-01-03'),
-          max: commits.a3.sortKey,
-          exclusiveMax: true,
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.c1, commits.a2])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: new Date('2018-01-03'),
+            max: commits.a3.sortKey,
+            exclusiveMax: true,
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.c1, commits.a2])
+    })
 
-  test('exclusiveMax = true in descending order', async () => {
-    const {store} = context
+    test('exclusiveMax = true in descending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: new Date('2018-01-03'),
-          max: commits.a3.sortKey,
-          exclusiveMax: true,
-          descending: true,
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.a2, commits.c1])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: new Date('2018-01-03'),
+            max: commits.a3.sortKey,
+            exclusiveMax: true,
+            descending: true,
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.a2, commits.c1])
+    })
 
-  test('non-default partition', async () => {
-    const {store} = context
+    test('non-default partition', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          group: 'other',
-          min: new Date('2018-01-02'),
-          max: new Date('2018-01-06'),
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.o1])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            group: 'other',
+            min: new Date('2018-01-02'),
+            max: new Date('2018-01-06'),
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.o1])
+    })
 
-  test('limit and ascending order', async () => {
-    const {store} = context
+    test('limit and ascending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: new Date('2018-01-02'),
-          max: new Date('2018-01-05'),
-          limit: 2,
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.b1, commits.c1])
-  })
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: new Date('2018-01-02'),
+            max: new Date('2018-01-05'),
+            limit: 2,
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.b1, commits.c1])
+    })
 
-  test('limit and descending order', async () => {
-    const {store} = context
+    test('limit and descending order', async () => {
+      const {eventStore} = context
 
-    await expect(
-      iterableToArray(
-        store.chronologicalQuery({
-          min: new Date('2018-01-02'),
-          max: new Date('2018-01-05'),
-          limit: 2,
-          descending: true,
-        }).commits
-      )
-    ).resolves.toMatchObject([commits.a3, commits.a2])
-  })
-})
+      await expect(
+        iterableToArray(
+          eventStore.chronologicalQuery({
+            min: new Date('2018-01-02'),
+            max: new Date('2018-01-05'),
+            limit: 2,
+            descending: true,
+          }).commits
+        )
+      ).resolves.toMatchObject([commits.a3, commits.a2])
+    })
+  }
+)

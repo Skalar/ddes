@@ -4,8 +4,8 @@
 
 import Aggregate from './Aggregate'
 import Commit from './Commit'
+import EventStore from './EventStore'
 import MetaStore from './MetaStore'
-import Store from './Store'
 
 export interface Event {
   type: string
@@ -126,7 +126,7 @@ export interface StoreQueryResponse {
 export type MarshalledCommit = any
 
 export interface StorePollerParams {
-  store: Store
+  eventStore: EventStore
   chronologicalGroup?: string
   sortKeyCursor?: string | Date
   initalSleepPeriod?: number

@@ -1,9 +1,9 @@
 import {describeWithResources} from 'support'
-import {aws as AwsTestStore} from 'support/stores'
+import {aws} from 'support/stores'
 
-describeWithResources('AwsStore', {}, context => {
+describeWithResources('AwsEventStore', {}, context => {
   test.concurrent('setup() [withServices]', async () => {
-    const store = AwsTestStore(context, {
+    const eventStore = aws.eventStore(context, {
       initialCapacity: {
         tableRead: 1,
         tableWrite: 2,
@@ -14,10 +14,10 @@ describeWithResources('AwsStore', {}, context => {
       },
     })
 
-    await store.setup()
+    await eventStore.setup()
 
-    const {Table} = await store.dynamodb
-      .describeTable({TableName: store.tableName})
+    const {Table} = await eventStore.dynamodb
+      .describeTable({TableName: eventStore.tableName})
       .promise()
 
     expect(Table).toBeDefined()
@@ -70,6 +70,6 @@ describeWithResources('AwsStore', {}, context => {
       {AttributeName: 'v', KeyType: 'RANGE'},
     ])
 
-    await store.teardown()
+    await eventStore.teardown()
   })
 })

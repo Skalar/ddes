@@ -4,22 +4,19 @@
 
 import {
   AggregateKey,
-  AggregateSnapshot,
   AggregateType,
   Commit,
-  Store,
-  Timestamp,
+  EventStore,
   VersionConflictError,
-  utils as coreutils,
 } from '@ddes/core'
-import {DynamoDB, S3} from 'aws-sdk'
+
+import {DynamoDB} from 'aws-sdk'
 import {ConfigurationOptions} from 'aws-sdk/lib/config'
-import AwsStoreBatchMutator from './AwsStoreBatchMutator'
-import AwsStoreQueryResponse from './AwsStoreQueryResponse'
+import AwsEventStoreBatchMutator from './AwsEventStoreBatchMutator'
+import AwsEventStoreQueryResponse from './AwsEventStoreQueryResponse'
 import {
   AutoscalingConfig,
-  AwsStoreConfig,
-  SnapshotsConfig,
+  AwsEventStoreConfig,
   StoreCapacityConfig,
   StoreQueryParams,
 } from './types'
@@ -27,13 +24,9 @@ import * as utils from './utils'
 import chronologicalPartitionIterator from './utils/chronologicalPartitionIterator'
 
 /**
- * Class representing an Event Store based on AWS DynamoDB and S3
- *
- * ```typescript
- * const eventStore = new AwsStore({tableName: 'my-table'})
- * ```
+ * Interface for EventStore powered by AWS DynamoDB
  */
-export default class AwsStore extends Store {
+export default class AwsEventStore extends EventStore {
   public tableName!: string
 
   public initialCapacity: StoreCapacityConfig = {
@@ -46,13 +39,11 @@ export default class AwsStore extends Store {
   }
 
   public autoscaling?: AutoscalingConfig
-  public snapshots?: SnapshotsConfig
-  public s3ClientConfiguration?: S3.ClientConfiguration
   public dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
   public awsConfig?: ConfigurationOptions
   public dynamodb: DynamoDB
 
-  constructor(config: AwsStoreConfig) {
+  constructor(config: AwsEventStoreConfig) {
     super()
 
     if (!config.tableName) {
@@ -68,23 +59,17 @@ export default class AwsStore extends Store {
   }
 
   public toString() {
-    return `AwsStore:${this.tableName}`
+    return `AwsEventStore:${this.tableName}`
   }
 
   /**
-   * Create and configure DynamoDB table, S3 bucket and DynamoDB auto-scaling
+   * Create DynamoDB table and auto scaling configuration
    */
   public async setup() {
     await utils.createTable(this.tableSpecification, {
       dynamodbClientConfiguration: this.dynamodbClientConfiguration,
       ttl: true,
     })
-
-    if (this.snapshots && this.snapshots.manageBucket) {
-      await utils.createBucket(this.snapshots.s3BucketName, {
-        s3ClientConfiguration: this.s3ClientConfiguration,
-      })
-    }
 
     if (this.autoscaling) {
       await utils.setupAutoScaling(this.tableName, this.autoscaling, {
@@ -94,7 +79,7 @@ export default class AwsStore extends Store {
   }
 
   /**
-   * Remove DynamoDB auto-scaling, S3 Bucket and DynamoDB table
+   * Remove DynamoDB table and auto scaling configuration
    */
   public async teardown() {
     if (this.autoscaling) {
@@ -104,12 +89,6 @@ export default class AwsStore extends Store {
     await utils.deleteTable(this.tableName, {
       dynamodbClientConfiguration: this.dynamodbClientConfiguration,
     })
-
-    if (this.snapshots && this.snapshots.manageBucket) {
-      await utils.deleteBucket(this.snapshots.s3BucketName, {
-        s3ClientConfiguration: this.s3ClientConfiguration,
-      })
-    }
   }
 
   /**
@@ -230,7 +209,7 @@ export default class AwsStore extends Store {
     const minSortKey =
       min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
 
-    return new AwsStoreQueryResponse(
+    return new AwsEventStoreQueryResponse(
       this,
       (async function*() {
         let commitCount = 0
@@ -305,7 +284,7 @@ export default class AwsStore extends Store {
     options: {
       instanceLimit?: number
     } = {}
-  ): AwsStoreQueryResponse {
+  ): AwsEventStoreQueryResponse {
     const keyExpressions = ['a = :a']
     const queryVariables: {[key: string]: string} = {
       ':a': type,
@@ -313,7 +292,7 @@ export default class AwsStore extends Store {
     const filterExpressions: string[] = []
     const store = this
 
-    return new AwsStoreQueryResponse(
+    return new AwsEventStoreQueryResponse(
       this,
       (async function*() {
         let instanceCount = 0
@@ -360,7 +339,7 @@ export default class AwsStore extends Store {
       descending?: boolean
       limit?: number
     } = {}
-  ): AwsStoreQueryResponse {
+  ): AwsEventStoreQueryResponse {
     const {
       consistentRead = true,
       minVersion = 1,
@@ -397,7 +376,7 @@ export default class AwsStore extends Store {
       ...(descending && {ScanIndexForward: false}),
     }
 
-    return new AwsStoreQueryResponse(
+    return new AwsEventStoreQueryResponse(
       this,
       this.request('query', {
         keyExpressions,
@@ -417,10 +396,10 @@ export default class AwsStore extends Store {
       segment?: number
       capacityLimit?: number
     } & StoreQueryParams
-  ): AwsStoreQueryResponse {
+  ): AwsEventStoreQueryResponse {
     const {segment = 0, totalSegments = 1, ...rest} = params || {}
 
-    return new AwsStoreQueryResponse(
+    return new AwsEventStoreQueryResponse(
       this,
       this.request('scan', {
         TotalSegments: totalSegments,
@@ -431,140 +410,16 @@ export default class AwsStore extends Store {
   }
 
   /**
-   * Write an aggregate instance snapshot to AWS S3 bucket
-   *
-   * @param type e.g. 'Account'
-   * @param key  e.g. '1234'
-   */
-  public async writeSnapshot(
-    type: string,
-    key: string,
-    payload: {
-      version: number
-      state: object
-      timestamp: Timestamp
-      compatibilityChecksum: string
-    }
-  ) {
-    if (!this.snapshots) {
-      throw new Error('Snapshots are not configured')
-    }
-
-    const {version, state, timestamp, compatibilityChecksum} = payload
-
-    await this.s3
-      .putObject({
-        Bucket: this.snapshots.s3BucketName,
-        Key: `${this.snapshots.keyPrefix}${type}_${key}`,
-        Body: JSON.stringify({
-          version,
-          state,
-          compatibilityChecksum,
-          timestamp,
-        }),
-      })
-      .promise()
-  }
-
-  /**
-   * Read an aggregate instance snapshot from AWS S3
-   *
-   * @param type e.g. 'Account'
-   * @param key  e.g. '1234'
-   */
-  public async readSnapshot(
-    type: AggregateType,
-    key: AggregateKey
-  ): Promise<AggregateSnapshot | null> {
-    if (!this.snapshots) {
-      throw new Error('Snapshots are not configured')
-    }
-
-    try {
-      const {Body: snapshotJSON} = await this.s3
-        .getObject({
-          Bucket: this.snapshots.s3BucketName,
-          Key: `${this.snapshots.keyPrefix}${type}_${key}`,
-        })
-        .promise()
-
-      if (!snapshotJSON) {
-        return null
-      }
-
-      const {
-        version,
-        state,
-        timestamp: timestampString,
-        compatibilityChecksum,
-      } = JSON.parse(snapshotJSON as string)
-
-      return {
-        version,
-        state,
-        timestamp: coreutils.toTimestamp(timestampString),
-        compatibilityChecksum,
-      }
-    } catch (error) {
-      if (error.code !== 'NoSuchKey') {
-        throw error
-      }
-
-      return null
-    }
-  }
-
-  /**
-   * Delete snapshots from AWS S3 bucket
-   */
-  public async deleteSnapshots() {
-    if (!this.snapshots) {
-      throw new Error('Snapshots are not configured')
-    }
-
-    let listResult
-
-    do {
-      listResult = await this.s3
-        .listObjectsV2({
-          Bucket: this.snapshots.s3BucketName,
-          Prefix: this.snapshots.keyPrefix,
-          ContinuationToken: listResult
-            ? listResult.NextContinuationToken
-            : undefined,
-        })
-        .promise()
-
-      if (!listResult.Contents) {
-        throw new Error('List request returned on content')
-      }
-
-      for (const s3Object of listResult.Contents) {
-        await this.s3
-          .deleteObject({
-            Bucket: this.snapshots.s3BucketName,
-            Key: s3Object.Key!,
-          })
-          .promise()
-      }
-    } while (listResult.NextContinuationToken)
-  }
-
-  /**
    * Get a [[AwsBatchMutator]] for the store
    */
   public createBatchMutator(params: {capacityLimit?: number} = {}) {
     const {capacityLimit} = params
-    return new AwsStoreBatchMutator({store: this, capacityLimit})
+    return new AwsEventStoreBatchMutator({store: this, capacityLimit})
   }
 
   //
   // PROTECTED
   //
-
-  protected get s3() {
-    return new S3(this.s3ClientConfiguration)
-  }
 
   protected get tableSpecification() {
     return {

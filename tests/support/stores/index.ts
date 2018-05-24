@@ -1,1 +1,2 @@
-export * from './aws'
+import * as aws from './aws'
+export {aws}

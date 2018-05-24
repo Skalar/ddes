@@ -2,7 +2,7 @@
  * @module @ddes/store-transformations
  */
 
-import {AggregateType, Commit, MarshalledCommit, Store} from '@ddes/core'
+import {AggregateType, Commit, EventStore, MarshalledCommit} from '@ddes/core'
 import * as debug from 'debug'
 import {TransformationWorkerInput} from '.'
 import Transformation from './Transformation'
@@ -20,8 +20,8 @@ const log = debug('@ddes/store-transformations:CommitTransformation')
  * export default new CommitTransformation({
  *   name: 'Do something',
  *
- *   source: new AwsStore({tableName: 'tableA'}),
- *   target: new AwsStore({tableName: 'tableB'}),
+ *   source: new AwsEventStore({tableName: 'tableA'}),
+ *   target: new AwsEventStore({tableName: 'tableB'}),
  *
  *   async transform(commit: Commit) {
  *     // return the output commits of this commit transformation
@@ -43,8 +43,8 @@ class CommitTransformation extends Transformation {
 
   constructor(transformationSpec: {
     name: string
-    source: Store
-    target: Store
+    source: EventStore
+    target: EventStore
     transform: (
       commit: MarshalledCommit | Commit
     ) => Promise<Array<MarshalledCommit | Commit>>
