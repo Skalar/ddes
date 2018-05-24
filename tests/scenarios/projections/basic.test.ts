@@ -8,7 +8,9 @@ import {
   Projection,
   Projector,
 } from '@ddes/core'
+import {flatten} from 'lodash'
 import {describeWithResources} from 'support'
+import projectorBatchMap from 'support/projectorBatchMap'
 
 function* getTestCommits() {
   yield new Commit({
@@ -118,50 +120,49 @@ describeWithResources('Projections', {stores: true}, context => {
 
     projector.stop()
 
-    expect(processedEventsA).toMatchObject([
-      [
-        {
-          aggregateKey: 'forumId1',
-          aggregateType: 'Forum',
-          aggregateVersion: 1,
-          properties: {title: 'test forum'},
-          type: 'Created',
-          version: 1,
-        },
-      ],
-      [
-        {
-          aggregateKey: 'forumId1',
-          aggregateType: 'Forum',
-          aggregateVersion: 1,
-          properties: {title: 'newtest'},
-          type: 'Updated',
-          version: 1,
-        },
-      ],
+    const batchMapA = projectorBatchMap(processedEventsA)
+
+    expect(batchMapA['Forum.forumId1.1.Updated']).toBeGreaterThan(
+      batchMapA['Forum.forumId1.1.Created']
+    )
+
+    expect(flatten(processedEventsA)).toMatchObject([
+      {
+        aggregateKey: 'forumId1',
+        aggregateType: 'Forum',
+        aggregateVersion: 1,
+        properties: {title: 'test forum'},
+        type: 'Created',
+        version: 1,
+      },
+
+      {
+        aggregateKey: 'forumId1',
+        aggregateType: 'Forum',
+        aggregateVersion: 1,
+        properties: {title: 'newtest'},
+        type: 'Updated',
+        version: 1,
+      },
     ])
 
-    expect(processedEventsB).toMatchObject([
-      [
-        {
-          aggregateKey: 'forumId1.threadId1',
-          aggregateType: 'ForumThread',
-          aggregateVersion: 1,
-          properties: {title: 'test thread'},
-          type: 'Created',
-          version: 1,
-        },
-      ],
-      [
-        {
-          aggregateKey: 'forumId2.threadId1',
-          aggregateType: 'ForumThread',
-          aggregateVersion: 1,
-          properties: {title: 'test thread 2'},
-          type: 'Created',
-          version: 1,
-        },
-      ],
+    expect(flatten(processedEventsB)).toMatchObject([
+      {
+        aggregateKey: 'forumId1.threadId1',
+        aggregateType: 'ForumThread',
+        aggregateVersion: 1,
+        properties: {title: 'test thread'},
+        type: 'Created',
+        version: 1,
+      },
+      {
+        aggregateKey: 'forumId2.threadId1',
+        aggregateType: 'ForumThread',
+        aggregateVersion: 1,
+        properties: {title: 'test thread 2'},
+        type: 'Created',
+        version: 1,
+      },
     ])
   })
 })

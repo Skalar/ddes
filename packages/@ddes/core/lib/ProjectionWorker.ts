@@ -26,7 +26,7 @@ export default class ProjectionWorker {
     this.queue.add(eventWithMetadata)
 
     if (!this.workerLoopRunning) {
-      this.workerLoop()
+      setTimeout(() => this.workerLoop(), 50)
     }
   }
 
