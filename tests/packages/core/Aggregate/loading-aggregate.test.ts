@@ -96,6 +96,18 @@ describeWithResources('Aggregate', {stores: true}, context => {
     expect(
       (await TestAggregate.load({
         key: 'a',
+      }))!.toJSON()
+    ).toMatchObject({
+      key: 'a',
+      state: {myProperty: 'snapshotstate'},
+      timestamp: utils.toTimestamp('2018-01-02T00:00:00.000Z'),
+      type: 'TestAggregate',
+      version: 2,
+    })
+
+    expect(
+      (await TestAggregate.load({
+        key: 'a',
         useSnapshots: true,
       }))!.toJSON()
     ).toMatchObject({
@@ -124,6 +136,7 @@ describeWithResources('Aggregate', {stores: true}, context => {
 describeWithResources('Aggregate', {stores: true}, context => {
   test('loading via manual instantiation and hydrate()', async () => {
     TestAggregate.eventStore = context.eventStore
+    TestAggregate.snapshotStore = context.snapshotStore
 
     for (const commit of commits) {
       await TestAggregate.eventStore.commit(commit)
