@@ -374,7 +374,7 @@ export default class Aggregate {
 
     let shouldRewriteSnapshot = false
 
-    if (this.snapshotStore && options.useSnapshots) {
+    if (this.snapshotStore && options.useSnapshots !== false) {
       const snapshot = await this.snapshotStore.readSnapshot(
         this.type,
         this.key
