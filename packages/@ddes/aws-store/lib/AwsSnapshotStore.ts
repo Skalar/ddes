@@ -36,6 +36,11 @@ export default class AwsSnapshotStore extends SnapshotStore {
     this.bucketName = config.bucketName
     this.s3ClientConfiguration = config.s3ClientConfiguration
     this.s3 = new S3(this.s3ClientConfiguration)
+
+    if (config.keyPrefix) {
+      this.keyPrefix = config.keyPrefix
+    }
+
     if (typeof config.manageBucket !== 'undefined') {
       this.manageBucket = config.manageBucket
     }
