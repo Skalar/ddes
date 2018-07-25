@@ -4,20 +4,21 @@ import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import {Readable} from 'stream'
 import GcpEventStoreBatchMutator from './GcpEventStoreBatchMutator'
 import GcpEventStoreQueryResponse from './GcpEventStoreQueryResponse'
-import {MarshalledCommit, QueryResult, StoreQueryParams} from './types'
+import {
+  DatastoreConfiguration,
+  MarshalledCommit,
+  StoreQueryParams,
+} from './types'
 import {marshallCommit} from './utils'
 
 export default class GcpEventStore extends EventStore {
   public projectId!: string
   public tableName!: string
-
   public datastore: Datastore
 
-  constructor(config: {
-    projectId: string
-    tableName: string
-    endpoint?: string
-  }) {
+  private kind: string = 'Commit'
+
+  constructor(config: DatastoreConfiguration) {
     super()
 
     if (!config.projectId) {
@@ -34,8 +35,6 @@ export default class GcpEventStore extends EventStore {
       projectId: config.projectId,
       apiEndpoint: config.endpoint,
       namespace: config.tableName,
-      // Check if servicePath and port can be set here
-      // Currently just used with env DATASTORE_EMULATOR_HOST=0.0.0.0:8081
     })
   }
 
@@ -48,16 +47,12 @@ export default class GcpEventStore extends EventStore {
   }
 
   public async teardown() {
-    // Delete all keys/entities etc
+    // Delete all commits
+    // Might need to do some cleanup?
     let keys = []
 
     for await (const item of asyncIterateStream(this.request(), true)) {
-      keys.push(
-        this.datastore.key({
-          namespace: this.tableName,
-          path: ['Commit', [item.s, item.v].join(':')],
-        })
-      )
+      keys.push(item[this.datastore.KEY])
 
       if (keys.length === 100) {
         await this.datastore.delete(keys)
@@ -87,7 +82,7 @@ export default class GcpEventStore extends EventStore {
     const key = this.datastore.key({
       namespace: this.tableName,
       path: [
-        'Commit',
+        this.kind,
         [aggregateType, aggregateKey, aggregateVersion].join(':'),
       ],
     })
@@ -333,7 +328,7 @@ export default class GcpEventStore extends EventStore {
    */
 
   protected request(params?: StoreQueryParams): Readable {
-    const query = this.datastore.createQuery(this.tableName, 'Commit')
+    const query = this.datastore.createQuery(this.tableName, this.kind)
     if (params) {
       if (params.filters) {
         for (const {property, operator, value} of params.filters) {

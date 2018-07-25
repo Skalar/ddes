@@ -8,6 +8,16 @@ import {
  * @module @ddes/gcp-store
  */
 
+export interface Snapshot {
+  data: string
+}
+
+export interface DatastoreConfiguration {
+  projectId: string
+  tableName: string
+  endpoint?: string
+}
+
 interface StoreQueryFilterParam {
   property: string
   operator: QueryFilterOperator
