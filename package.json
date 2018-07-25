@@ -58,7 +58,8 @@
     "packages/@ddes/aws-store",
     "packages/@ddes/aws-lambda-transformer",
     "packages/@ddes/store-transformations",
-    "packages/@ddes/event-streaming"
+    "packages/@ddes/event-streaming",
+    "packages/@ddes/gcp-store"
   ],
   "jest": {
     "testEnvironment": "node",
