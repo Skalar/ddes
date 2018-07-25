@@ -1,7 +1,6 @@
 import {AggregateKey, AggregateType, Commit, EventStore} from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
 import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
-import {Readable} from 'stream'
 import GcpEventStoreBatchMutator from './GcpEventStoreBatchMutator'
 import GcpEventStoreQueryResponse from './GcpEventStoreQueryResponse'
 import {
@@ -9,14 +8,13 @@ import {
   MarshalledCommit,
   StoreQueryParams,
 } from './types'
-import {marshallCommit} from './utils'
+import {gcpRequest, marshallCommit} from './utils'
 
 export default class GcpEventStore extends EventStore {
   public projectId!: string
   public tableName!: string
   public datastore: Datastore
-
-  private kind: string = 'Commit'
+  public kind: string = 'Commit'
 
   constructor(config: DatastoreConfiguration) {
     super()
@@ -51,7 +49,7 @@ export default class GcpEventStore extends EventStore {
     // Might need to do some cleanup?
     let keys = []
 
-    for await (const item of asyncIterateStream(this.request(), true)) {
+    for await (const item of asyncIterateStream(gcpRequest(this), true)) {
       keys.push(item[this.datastore.KEY])
 
       if (keys.length === 100) {
@@ -66,10 +64,17 @@ export default class GcpEventStore extends EventStore {
     }
   }
 
+  public key(type: AggregateType, key: AggregateKey, version: number) {
+    return this.datastore.key({
+      namespace: this.tableName,
+      path: [this.kind, [type, key, version].join(':')],
+    })
+  }
+
   public async bestEffortCount() {
     let count = 0
 
-    for await (const item of asyncIterateStream(this.request(), true)) {
+    for await (const item of asyncIterateStream(gcpRequest(this), true)) {
       count++
     }
 
@@ -79,13 +84,7 @@ export default class GcpEventStore extends EventStore {
   public async commit(commit: Commit) {
     const {aggregateType, aggregateKey, aggregateVersion} = commit
     const marshalledCommit = await marshallCommit(commit)
-    const key = this.datastore.key({
-      namespace: this.tableName,
-      path: [
-        this.kind,
-        [aggregateType, aggregateKey, aggregateVersion].join(':'),
-      ],
-    })
+    const key = this.key(aggregateType, aggregateKey, aggregateVersion)
 
     try {
       await this.datastore.save({
@@ -188,7 +187,7 @@ export default class GcpEventStore extends EventStore {
         }
 
         for await (const queryResult of asyncIterateStream(
-          store.request(queryParams),
+          gcpRequest(store, queryParams),
           true
         )) {
           yield queryResult as MarshalledCommit
@@ -217,7 +216,7 @@ export default class GcpEventStore extends EventStore {
         } as StoreQueryParams
 
         for await (const result of asyncIterateStream(
-          store.request(queryParams),
+          gcpRequest(store, queryParams),
           true
         )) {
           if (!instances.includes(result.s)) {
@@ -305,7 +304,7 @@ export default class GcpEventStore extends EventStore {
     }
 
     return new GcpEventStoreQueryResponse(
-      asyncIterateStream(this.request(params), true)
+      asyncIterateStream(gcpRequest(this, params), true)
     )
   }
 
@@ -319,36 +318,7 @@ export default class GcpEventStore extends EventStore {
     const {segment = 0, totalSegments = 1, ...rest} = params || {}
 
     return new GcpEventStoreQueryResponse(
-      asyncIterateStream(this.request(rest), true)
+      asyncIterateStream(gcpRequest(this, rest), true)
     )
-  }
-
-  /**
-   * PROTECTED
-   */
-
-  protected request(params?: StoreQueryParams): Readable {
-    const query = this.datastore.createQuery(this.tableName, this.kind)
-    if (params) {
-      if (params.filters) {
-        for (const {property, operator, value} of params.filters) {
-          query.filter(
-            property,
-            operator ? operator : value,
-            operator ? value : null
-          )
-        }
-      }
-      if (params.orders) {
-        for (const order of params.orders) {
-          query.order(order.property, order.options)
-        }
-      }
-      if (params.limit) {
-        query.limit(params.limit)
-      }
-    }
-
-    return this.datastore.runQueryStream(query) as Readable
   }
 }

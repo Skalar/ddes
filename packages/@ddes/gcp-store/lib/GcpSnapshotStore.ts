@@ -9,22 +9,14 @@ import {
 import Datastore = require('@google-cloud/datastore')
 import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import {Readable} from 'stream'
-import {promisify} from 'util'
-import {gunzip as gunzipCb, gzip as gzipCb} from 'zlib'
 import {DatastoreConfiguration, Snapshot, StoreQueryParams} from './types'
-
-/**
- * @hidden
- */
-const gunzip = promisify(gunzipCb)
-const gzip = promisify(gzipCb)
+import {gcpRequest, zipper} from './utils'
 
 export default class GcpSnapshotStore extends SnapshotStore {
   public projectId!: string
   public tableName!: string
   public datastore: Datastore
-
-  private kind: string = 'Snapshot'
+  public kind: string = 'Snapshot'
 
   constructor(config: DatastoreConfiguration) {
     super()
@@ -54,15 +46,19 @@ export default class GcpSnapshotStore extends SnapshotStore {
     await this.deleteSnapshots()
   }
 
+  public key(type: AggregateType, key: AggregateKey) {
+    return this.datastore.key({
+      namespace: this.tableName,
+      path: [this.kind, [type, key].join(':')],
+    })
+  }
+
   public async readSnapshot(
     type: AggregateType,
     key: AggregateKey
   ): Promise<AggregateSnapshot | null> {
     try {
-      const snapshotKey = this.datastore.key({
-        namespace: this.tableName,
-        path: [this.kind, [type, key].join(':')],
-      })
+      const snapshotKey = this.key(type, key)
       const snapshot = (await this.datastore.get(snapshotKey))[0] as Snapshot
 
       if (!snapshot || !snapshot.data) {
@@ -74,7 +70,7 @@ export default class GcpSnapshotStore extends SnapshotStore {
         state,
         timestamp: timestampString,
         compatibilityChecksum,
-      } = JSON.parse((await gunzip(snapshot.data)) as string)
+      } = JSON.parse((await zipper.unzip(snapshot.data)) as string)
 
       return {
         version,
@@ -91,7 +87,7 @@ export default class GcpSnapshotStore extends SnapshotStore {
     // Delete all snapshots
     let keys = []
 
-    for await (const item of asyncIterateStream(this.request(), true)) {
+    for await (const item of asyncIterateStream(gcpRequest(this), true)) {
       keys.push(item[this.datastore.KEY])
 
       if (keys.length === 100) {
@@ -116,40 +112,9 @@ export default class GcpSnapshotStore extends SnapshotStore {
       compatibilityChecksum: string
     }
   ) {
-    const data = (await gzip(JSON.stringify(payload))) as string
-    const snapshotKey = this.datastore.key({
-      namespace: this.tableName,
-      path: [this.kind, [type, key].join(':')],
-    })
+    const data = (await zipper.zip(JSON.stringify(payload))) as string
+    const snapshotKey = this.key(type, key)
 
     await this.datastore.save({key: snapshotKey, data: {data}})
-  }
-
-  /**
-   * PROTECTED
-   */
-  protected request(params?: StoreQueryParams): Readable {
-    const query = this.datastore.createQuery(this.tableName, this.kind)
-    if (params) {
-      if (params.filters) {
-        for (const {property, operator, value} of params.filters) {
-          query.filter(
-            property,
-            operator ? operator : value,
-            operator ? value : null
-          )
-        }
-      }
-      if (params.orders) {
-        for (const order of params.orders) {
-          query.order(order.property, order.options)
-        }
-      }
-      if (params.limit) {
-        query.limit(params.limit)
-      }
-    }
-
-    return this.datastore.runQueryStream(query) as Readable
   }
 }

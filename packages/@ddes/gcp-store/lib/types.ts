@@ -7,7 +7,11 @@ import {
 /**
  * @module @ddes/gcp-store
  */
-
+export interface MetaItem {
+  p: string
+  v: string
+  x?: number
+}
 export interface Snapshot {
   data: string
 }
