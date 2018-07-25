@@ -1,0 +1,39 @@
+{
+  "name": "@ddes/gcp-store",
+  "version": "3.0.1",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "description": "GCP powered EventStore implementation for DDES, a framework for distributed Event Sourcing & CQRS",
+  "author": "Kristinn Thor Johannson <spiffern@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "index.js",
+    "package.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ddes/core": "3.0.1",
+    "@google-cloud/datastore": "1.4.1",
+    "async.forever": "0.5.2"
+  },
+  "repository": "skalar/ddes",
+  "homepage": "https://ddes.io",
+  "keywords": [
+    "gcp",
+    "datastore",
+    "distributed",
+    "event",
+    "store",
+    "event",
+    "sourcing",
+    "cqrs"
+  ],
+  "devDependencies": {
+    "typescript": "3.4.5"
+  }
+}

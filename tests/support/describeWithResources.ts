@@ -7,7 +7,7 @@ enum ResourceName {
   eventStreamServer = 'eventStreamServer',
 }
 
-const storeTypes = ['aws']
+const storeTypes = ['gcp', 'aws']
 
 export interface TestWithResourcesContext {
   eventStore: EventStore

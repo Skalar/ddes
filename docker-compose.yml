@@ -1,6 +1,6 @@
 version: '3.2'
 
-services:      
+services:
   dynamodb:
     image: socialpoint/dynalite
     command: dynalite --port=8000 --createTableMs=1 --deleteTableMs=1 --updateTableMs=100 --path=/var/dynamodb
@@ -12,3 +12,11 @@ services:
     command: s3rver --hostname 0.0.0.0 --port 5000 --directory /tmp/s3 --silent
     ports:
       - 5000:5000
+
+  datastore:
+    build: support/datastore
+    environment:
+      - DATASTORE_PROJECT_ID=ddes-test
+      - DATASTORE_LISTEN_ADDRESS=0.0.0.0:8081
+    ports:
+      - '8081:8081'

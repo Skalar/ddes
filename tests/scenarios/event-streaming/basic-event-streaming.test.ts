@@ -58,7 +58,7 @@ describeWithResources(
         events: [{}],
       })
 
-      const iterator = subscriptionStream[Symbol.asyncIterator]()
+      subscriptionStream[Symbol.asyncIterator]()
 
       for (const commit of getTestCommits()) {
         await eventStore.commit(commit)
@@ -66,7 +66,7 @@ describeWithResources(
 
       await expect(
         iterableToArray(subscriptionStream, {
-          maxWaitTime: 50,
+          maxWaitTime: 500,
         })
       ).resolves.toMatchObject([
         {
@@ -113,14 +113,14 @@ describeWithResources(
         events: [{aggregateType: 'TestAggregate'}],
       })
 
-      const iterator = subscriptionStream[Symbol.asyncIterator]()
+      subscriptionStream[Symbol.asyncIterator]()
 
       for (const commit of getTestCommits()) {
         await eventStore.commit(commit)
       }
 
       await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 50})
+        iterableToArray(subscriptionStream, {maxWaitTime: 500})
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',
@@ -158,14 +158,14 @@ describeWithResources(
         events: [{'properties.deep.property': 4}],
       })
 
-      const iterator = subscriptionStream[Symbol.asyncIterator]()
+      subscriptionStream[Symbol.asyncIterator]()
 
       for (const commit of getTestCommits()) {
         await eventStore.commit(commit)
       }
 
       await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 50})
+        iterableToArray(subscriptionStream, {maxWaitTime: 500})
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',
@@ -205,7 +205,7 @@ describeWithResources(
       }
 
       await expect(
-        iterableToArray(subscriptionStream1, {maxWaitTime: 50})
+        iterableToArray(subscriptionStream1, {maxWaitTime: 500})
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',
@@ -226,7 +226,7 @@ describeWithResources(
       ])
 
       await expect(
-        iterableToArray(subscriptionStream2, {maxWaitTime: 50})
+        iterableToArray(subscriptionStream2, {maxWaitTime: 500})
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',

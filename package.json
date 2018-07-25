@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "scripts/build.js",
+    "build": "scripts/build",
     "test": "scripts/test"
   },
   "release": {
@@ -44,11 +44,11 @@
     "semantic-release": "^15.1.7",
     "semantic-release-github-pr": "^5.0.1",
     "travis-deploy-once": "^4.4.1",
-    "ts-jest": "^22.4.4",
-    "tslint": "^5.9.1",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.16.0",
     "typedoc": "^0.11.1",
     "typedoc-plugin-external-module-name": "^1.1.1",
-    "typescript": "^2.8.1"
+    "typescript": "^3.4.5"
   },
   "npmClient": "yarn",
   "useWorkspaces": true,
@@ -58,7 +58,8 @@
     "packages/@ddes/aws-store",
     "packages/@ddes/aws-lambda-transformer",
     "packages/@ddes/store-transformations",
-    "packages/@ddes/event-streaming"
+    "packages/@ddes/event-streaming",
+    "packages/@ddes/gcp-store"
   ],
   "jest": {
     "testEnvironment": "node",

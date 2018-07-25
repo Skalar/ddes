@@ -113,7 +113,6 @@ class CommitTransformation extends Transformation {
         ? resultSet.items
         : resultSet.commits) {
         commitsRead++
-
         const outputCommits = await this.transform(commit)
 
         if (!Array.isArray(outputCommits)) {
