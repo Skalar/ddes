@@ -24,8 +24,14 @@ export interface DatastoreConfiguration {
 
 interface StoreQueryFilterParam {
   property: string
-  operator: QueryFilterOperator
+  operator?: QueryFilterOperator
   value: any
+}
+
+interface StoreQueryFilterInParam {
+  property: string
+  operator?: QueryFilterOperator
+  value: any[]
 }
 
 interface StoreQueryOrderParam {
@@ -35,6 +41,7 @@ interface StoreQueryOrderParam {
 
 export interface StoreQueryParams {
   keyOnly?: boolean
+  filterIn?: StoreQueryFilterInParam
   filters?: StoreQueryFilterParam[]
   orders?: StoreQueryOrderParam[]
   limit?: number

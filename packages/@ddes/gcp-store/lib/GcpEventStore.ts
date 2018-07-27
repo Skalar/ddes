@@ -3,12 +3,13 @@ import Datastore = require('@google-cloud/datastore')
 import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import GcpEventStoreBatchMutator from './GcpEventStoreBatchMutator'
 import GcpEventStoreQueryResponse from './GcpEventStoreQueryResponse'
+import {DatastoreConfiguration, StoreQueryParams} from './types'
 import {
-  DatastoreConfiguration,
-  MarshalledCommit,
-  StoreQueryParams,
-} from './types'
-import {gcpRequest, marshallCommit} from './utils'
+  chronologicalPartitionIterator,
+  gcpRequest,
+  marshallCommit,
+  stringcrementor,
+} from './utils'
 
 export default class GcpEventStore extends EventStore {
   public projectId!: string
@@ -155,7 +156,7 @@ export default class GcpEventStore extends EventStore {
         ? max
         : new Date(max.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
     const maxSortKey =
-      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') + ';' : max
+      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') : max
 
     const minDate =
       min instanceof Date
@@ -167,30 +168,61 @@ export default class GcpEventStore extends EventStore {
 
     return new GcpEventStoreQueryResponse(
       (async function*() {
-        const commitCount = 0
+        let commitCount = 0
 
-        const queryParams: StoreQueryParams = {
-          orders: [
-            {
-              property: 't',
-              options: {descending: descending || false},
-            },
-          ],
-          filters: [
-            {property: 't', operator: '>', value: minDate},
-            {property: 't', operator: '<', value: maxDate},
-          ],
-        }
+        for (const partition of chronologicalPartitionIterator({
+          start: minDate,
+          end: maxDate,
+          group,
+          descending,
+        })) {
+          const queryParams: StoreQueryParams = {
+            filters: [
+              {property: 'p', value: partition.key},
+              {
+                property: 'g',
+                operator: '>=',
+                value: exclusiveMin ? stringcrementor(minSortKey) : minSortKey,
+              },
+              {
+                property: 'g',
+                operator: '<=',
+                value: exclusiveMax
+                  ? stringcrementor(maxSortKey, -1)
+                  : maxSortKey,
+              },
+            ],
+            orders: [
+              {
+                property: 'g',
+                options: {descending: descending || false},
+              },
+            ],
+          }
 
-        if (limit) {
-          queryParams.limit = limit
-        }
+          if (params.filterAggregateTypes) {
+            queryParams.filterIn = {
+              property: 'a',
+              value: params.filterAggregateTypes,
+            }
+          }
 
-        for await (const queryResult of asyncIterateStream(
-          gcpRequest(store, queryParams),
-          true
-        )) {
-          yield queryResult as MarshalledCommit
+          if (limit && limit - commitCount > 0) {
+            queryParams.limit = limit - commitCount
+          }
+
+          for await (const result of asyncIterateStream(
+            gcpRequest(store, queryParams),
+            true
+          )) {
+            commitCount++
+
+            if (limit && commitCount >= limit) {
+              return
+            }
+
+            yield result
+          }
         }
       })()
     )
@@ -208,7 +240,6 @@ export default class GcpEventStore extends EventStore {
           filters: [
             {
               property: 'a',
-              operator: '=',
               value: type,
             },
           ],
@@ -268,7 +299,6 @@ export default class GcpEventStore extends EventStore {
       filters: [
         {
           property: 's',
-          operator: '=',
           value: [type, key].join(':'),
         },
         {

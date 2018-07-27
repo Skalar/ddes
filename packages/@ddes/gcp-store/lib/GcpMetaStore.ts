@@ -1,7 +1,7 @@
 import {MetaStore, MetaStoreKey} from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
-import {asyncIterateStream} from '../node_modules/async-iterate-stream/asyncIterateStream'
-import {DatastoreConfiguration, MetaItem, StoreQueryParams} from './types'
+import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
+import {DatastoreConfiguration, MetaItem} from './types'
 import {gcpRequest, zipper} from './utils'
 
 export default class GcpMetaStore extends MetaStore {
@@ -39,7 +39,7 @@ export default class GcpMetaStore extends MetaStore {
 
   public async get(key: MetaStoreKey) {
     const metaKey = this.key(key)
-
+    console.log(`Getting: ${key[0]}, ${key[1]}`)
     const item = (await this.datastore.get(metaKey))[0] as MetaItem
 
     if (!item) {
@@ -61,7 +61,7 @@ export default class GcpMetaStore extends MetaStore {
     options: {expiresAt?: Date} = {}
   ) {
     const metaKey = this.key(key)
-
+    console.log(`Putting: ${key[0]}, ${key[1]}`)
     await this.datastore.save({
       key: metaKey,
       data: {
