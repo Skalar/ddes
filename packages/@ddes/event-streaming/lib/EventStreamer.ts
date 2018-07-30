@@ -76,13 +76,14 @@ export default class EventStreamer {
       sortKey,
     } = commit
 
-    for (const event of events) {
+    for (const [commitEventIndex, event] of Object.entries(events)) {
       this.publishEventToSubscribers({
         ...event,
         aggregateType,
         aggregateKey,
         aggregateVersion,
         timestamp,
+        commitEventIndex: parseInt(commitEventIndex, 10)
       })
     }
   }

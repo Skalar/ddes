@@ -46,7 +46,7 @@ export default class Projector extends StorePoller {
   }
 
   public async processCommit(commit: Commit) {
-    for (const event of commit.events) {
+    for (const [index, event] of Object.entries(commit.events)) {
       const {
         aggregateType,
         aggregateKey,
@@ -62,6 +62,7 @@ export default class Projector extends StorePoller {
         aggregateVersion,
         timestamp,
         sortKey,
+        commitEventIndex: parseInt(index, 10)
       }
 
       for (const queue of this.queues) {

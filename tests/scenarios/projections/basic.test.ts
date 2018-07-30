@@ -134,6 +134,7 @@ describeWithResources('Projections', {stores: true}, context => {
         properties: {title: 'test forum'},
         type: 'Created',
         version: 1,
+        commitEventIndex: 0,
       },
 
       {
@@ -143,6 +144,7 @@ describeWithResources('Projections', {stores: true}, context => {
         properties: {title: 'newtest'},
         type: 'Updated',
         version: 1,
+        commitEventIndex: 1,
       },
     ])
 
@@ -154,6 +156,7 @@ describeWithResources('Projections', {stores: true}, context => {
         properties: {title: 'test thread'},
         type: 'Created',
         version: 1,
+        commitEventIndex: 0,
       },
       {
         aggregateKey: 'forumId2.threadId1',
@@ -162,6 +165,7 @@ describeWithResources('Projections', {stores: true}, context => {
         properties: {title: 'test thread 2'},
         type: 'Created',
         version: 1,
+        commitEventIndex: 0,
       },
     ])
   })

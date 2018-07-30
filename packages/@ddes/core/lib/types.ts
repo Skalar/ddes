@@ -31,7 +31,9 @@ export type EventWithMetadata = Event &
   Pick<
     Commit,
     'aggregateType' | 'aggregateKey' | 'aggregateVersion' | 'timestamp'
-  >
+  > & {
+    commitEventIndex: number
+  }
 
 export type Timestamp = number
 
