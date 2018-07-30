@@ -34,29 +34,5 @@ export default function(
   store: GcpEventStore | GcpMetaStore | GcpSnapshotStore,
   params?: StoreQueryParams
 ): Readable {
-  if (params && params.filterIn) {
-    const {property, operator} = params.filterIn
-    const queries: Query[] = []
-    params.filterIn.value.forEach(val => {
-      const filterIn = {
-        property,
-        operator,
-        value: val,
-      }
-      queries.push(
-        createQuery(store, {
-          ...params,
-          filters: params.filters ? [...params.filters, filterIn] : [filterIn],
-        })
-      )
-    })
-
-    const streams = queries.map(query => store.datastore.runQueryStream(query))
-
-    return MultiStream(streams) as Readable
-  } else {
-    return store.datastore.runQueryStream(
-      createQuery(store, params)
-    ) as Readable
-  }
+  return store.datastore.runQueryStream(createQuery(store, params)) as Readable
 }

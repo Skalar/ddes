@@ -1,6 +1,7 @@
-import {BatchMutator, Commit} from '@ddes/core'
+import {AggregateKey, AggregateType, BatchMutator, Commit} from '@ddes/core'
 import GcpEventStore from './GcpEventStore'
 import {GcpEventStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
+import {marshallCommit, unmarshallCommit} from './utils'
 
 export default class GcpEventStoreBatchMutator extends BatchMutator<
   MarshalledCommit
@@ -46,10 +47,21 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
   public async delete(
     commits: Array<Commit | MarshalledCommit | Commit | MarshalledCommit>
   ): Promise<void> {
-    return Promise.resolve()
+    for await (const commit of this.asIterable(commits)) {
+      const {aggregateKey, aggregateType, aggregateVersion} =
+        commit instanceof Commit ? commit : await unmarshallCommit(commit)
+
+      const key = this.store.key(aggregateType, aggregateKey, aggregateVersion)
+
+      await this.addToQueue({delete: {key}})
+    }
   }
 
   public async put(): Promise<void> {
     return Promise.resolve()
+  }
+
+  private addToQueue(item: any) {
+    console.log(item)
   }
 }

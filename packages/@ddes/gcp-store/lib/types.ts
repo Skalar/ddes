@@ -28,12 +28,6 @@ interface StoreQueryFilterParam {
   value: any
 }
 
-interface StoreQueryFilterInParam {
-  property: string
-  operator?: QueryFilterOperator
-  value: any[]
-}
-
 interface StoreQueryOrderParam {
   property: string
   options?: OrderOptions
@@ -41,7 +35,6 @@ interface StoreQueryOrderParam {
 
 export interface StoreQueryParams {
   keyOnly?: boolean
-  filterIn?: StoreQueryFilterInParam
   filters?: StoreQueryFilterParam[]
   orders?: StoreQueryOrderParam[]
   limit?: number

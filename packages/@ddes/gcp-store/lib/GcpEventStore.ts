@@ -146,7 +146,7 @@ export default class GcpEventStore extends EventStore {
       timeDriftCompensation = 500,
     } = params
     const {max = new Date(Date.now() + timeDriftCompensation)} = params
-
+    console.log(params)
     if (!min) {
       throw new Error('You must specify the "min" parameter')
     }
@@ -200,21 +200,17 @@ export default class GcpEventStore extends EventStore {
             ],
           }
 
-          if (params.filterAggregateTypes) {
-            queryParams.filterIn = {
-              property: 'a',
-              value: params.filterAggregateTypes,
-            }
-          }
-
-          if (limit && limit - commitCount > 0) {
-            queryParams.limit = limit - commitCount
-          }
-
           for await (const result of asyncIterateStream(
             gcpRequest(store, queryParams),
             true
           )) {
+            if (
+              params.filterAggregateTypes &&
+              !params.filterAggregateTypes.includes(result.a)
+            ) {
+              continue
+            }
+
             commitCount++
 
             if (limit && commitCount >= limit) {
