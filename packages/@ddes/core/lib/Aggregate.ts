@@ -531,13 +531,14 @@ export default class Aggregate {
       timestamp,
     } = commit
 
-    this.internalState = events.reduce((state, event) => {
+    this.internalState = events.reduce((state, event, commitEventIndex) => {
       const eventWithMetadata: EventWithMetadata = {
         ...event,
         aggregateType,
         aggregateKey,
         aggregateVersion,
         timestamp,
+        commitEventIndex,
       }
       const klass = this.constructor as typeof Aggregate
       return klass.stateReducer(state, eventWithMetadata)
