@@ -19,9 +19,7 @@
   "dependencies": {
     "@ddes/core": "3.0.1",
     "@google-cloud/datastore": "1.4.1",
-    "async-iterate-stream": "1.0.3",
-    "multistream": "2.1.1",
-    "stream-to-async-iterator": "0.2.0"
+    "async-iterate-stream": "1.0.3"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
@@ -37,7 +35,6 @@
   ],
   "devDependencies": {
     "@types/google-cloud__datastore": "1.3.1",
-    "@types/multistream": "2.1.1",
     "typescript": "2.7.2"
   }
 }

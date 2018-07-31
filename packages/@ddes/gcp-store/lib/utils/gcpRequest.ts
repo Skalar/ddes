@@ -1,5 +1,3 @@
-import {Query} from '@google-cloud/datastore/query'
-import {obj as MultiStream} from 'multistream'
 import {Readable} from 'stream'
 import GcpEventStore from '../GcpEventStore'
 import GcpMetaStore from '../GcpMetaStore'

@@ -60,7 +60,7 @@ export interface MarshalledCommit {
   /**
    * Aggregate version (table sort key)
    */
-  v: string
+  v: number
 
   /**
    * Chronological sort key (chronological index sort key)
@@ -80,7 +80,7 @@ export interface MarshalledCommit {
   /**
    * Commit timestamp
    */
-  t: string
+  t: number
 
   /**
    * Events in gzipped JSON form
@@ -107,8 +107,7 @@ export interface GcpEventStoreBatchMutatorQueueItem {
   startedResolver: () => void
   processedPromise: Promise<any>
   processedResolver: () => void
-  capacityUnits: number
   processing: boolean
   item: any
-  throttleCount: number
+  capacityUnits: number
 }

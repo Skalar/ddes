@@ -5,7 +5,7 @@
 import {Commit} from '@ddes/core'
 import {promisify} from 'util'
 import {gzip as gzipCb} from 'zlib'
-import {MarshalledCommitProperty} from '../types'
+import {MarshalledCommit, MarshalledCommitProperty} from '../types'
 
 /**
  * @hidden
@@ -17,8 +17,9 @@ const gzip = promisify(gzipCb)
  * @hidden
  */
 export default async function marshallCommit(
-  commit: Commit
-): Promise<MarshalledCommitProperty[]> {
+  commit: Commit,
+  asObject?: boolean
+): Promise<MarshalledCommitProperty[] | MarshalledCommit> {
   const {
     aggregateType,
     aggregateKey,
@@ -40,46 +41,62 @@ export default async function marshallCommit(
     )
   )) as string
 
+  const commitObj = {
+    s: [aggregateType, aggregateKey].join(':'),
+    v: aggregateVersion,
+    g: sortKey,
+    a: aggregateType,
+    r: aggregateVersion === 1 ? aggregateKey : null,
+    t: new Date(timestamp).valueOf(),
+    e: zippedEvents,
+    x: expiresAt || '',
+    p: `${new Date(timestamp)
+      .toISOString()
+      .split('T')[0]
+      .replace(/\-/g, '')}${chronologicalGroup}`,
+  } as MarshalledCommit
+
+  if (asObject) {
+    return commitObj
+  }
+
   return [
     {
       name: 's',
-      value: [aggregateType, aggregateKey].join(':'),
+      value: commitObj.s,
     },
     {
       name: 'v',
-      value: aggregateVersion,
+      value: commitObj.v,
     },
     {
       name: 'g',
-      value: sortKey,
+      value: commitObj.g,
     },
     {
       name: 'a',
-      value: aggregateType,
+      value: commitObj.a,
     },
     {
       name: 'r',
-      value: aggregateVersion === 1 ? aggregateKey : null,
+      value: commitObj.r,
     },
     {
       name: 't',
-      value: new Date(timestamp).valueOf(),
+      value: commitObj.t,
     },
     {
       name: 'e',
-      value: zippedEvents,
+      value: commitObj.e,
       excludeFromIndexes: true,
     },
     {
       name: 'x',
-      value: expiresAt || '',
+      value: commitObj.x,
     },
     {
       name: 'p',
-      value: `${new Date(timestamp)
-        .toISOString()
-        .split('T')[0]
-        .replace(/\-/g, '')}${chronologicalGroup}`,
+      value: commitObj.p,
     },
   ] as MarshalledCommitProperty[]
 }
