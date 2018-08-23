@@ -113,9 +113,9 @@ class CommitTransformation extends Transformation {
         ? resultSet.items
         : resultSet.commits) {
         commitsRead++
-
         const outputCommits = await this.transform(commit)
-
+        console.log(commit)
+        console.log(commit instanceof Commit)
         if (!Array.isArray(outputCommits)) {
           throw new Error(
             'CommitTransformation#transform() must return an array'

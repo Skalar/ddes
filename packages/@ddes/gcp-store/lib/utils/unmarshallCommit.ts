@@ -26,8 +26,8 @@ export default async function unmarshallCommit(
   const commit = new Commit({
     aggregateType,
     aggregateKey,
-    aggregateVersion: parseInt(marshalled.v, 10),
-    expiresAt: parseInt(marshalled.x, 10),
+    aggregateVersion: marshalled.v,
+    expiresAt: marshalled.x ? parseInt(marshalled.x, 10) : undefined,
     timestamp: marshalled.t,
     events: JSON.parse((await gunzip(marshalled.e)) as string).map(
       ({

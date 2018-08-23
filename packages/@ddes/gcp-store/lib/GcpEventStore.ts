@@ -1,4 +1,10 @@
-import {AggregateKey, AggregateType, Commit, EventStore} from '@ddes/core'
+import {
+  AggregateKey,
+  AggregateType,
+  Commit,
+  EventStore,
+  VersionConflictError,
+} from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
 import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import GcpEventStoreBatchMutator from './GcpEventStoreBatchMutator'
@@ -49,7 +55,6 @@ export default class GcpEventStore extends EventStore {
     // Delete all commits
     // Might need to do some cleanup?
     let keys = []
-
     for await (const item of asyncIterateStream(gcpRequest(this), true)) {
       keys.push(item[this.datastore.KEY])
 
@@ -88,12 +93,19 @@ export default class GcpEventStore extends EventStore {
     const key = this.key(aggregateType, aggregateKey, aggregateVersion)
 
     try {
-      await this.datastore.save({
+      await this.datastore.insert({
         key,
         data: marshalledCommit,
       })
-    } catch (e) {
-      throw new Error(`Commit ${commit.aggregateVersion} failed: ${e.message}`)
+    } catch (error) {
+      if (error.code === 6) {
+        throw new VersionConflictError(
+          `${commit.aggregateType}[${
+            commit.aggregateKey
+          }] already has a version ${commit.aggregateVersion} commit`
+        )
+      }
+      throw error
     }
   }
 
@@ -146,7 +158,7 @@ export default class GcpEventStore extends EventStore {
       timeDriftCompensation = 500,
     } = params
     const {max = new Date(Date.now() + timeDriftCompensation)} = params
-    console.log(params)
+
     if (!min) {
       throw new Error('You must specify the "min" parameter')
     }
@@ -156,7 +168,7 @@ export default class GcpEventStore extends EventStore {
         ? max
         : new Date(max.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
     const maxSortKey =
-      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') : max
+      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') + ';' : max
 
     const minDate =
       min instanceof Date
@@ -195,7 +207,11 @@ export default class GcpEventStore extends EventStore {
             orders: [
               {
                 property: 'g',
-                options: {descending: descending || false},
+                options: {descending: !!descending},
+              },
+              {
+                property: 't',
+                options: {descending: !!descending},
               },
             ],
           }
@@ -213,7 +229,7 @@ export default class GcpEventStore extends EventStore {
 
             commitCount++
 
-            if (limit && commitCount >= limit) {
+            if (limit && commitCount > limit) {
               return
             }
 
@@ -277,7 +293,7 @@ export default class GcpEventStore extends EventStore {
       maxTime?: Date | number
       descending?: boolean
       limit?: number
-    }
+    } = {}
   ): GcpEventStoreQueryResponse {
     const {
       minVersion = 1,
@@ -307,7 +323,7 @@ export default class GcpEventStore extends EventStore {
           operator: '<=',
           value: maxVersion,
         },
-        // { This needs to be done in a different way:
+        // { This needs to be done in a different way because of query restrictions:
         // https: // cloud.google.com/appengine/docs/standard/go/datastore/query-restrictions
         //   property: 't',
         //   operator: '<=',
@@ -317,6 +333,7 @@ export default class GcpEventStore extends EventStore {
       orders: [
         {
           property: 'v',
+          options: {descending: !!descending},
         },
         {
           property: 't',
@@ -329,8 +346,22 @@ export default class GcpEventStore extends EventStore {
       params.limit = limit
     }
 
+    const store = this
+    let timestamp = 0
     return new GcpEventStoreQueryResponse(
-      asyncIterateStream(gcpRequest(this, params), true)
+      (async function*() {
+        for await (const result of asyncIterateStream(
+          gcpRequest(store, params),
+          true
+        )) {
+          timestamp = result.t
+          if (maxTime && timestamp > maxTime.valueOf()) {
+            return
+          }
+
+          yield result
+        }
+      })()
     )
   }
 

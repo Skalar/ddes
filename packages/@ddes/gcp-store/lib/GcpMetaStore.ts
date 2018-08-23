@@ -39,7 +39,6 @@ export default class GcpMetaStore extends MetaStore {
 
   public async get(key: MetaStoreKey) {
     const metaKey = this.key(key)
-    console.log(`Getting: ${key[0]}, ${key[1]}`)
     const item = (await this.datastore.get(metaKey))[0] as MetaItem
 
     if (!item) {
@@ -61,7 +60,6 @@ export default class GcpMetaStore extends MetaStore {
     options: {expiresAt?: Date} = {}
   ) {
     const metaKey = this.key(key)
-    console.log(`Putting: ${key[0]}, ${key[1]}`)
     await this.datastore.save({
       key: metaKey,
       data: {
@@ -107,7 +105,6 @@ export default class GcpMetaStore extends MetaStore {
       }
 
       yield [item.s, item.v]
-
       done = isDone
     } while (!done)
   }
@@ -119,7 +116,6 @@ export default class GcpMetaStore extends MetaStore {
   public async teardown() {
     // Delete all meta rows
     let keys = []
-
     for await (const item of asyncIterateStream(gcpRequest(this), true)) {
       keys.push(item[this.datastore.KEY])
 

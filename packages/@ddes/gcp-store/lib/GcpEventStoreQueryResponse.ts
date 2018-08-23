@@ -51,7 +51,6 @@ export default class GcpEventStoreQueryResponse implements StoreQueryResponse {
 
   protected async *asResultSets() {
     const self = this
-
     for await (const rawQueryResult of this.responseIterator) {
       yield {
         get commits() {
@@ -66,6 +65,6 @@ export default class GcpEventStoreQueryResponse implements StoreQueryResponse {
       return
     }
 
-    yield await unmarshallCommit(queryOutput as MarshalledCommit)
+    yield await unmarshallCommit(queryOutput)
   }
 }

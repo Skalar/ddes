@@ -1,2 +1,4 @@
 import * as aws from './aws'
-export {aws}
+import * as gcp from './gcp'
+
+export {aws, gcp}
