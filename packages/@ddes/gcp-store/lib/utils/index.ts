@@ -2,6 +2,7 @@
  * @module @ddes/gcp-store.utils
  */
 
+export {default as asyncIterateStream} from './asyncIterateStream'
 export {
   default as chronologicalPartitionIterator,
 } from './chronologicalPartitionIterator'

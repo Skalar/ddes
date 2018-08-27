@@ -7,9 +7,8 @@ import {
   utils as coreutils,
 } from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
-import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import {DatastoreConfiguration, Snapshot} from './types'
-import {gcpRequest, zipper} from './utils'
+import {asyncIterateStream, gcpRequest, zipper} from './utils'
 
 export default class GcpSnapshotStore extends SnapshotStore {
   public projectId!: string

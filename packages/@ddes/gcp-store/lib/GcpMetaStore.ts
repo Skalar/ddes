@@ -1,8 +1,7 @@
 import {MetaStore, MetaStoreKey} from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
-import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import {DatastoreConfiguration, MetaItem} from './types'
-import {gcpRequest} from './utils'
+import {asyncIterateStream, gcpRequest} from './utils'
 
 export default class GcpMetaStore extends MetaStore {
   public projectId!: string

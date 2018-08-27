@@ -6,11 +6,11 @@ import {
   VersionConflictError,
 } from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
-import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import GcpEventStoreBatchMutator from './GcpEventStoreBatchMutator'
 import GcpEventStoreQueryResponse from './GcpEventStoreQueryResponse'
 import {DatastoreConfiguration, StoreQueryParams} from './types'
 import {
+  asyncIterateStream,
   chronologicalPartitionIterator,
   gcpRequest,
   marshallCommit,

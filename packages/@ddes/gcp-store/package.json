@@ -19,7 +19,7 @@
   "dependencies": {
     "@ddes/core": "3.0.1",
     "@google-cloud/datastore": "1.4.1",
-    "async-iterate-stream": "1.0.3"
+    "async.forever": "0.5.2"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
