@@ -73,7 +73,7 @@ export default class GcpEventStore extends EventStore {
   public key(type: AggregateType, key: AggregateKey, version: number) {
     return this.datastore.key({
       namespace: this.tableName,
-      path: [this.kind, [type, key, version].join(':')],
+      path: [type, key, this.kind, [type, key, version].join(':')],
     })
   }
 
@@ -358,7 +358,6 @@ export default class GcpEventStore extends EventStore {
           if (maxTime && timestamp > maxTime.valueOf()) {
             return
           }
-
           yield result
         }
       })()

@@ -2,7 +2,7 @@ import {MetaStore, MetaStoreKey} from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
 import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
 import {DatastoreConfiguration, MetaItem} from './types'
-import {gcpRequest, zipper} from './utils'
+import {gcpRequest} from './utils'
 
 export default class GcpMetaStore extends MetaStore {
   public projectId!: string
@@ -45,7 +45,7 @@ export default class GcpMetaStore extends MetaStore {
       return null
     }
 
-    item.v = JSON.parse((await zipper.unzip(item.v)) as string)
+    item.v = JSON.parse(item.v)
 
     if (item.x && item.x <= Math.floor(Date.now() / 1000)) {
       return null
@@ -60,12 +60,16 @@ export default class GcpMetaStore extends MetaStore {
     options: {expiresAt?: Date} = {}
   ) {
     const metaKey = this.key(key)
+
     await this.datastore.save({
       key: metaKey,
       data: {
         p: key[0],
-        s: key[0],
-        v: (await zipper.zip(JSON.stringify(value))) as string,
+        s: key[1],
+        v: JSON.stringify(value),
+        ...(options.expiresAt && {
+          x: Math.floor(options.expiresAt.valueOf() / 1000).toString(),
+        }),
       },
     })
   }
@@ -77,8 +81,7 @@ export default class GcpMetaStore extends MetaStore {
   }
 
   public async *list(primaryKey: string): AsyncIterableIterator<[string, any]> {
-    let done = false
-    const iterator = asyncIterateStream(
+    for await (const item of asyncIterateStream(
       gcpRequest(this, {
         filters: [
           {
@@ -89,24 +92,19 @@ export default class GcpMetaStore extends MetaStore {
         ],
       }),
       true
-    )
-
-    do {
-      const {value: item, done: isDone} = await iterator.next()
-
+    )) {
       if (!item) {
         continue
       }
 
-      item.v = JSON.parse((await zipper.unzip(item.v)) as string)
+      item.v = JSON.parse(item.v)
 
       if (item.x && item.x <= Math.floor(Date.now() / 1000)) {
         continue
       }
 
       yield [item.s, item.v]
-      done = isDone
-    } while (!done)
+    }
   }
 
   public async setup() {

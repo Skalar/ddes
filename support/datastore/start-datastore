@@ -24,11 +24,6 @@ do
       options="$options --no-store-on-disk"
       shift
       ;;
-    --consistency=*)
-      consistency=${1#*=}
-      options="$options --consistency=$consistency"
-      shift
-      ;;
     *)
       echo "Invalid option: $1. Use: --store-on-disk, --no-store-on-disk, --consistency=[0.0-1.0]"
       exit 1
@@ -42,6 +37,7 @@ gcloud config set project ${DATASTORE_PROJECT_ID}
 # Start emulator
 gcloud beta emulators datastore start \
   --data-dir=/opt/data \
-  --verbosity="debug" \
+  --verbosity=debug \
   --host-port=${DATASTORE_LISTEN_ADDRESS} \
+  --consistency=1.0 \
   ${options}

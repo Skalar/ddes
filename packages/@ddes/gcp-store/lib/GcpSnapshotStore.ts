@@ -8,8 +8,7 @@ import {
 } from '@ddes/core'
 import Datastore = require('@google-cloud/datastore')
 import {asyncIterateStream} from 'async-iterate-stream/asyncIterateStream'
-import {Readable} from 'stream'
-import {DatastoreConfiguration, Snapshot, StoreQueryParams} from './types'
+import {DatastoreConfiguration, Snapshot} from './types'
 import {gcpRequest, zipper} from './utils'
 
 export default class GcpSnapshotStore extends SnapshotStore {
@@ -115,6 +114,9 @@ export default class GcpSnapshotStore extends SnapshotStore {
     const data = (await zipper.zip(JSON.stringify(payload))) as string
     const snapshotKey = this.key(type, key)
 
-    await this.datastore.save({key: snapshotKey, data: {data}})
+    await this.datastore.save({
+      key: snapshotKey,
+      data: {data},
+    })
   }
 }

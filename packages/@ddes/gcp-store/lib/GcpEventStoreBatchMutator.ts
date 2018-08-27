@@ -49,7 +49,7 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
   }
 
   public async delete(
-    commits: Array<Commit | MarshalledCommit | Commit | MarshalledCommit>
+    commits: Array<Commit | MarshalledCommit>
   ): Promise<void> {
     for await (const commit of this.asIterable(commits)) {
       const marshalledCommit =
@@ -68,9 +68,7 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
     }
   }
 
-  public async put(
-    commits: Array<Commit | MarshalledCommit | Commit | MarshalledCommit>
-  ): Promise<void> {
+  public async put(commits: Array<Commit | MarshalledCommit>): Promise<void> {
     for await (const commit of this.asIterable(commits)) {
       const marshalledCommit =
         commit instanceof Commit
@@ -83,7 +81,6 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
           : commit
 
       const {s, v} = marshalledCommit
-
       const key = this.store.key(s.split(':')[0], s.split(':')[1], v)
 
       await this.addToQueue(
@@ -274,7 +271,7 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
         }
         case 'object': {
           // assuming it's a buffer
-          bytes += (val as Buffer).length
+          bytes += JSON.stringify(val).length
           break
         }
         case 'number': {
