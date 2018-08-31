@@ -38,7 +38,7 @@ gcloud config set project project-id
 To upload index:
 
 ```
-gcloud datastore create-indexes lib/utils/gcp-index-config.yaml
+gcloud datastore create-indexes /node_modules/@ddes/packages/gcp-store/lib/utils/gcp-index-config.yaml
 ```
 
 Wait for indexes to have status `serving`. You can see the status [here](https://console.cloud.google.com/datastore/indexes)
