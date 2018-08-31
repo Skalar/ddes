@@ -14,16 +14,16 @@
 
 ### Live development
 
+- Make sure [CLOUD SDK](https://cloud.google.com/sdk/) is installed
 - Follow the getting started guide [here](https://cloud.google.com/datastore/docs/activate)
 - Authentication for Google Cloud, see [here](https://cloud.google.com/docs/authentication/getting-started)
-- Make sure [CLOUD SDK](https://cloud.google.com/sdk/) is installed
 - Indexes are created and `serving`, see below:
 
 #### Create indexes
 
 To create indexes, first make sure the current project is correct:
 
-To ee what project is active, run:
+To see what project is active, run:
 
 ```
 gcloud config list project --format "value(core.project)"
