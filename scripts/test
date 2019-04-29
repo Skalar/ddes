@@ -36,7 +36,7 @@ if [[ ! -z "$NODE" || ! -z "$CI" ]]; then
 
   $nodeBin $jest ${jestArgs[*]}
 else
-  $jest --config ts-jest.config.json ${jestArgs[*]}
+  node --inspect $jest --config ts-jest.config.json ${jestArgs[*]}
 fi
 
 

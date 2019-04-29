@@ -1,27 +1,26 @@
-import {BatchMutator, Commit} from '@ddes/core'
-import {entity} from '@google-cloud/datastore/build/src/entity'
+import {BatchMutator, Commit, MarshalledCommit} from '@ddes/core'
 import * as debug from 'debug'
-import GcpEventStore from './GcpEventStore'
-import {GcpEventStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
+import FirestoreEventStore from './FirestoreEventStore'
+import {FirestoreEventStoreBatchMutatorQueueItem} from './types'
 import {marshallCommit} from './utils'
 
 /**
  * @hidden
  */
-const log = debug('@ddes/gcp-store:GcpEventStoreBatchMutator')
+const log = debug('@ddes/firestore:FirestoreEventStoreBatchMutator')
 
-export default class GcpEventStoreBatchMutator extends BatchMutator<
+export default class FirestoreEventStoreBatchMutator extends BatchMutator<
   MarshalledCommit
 > {
-  protected store: GcpEventStore
-  protected queue: Set<GcpEventStoreBatchMutatorQueueItem> = new Set()
+  protected store: FirestoreEventStore
+  protected queue: Set<FirestoreEventStoreBatchMutatorQueueItem> = new Set()
   protected maxItemsPerRequest: number = 50
   protected processQueueRunning: boolean = false
   protected capacityLimit?: number
   protected bufferSize: number = 100
   protected remainingCapacity?: {second: number; units: number}
 
-  constructor(params: {store: GcpEventStore; capacityLimit?: number}) {
+  constructor(params: {store: FirestoreEventStore; capacityLimit?: number}) {
     super()
     const {store, capacityLimit} = params
     this.store = store
@@ -31,7 +30,6 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
       this.bufferSize = capacityLimit
     }
   }
-
   public get saturated() {
     let pendingCount = 0
 
@@ -166,7 +164,7 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
         capacityLeft = this.remainingCapacity.units
       }
 
-      let queueItemsToProcess: GcpEventStoreBatchMutatorQueueItem[] = []
+      let queueItemsToProcess: FirestoreEventStoreBatchMutatorQueueItem[] = []
 
       let processingCount = 0
       log(`pending items ${this.pendingItems.length}`)
@@ -219,12 +217,13 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
     }
   }
 
-  private sendRequest(queueItemsToSend: GcpEventStoreBatchMutatorQueueItem[]) {
+  private sendRequest(
+    queueItemsToSend: FirestoreEventStoreBatchMutatorQueueItem[]
+  ) {
     log(`Sending request ${queueItemsToSend.length} items`)
 
-    const transaction = this.store.datastore.transaction()
-    const deletes: entity.Key[] = []
-    const puts: Array<{key: entity.Key; data: any}> = []
+    const deletes: string[] = []
+    const puts: Array<{key: string; data: any}> = []
 
     queueItemsToSend.forEach(item => {
       if (item.item.delete) {
@@ -236,13 +235,48 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
       }
     })
 
-    transaction
-      .run()
-      .then(() => {
-        transaction.save(puts)
-        transaction.delete(deletes)
+    return this.store.firestore
+      .runTransaction(transaction => {
+        return new Promise(async (resolve, reject) => {
+          const actions = []
+          try {
+            for (const item of puts) {
+              const itemRef = this.store.firestore
+                .collection(this.store.tableName)
+                .doc(item.key)
 
-        return transaction.commit()
+              const doc = await transaction.get(itemRef)
+              if (doc.exists) {
+                actions.push(['update', itemRef, item.data])
+              } else {
+                actions.push(['create', itemRef, item.data])
+              }
+            }
+            for (const item of deletes) {
+              const itemRef = this.store.firestore
+                .collection(this.store.tableName)
+                .doc(item)
+
+              actions.push(['delete', itemRef])
+            }
+
+            for (const [action, ref, data] of actions) {
+              switch (action) {
+                case 'update':
+                  transaction.update(ref, data)
+                  break
+                case 'create':
+                  transaction.create(ref, data)
+                  break
+                case 'delete':
+                  transaction.delete(ref)
+              }
+            }
+          } catch (e) {
+            reject(e)
+          }
+          resolve()
+        })
       })
       .then(() => {
         this.deleteCount += deletes.length
@@ -252,10 +286,11 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
           this.queue.delete(queueItem)
         }
       })
-      .catch(() => {
+      .catch(e => {
+        console.log('catch in transaction :(')
+        console.log(e)
         this.throttleCount++
         queueItemsToSend.forEach(item => (item.processing = false))
-        return transaction.rollback()
       })
   }
 
@@ -266,7 +301,7 @@ export default class GcpEventStoreBatchMutator extends BatchMutator<
 
       switch (typeof val) {
         case 'string': {
-          bytes += Buffer.from(val, 'utf8').length + 1
+          bytes += Buffer.from(val as string, 'utf8').length + 1
           break
         }
         case 'object': {

@@ -1,10 +1,10 @@
 {
-  "name": "@ddes/gcp-store",
+  "name": "@ddes/firestore",
   "version": "3.0.1",
   "engines": {
     "node": ">=8.10"
   },
-  "description": "GCP powered EventStore implementation for DDES, a framework for distributed Event Sourcing & CQRS",
+  "description": "Cloud Firestore powered EventStore implementation for DDES, a framework for distributed Event Sourcing & CQRS",
   "author": "Kristinn Thor Johannson <spiffern@gmail.com>",
   "license": "MIT",
   "files": [
@@ -18,14 +18,15 @@
   },
   "dependencies": {
     "@ddes/core": "3.0.1",
-    "@google-cloud/datastore": "3.1.2",
+    "@google-cloud/firestore": "1.2.0",
+    "@types/node": "^11.13.7",
     "async": "2.6.2"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
   "keywords": [
     "gcp",
-    "datastore",
+    "firestore",
     "distributed",
     "event",
     "store",
@@ -34,6 +35,7 @@
     "cqrs"
   ],
   "devDependencies": {
+    "@types/async": "2.4.1",
     "typescript": "3.4.5"
   }
 }

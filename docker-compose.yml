@@ -20,3 +20,11 @@ services:
       - DATASTORE_LISTEN_ADDRESS=0.0.0.0:8081
     ports:
       - '8081:8081'
+
+  firestore:
+    build: support/firestore
+    environment:
+      - FIRESTORE_PROJECT_ID=ddes-test
+      - FIRESTORE_LISTEN_ADDRESS=0.0.0.0:8082
+    ports:
+      - '8082:8082'

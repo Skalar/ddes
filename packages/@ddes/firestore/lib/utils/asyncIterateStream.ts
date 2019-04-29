@@ -46,15 +46,15 @@ class NextQueue {
 }
 
 export default async function* asyncIterateStream(
-  src: Readable,
+  src: Readable | NodeJS.ReadableStream,
   objectMode: boolean
 ): AsyncIterableIterator<any> {
   let iterator: P | null = null
   let end: boolean = false
 
-  src.on('error', err => {
+  src.on('error', (err: any) => {
     async.forever<string>(
-      (next: any) => {
+      next => {
         if (iterator != null) {
           iterator.rejecter(err)
           end = true

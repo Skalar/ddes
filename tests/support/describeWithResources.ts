@@ -7,7 +7,7 @@ enum ResourceName {
   eventStreamServer = 'eventStreamServer',
 }
 
-const storeTypes = ['gcp', 'aws']
+const storeTypes = ['aws', 'gcp', 'firestore']
 
 export interface TestWithResourcesContext {
   eventStore: EventStore
@@ -55,9 +55,8 @@ export function describeWithResources( // describe with resources
               createdResources[resourceName] = resource
             }
           ),
-          ...Object.values(storeInstances).map(
-            storeInstance =>
-              storeInstance ? storeInstance.setup() : Promise.resolve()
+          ...Object.values(storeInstances).map(storeInstance =>
+            storeInstance ? storeInstance.setup() : Promise.resolve()
           ),
         ])
         Object.assign(testContext, createdResources)
@@ -66,9 +65,8 @@ export function describeWithResources( // describe with resources
       afterAll(async () => {
         await Promise.all([
           ...teardownFunctions.map(teardownFn => teardownFn()),
-          ...Object.values(storeInstances).map(
-            storeInstance =>
-              storeInstance ? storeInstance.teardown() : Promise.resolve()
+          ...Object.values(storeInstances).map(storeInstance =>
+            storeInstance ? storeInstance.teardown() : Promise.resolve()
           ),
         ])
       })

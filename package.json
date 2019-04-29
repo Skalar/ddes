@@ -33,12 +33,12 @@
     "@semantic-release/git": "^4.0.2",
     "@types/jest": "^22.2.2",
     "@types/lodash": "^4.14.106",
-    "@types/node": "^9.6.1",
+    "@types/node": "^11.13.7",
     "@types/semver": "^5.5.0",
     "debug": "^3.1.0",
     "env-ci": "^1.7.1",
     "glob": "^7.1.2",
-    "jest": "^22.4.3",
+    "jest": "^24.7.1",
     "lodash": "^4.17.10",
     "ora": "^2.0.0",
     "semantic-release": "^15.1.7",
@@ -59,10 +59,14 @@
     "packages/@ddes/aws-lambda-transformer",
     "packages/@ddes/store-transformations",
     "packages/@ddes/event-streaming",
-    "packages/@ddes/gcp-store"
+    "packages/@ddes/gcp-store",
+    "packages/@ddes/firestore"
   ],
   "jest": {
     "testEnvironment": "node",
     "transform": {}
+  },
+  "dependencies": {
+    "@google-cloud/storage": "2.5.0"
   }
 }
