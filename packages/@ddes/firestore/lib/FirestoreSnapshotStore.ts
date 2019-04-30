@@ -1,8 +1,8 @@
 import {AggregateSnapshot, SnapshotStore, utils} from '@ddes/core'
-import {zipper} from '@ddes/gcp-store/lib/utils'
 import {Firestore} from '@google-cloud/firestore'
 import {FirestoreConfig} from './types'
 import deleteQueryBatch from './utils/deleteQueryBatch'
+import zipper from './utils/zipper'
 
 /**
  * @module @ddes/firestore

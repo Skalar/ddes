@@ -64,7 +64,14 @@
   ],
   "jest": {
     "testEnvironment": "node",
-    "transform": {}
+    "transform": {},
+    "moduleFileExtensions": [
+      "js",
+      "json"
+    ],
+    "modulePaths": [
+      "<rootDir>/../packages/*"
+    ]
   },
   "dependencies": {
     "@google-cloud/storage": "2.5.0"

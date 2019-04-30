@@ -2,7 +2,7 @@
   "name": "@ddes/cli",
   "version": "3.0.1",
   "engines": {
-    "node": ">=8.10"
+    "node": ">=10"
   },
   "description": "Command Line Interface for DDES, a framework for distributed Event Sourcing & CQRS",
   "author": "Trym Skaar <trym.skaar@gmail.com>",

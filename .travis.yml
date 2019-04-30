@@ -2,8 +2,6 @@ sudo: required
 
 language: node_js
 node_js:
-  - "8.10"
-  - "9"
   - "10"
 
 services:
@@ -13,7 +11,7 @@ env:
   - GIT_USERNAME=ddes-ci GIT_EMAIL=ci@ddes.io
 
 before_script:
-  - docker-compose up --build -d dynamodb s3
+  - docker-compose up --build -d dynamodb s3 firestore datastore
   - docker-compose ps
 
 script:
