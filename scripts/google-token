@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo $GOOGLE_TOKEN
+echo "Gonna use this output to create a json file"
+echo $GOOGLE_TOKEN | base64 --decode
+echo $GOOGLE_TOKEN | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
+
+if test -f "$GOOGLE_APPLICATION_CREDENTIALS"; then
+    echo "$GOOGLE_APPLICATION_CREDENTIALS exists"
+    echo "Gonna cat this thing:"
+    echo "$(cat ${GOOGLE_APPLICATION_CREDENTIALS})"
+    echo "did you get that?"
+else
+    echo "$GOOGLE_APPLICATION_CREDENTIALS does not exist"
+fi

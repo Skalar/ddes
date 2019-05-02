@@ -8,15 +8,16 @@ services:
   - docker
 
 env:
-  - GIT_USERNAME=ddes-ci GIT_EMAIL=ci@ddes.io
+  - GIT_USERNAME=ddes-ci GIT_EMAIL=ci@ddes.io GOOGLE_APPLICATION_CREDENTIALS=/tmp/ci-auth.json
 
 before_script:
+  - scripts/google-token
   - docker-compose up --build -d dynamodb s3 firestore datastore
   - docker-compose ps
 
 script:
   - scripts/build
-  - scripts/test
+  - scripts/test --runInBand
 
 after_script:
   - docker-compose kill
