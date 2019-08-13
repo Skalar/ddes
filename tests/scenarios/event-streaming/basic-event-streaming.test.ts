@@ -149,6 +149,62 @@ describeWithResources(
   'scenarios/event-streaming: basic event streaming',
   {eventStreamServer: true, stores: true},
   context => {
+    test('single client with multiple filter sets', async () => {
+      const {eventStreamServer} = context
+      const eventStore = context.eventStore
+
+      const subscriptionStream = new EventSubscriber({
+        wsUrl: `ws://localhost:${eventStreamServer.port}`,
+        events: [
+          {aggregateType: 'TestAggregate'},
+          {aggregateType: 'OtherAggregate'},
+        ],
+      })
+
+      const iterator = subscriptionStream[Symbol.asyncIterator]()
+
+      for (const commit of getTestCommits()) {
+        await eventStore.commit(commit)
+      }
+
+      await expect(
+        iterableToArray(subscriptionStream, {maxWaitTime: 50})
+      ).resolves.toMatchObject([
+        {
+          aggregateKey: 'a',
+          aggregateType: 'TestAggregate',
+          aggregateVersion: 1,
+          properties: {myProperty: 'test'},
+          type: 'Created',
+          version: 1,
+        },
+        {
+          aggregateKey: 'a',
+          aggregateType: 'OtherAggregate',
+          aggregateVersion: 1,
+          properties: {myProperty: 'somevalue'},
+          type: 'Created',
+          version: 1,
+        },
+        {
+          aggregateKey: 'a',
+          aggregateType: 'TestAggregate',
+          aggregateVersion: 2,
+          properties: {myProperty: 'changed'},
+          type: 'Updated',
+          version: 1,
+        },
+      ])
+
+      subscriptionStream.close()
+    })
+  }
+)
+
+describeWithResources(
+  'scenarios/event-streaming: basic event streaming',
+  {eventStreamServer: true, stores: true},
+  context => {
     test('deep property filter', async () => {
       const {eventStreamServer} = context
       const eventStore = context.eventStore

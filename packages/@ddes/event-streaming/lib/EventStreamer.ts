@@ -24,13 +24,11 @@ export default class EventStreamer {
     params: StorePollerParams & {
       chronologicalGroups?: string[]
       port: number
-      authenticateClient?: (
-        info: {
-          origin: string
-          req: IncomingMessage
-          secure: boolean
-        }
-      ) => boolean
+      authenticateClient?: (info: {
+        origin: string
+        req: IncomingMessage
+        secure: boolean
+      }) => boolean
     }
   ) {
     const {
@@ -83,7 +81,7 @@ export default class EventStreamer {
         aggregateKey,
         aggregateVersion,
         timestamp,
-        commitEventIndex: parseInt(commitEventIndex, 10)
+        commitEventIndex: parseInt(commitEventIndex, 10),
       })
     }
   }
@@ -96,12 +94,14 @@ export default class EventStreamer {
 
       const {filterSets}: {filterSets: FilterSet[]} = client as any
 
-      for (const filterSet of filterSets) {
+      let clientShouldReceiveEvent = false
+
+      filtersets: for (const filterSet of filterSets) {
         for (const [filterKey, filterValue] of Object.entries(filterSet)) {
           const eventValue = get(eventWithMetadata, filterKey)
           if (Array.isArray(filterValue)) {
             if (!filterValue.includes(eventValue)) {
-              continue clients
+              continue filtersets
             }
           } else if (typeof filterValue === 'object' && filterValue.regexp) {
             if (
@@ -110,16 +110,17 @@ export default class EventStreamer {
                 eventValue.match(filterValue.regexp)
               )
             ) {
-              continue clients
+              continue filtersets
             }
           } else {
             if (eventValue !== filterValue) {
-              continue clients
+              continue filtersets
             }
           }
         }
+        clientShouldReceiveEvent = true
       }
-      if (client.OPEN) {
+      if (client.OPEN && clientShouldReceiveEvent) {
         client.send(JSON.stringify(eventWithMetadata))
       }
     }
