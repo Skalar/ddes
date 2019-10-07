@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo $GOOGLE_TOKEN | base64 --decode > $GOOGLE_APPLICATION_CREDENTIALS
+
+if test -f "$GOOGLE_APPLICATION_CREDENTIALS"; then
+    echo "$GOOGLE_APPLICATION_CREDENTIALS exists"
+else
+    echo "$GOOGLE_APPLICATION_CREDENTIALS does not exist"
+fi

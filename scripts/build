@@ -3,10 +3,12 @@
 tsc=$PWD/node_modules/.bin/tsc
 root=$PWD
 
-declare -a targets=("node-8.10" "node-10")
+declare -a targets=("node-10")
 
 rm -rf $root/packages/@ddes/core/dist
 rm -rf $root/packages/@ddes/aws-store/dist
+rm -rf $root/packages/@ddes/firestore/dist
+rm -rf $root/packages/@ddes/gcp-store/dist
 rm -rf $root/packages/@ddes/event-streaming/dist
 rm -rf $root/packages/@ddes/aws-lambda-transformer/dist
 rm -rf $root/packages/@ddes/store-transformations/dist
@@ -19,6 +21,8 @@ if [[ $1 != "clean" ]]; then
     echo -n "target $target.. "
     cd $root/packages/@ddes/core && $tsc -p tsconfig.$target.json
     cd $root/packages/@ddes/aws-store && $tsc -p tsconfig.$target.json
+    cd $root/packages/@ddes/firestore && $tsc -p tsconfig.$target.json
+    cd $root/packages/@ddes/gcp-store && $tsc -p tsconfig.$target.json
     cd $root/packages/@ddes/event-streaming && $tsc -p tsconfig.$target.json
     cd $root/packages/@ddes/aws-lambda-transformer && $tsc -p tsconfig.$target.json
     cd $root/packages/@ddes/store-transformations && $tsc -p tsconfig.$target.json
