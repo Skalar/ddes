@@ -1,12 +1,10 @@
 import {
   Aggregate,
-  Commit,
   EventStore,
   EventWithMetadata,
   KeySchema,
-  utils,
 } from '@ddes/core'
-import {describeWithResources} from 'support'
+import {describeWithResources} from 'tests/support'
 
 class TestAggregate extends Aggregate {
   public static eventStore = {} as EventStore

@@ -6,7 +6,7 @@ import {
   VersionConflictError,
   retryCommand as retry,
 } from '@ddes/core'
-import {describeWithResources} from 'support'
+import {describeWithResources} from 'tests/support'
 
 describe('Aggregate', () => {
   describeWithResources('executeCommand()', {stores: true}, context => {

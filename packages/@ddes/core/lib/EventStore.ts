@@ -6,11 +6,9 @@ import BatchMutator from './BatchMutator'
 import Commit from './Commit'
 import {
   AggregateKey,
-  AggregateSnapshot,
   AggregateType,
   MarshalledCommit,
   StoreQueryResponse,
-  Timestamp,
 } from './types'
 
 /**

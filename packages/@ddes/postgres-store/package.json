@@ -1,0 +1,47 @@
+{
+  "name": "@ddes/postgres-store",
+  "version": "3.1.1",
+  "engines": {
+    "node": ">=8.10"
+  },
+  "description": "PostgreSQL powered EventStore, SnapshotStore and MetaStore implementations for DDES, a framework for distributed Event Sourcing & CQRS",
+  "author": "Kristinn Thor Johannsson <spiffern@gmail.com>, Lars Larsen Skjæveland <larslalars@gmail.com>",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "index.js",
+    "package.json",
+    "README.md"
+  ],
+  "types": "./dist/node-10/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ddes/core": "^3.1.1",
+    "knex": "^0.20.13",
+    "pg": "^8.0.0",
+    "pg-query-stream": "^3.0.4",
+    "pg-sql": "^1.1.0",
+    "stream-to-async-iterator": "^0.2.0"
+  },
+  "repository": "skalar/ddes",
+  "homepage": "https://ddes.io",
+  "keywords": [
+    "postgres",
+    "postgresql",
+    "distributed",
+    "event store",
+    "event sourcing",
+    "cqrs"
+  ],
+  "devDependencies": {
+    "@types/node": "^13.11.0",
+    "@types/pg": "^7.14.3",
+    "@types/pg-query-stream": "^1.0.3",
+    "typescript": "^3.8.3"
+  },
+  "eslintConfig": {
+    "extends": "../../../eslintrc.json"
+  }
+}

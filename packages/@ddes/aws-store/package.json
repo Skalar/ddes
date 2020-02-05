@@ -19,9 +19,9 @@
   },
   "dependencies": {
     "@ddes/core": "^3.1.1",
-    "aws-sdk": "^2.217.1",
-    "debug": "^3.1.0",
-    "fast-deep-equal": "^2.0.1"
+    "aws-sdk": "^2.612.0",
+    "debug": "^4.1.1",
+    "fast-deep-equal": "^3.1.1"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
@@ -35,6 +35,9 @@
   ],
   "devDependencies": {
     "@types/debug": "^0.0.30",
-    "typescript": "^2.8.3"
+    "typescript": "^3.8.3"
+  },
+  "eslintConfig": {
+    "extends": "../../../eslintrc.json"
   }
 }

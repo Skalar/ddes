@@ -13,7 +13,7 @@ See [website](https://ddes.io) for documentation.
 
 ## Development
 
-### Local DynamoDB and S3 for running tests
+### Local DynamoDB, Postgres and S3 for running tests
 
 ```bash
 # Start

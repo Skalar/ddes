@@ -64,6 +64,7 @@ export default class AwsEventStoreQueryResponse implements StoreQueryResponse {
   }
 
   protected async *asResultSets() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
 
     for await (const rawQueryResult of this.responseIterator) {

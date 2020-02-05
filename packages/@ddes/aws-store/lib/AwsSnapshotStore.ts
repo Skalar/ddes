@@ -19,9 +19,9 @@ import {createBucket, deleteBucket} from './utils'
  * Interface for SnapshotStore powered by AWS S3
  */
 export default class AwsSnapshotStore extends SnapshotStore {
-  public manageBucket: boolean = false
+  public manageBucket = false
   public bucketName: string
-  public keyPrefix: string = ''
+  public keyPrefix = ''
   public s3ClientConfiguration?: S3.ClientConfiguration
   public awsConfig?: ConfigurationOptions
   public s3: S3

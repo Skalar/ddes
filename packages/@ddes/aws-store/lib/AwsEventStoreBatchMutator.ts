@@ -3,8 +3,8 @@
  */
 
 import {BatchMutator, Commit} from '@ddes/core'
-import * as debug from 'debug'
-import * as equal from 'fast-deep-equal'
+import debug from 'debug'
+import equal from 'fast-deep-equal'
 import AwsEventStore from './AwsEventStore'
 import {AwsEventStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
 import {marshallCommit} from './utils'
@@ -19,10 +19,10 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<
 > {
   protected store: AwsEventStore
   protected queue: Set<AwsEventStoreBatchMutatorQueueItem> = new Set()
-  protected maxItemsPerRequest: number = 25
-  protected processQueueRunning: boolean = false
+  protected maxItemsPerRequest = 25
+  protected processQueueRunning = false
   protected capacityLimit?: number
-  protected bufferSize: number = 100
+  protected bufferSize = 100
   protected remainingCapacity?: {
     second: number
     units: number
@@ -91,7 +91,7 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<
   public get drained() {
     return Promise.all(
       [...this.queue.values()].map(queueItem => queueItem.processedPromise)
-    ).then(res => undefined)
+    ).then(() => undefined)
   }
 
   public get itemsBeingProcessed() {
@@ -167,11 +167,9 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<
 
       let queueItemsToProcess: AwsEventStoreBatchMutatorQueueItem[] = []
 
-      let processingCount = 0
       log(`pending items ${this.pendingItems.length}`)
       for (const queueItem of this.queue) {
         if (queueItem.processing) {
-          processingCount++
           continue
         }
 
@@ -191,9 +189,7 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<
             queueItem.capacityUnits > this.capacityLimit
           ) {
             throw new Error(
-              `Commit required ${
-                queueItem.capacityUnits
-              } which is higher than the capacity consumption target`
+              `Commit required ${queueItem.capacityUnits} which is higher than the capacity consumption target`
             )
           }
           if (queueItemsToProcess.length === 0) {

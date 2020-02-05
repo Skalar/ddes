@@ -4,7 +4,7 @@ import {
   Commit,
   upcastCommits,
 } from '@ddes/core'
-import {iterableToArray} from 'support'
+import {iterableToArray} from 'tests/support'
 
 const commits = [
   new Commit({

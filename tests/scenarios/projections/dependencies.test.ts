@@ -8,8 +8,8 @@ import {
   Projection,
   Projector,
 } from '@ddes/core'
-import {describeWithResources} from 'support'
-import projectorBatchMap from 'support/projectorBatchMap'
+import {describeWithResources} from 'tests/support'
+import projectorBatchMap from 'tests/support/projectorBatchMap'
 
 function* getTestCommits() {
   yield new Commit({

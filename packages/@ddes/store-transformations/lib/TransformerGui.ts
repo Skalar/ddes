@@ -147,16 +147,18 @@ export default class TransformerGui {
       })
       .append(spinner)
 
-    this.intervals.push((setInterval(() => {
-      spinner.setContent(
-        chalk.yellow.bold(this.spinnerAnimationFrames[spinnerFrameIndex])
-      )
-      this.screen.render()
-      spinnerFrameIndex++
-      if (spinnerFrameIndex >= this.spinnerAnimationFrames.length) {
-        spinnerFrameIndex = 0
-      }
-    }, 120) as any) as NodeJS.Timer)
+    this.intervals.push(
+      (setInterval(() => {
+        spinner.setContent(
+          chalk.yellow.bold(this.spinnerAnimationFrames[spinnerFrameIndex])
+        )
+        this.screen.render()
+        spinnerFrameIndex++
+        if (spinnerFrameIndex >= this.spinnerAnimationFrames.length) {
+          spinnerFrameIndex = 0
+        }
+      }, 120) as any) as NodeJS.Timer
+    )
 
     this.table = blessed.table({
       parent: centeredContainer,
@@ -177,7 +179,7 @@ export default class TransformerGui {
         this.progressBar.setProgress(
           this.transformer.sourceCommitCount
             ? this.transformer.counters.commitsScanned /
-              this.transformer.sourceCommitCount
+                this.transformer.sourceCommitCount
             : 0
         )
       }, 1000)
@@ -195,9 +197,7 @@ export default class TransformerGui {
         return `${transformer.transformation.source} preparing`
       }
       case StoreState.Active: {
-        return `${transformer.transformation.source} ~${
-          transformer.sourceCommitCount
-        }`
+        return `${transformer.transformation.source} ~${transformer.sourceCommitCount}`
       }
     }
   }
@@ -213,9 +213,7 @@ export default class TransformerGui {
         return `${transformer.transformation.target} preparing`
       }
       case StoreState.Active: {
-        return `${transformer.transformation.target} ~${
-          transformer.targetCommitCount
-        }`
+        return `${transformer.transformation.target} ~${transformer.targetCommitCount}`
       }
     }
   }

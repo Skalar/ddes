@@ -6,17 +6,19 @@
 
 import chalk from 'chalk'
 import {pointer} from 'figures'
-import * as findUp from 'find-up'
+import findUp from 'find-up'
 import {CliCommand} from './types'
 
 /**
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const columnify = require('columnify')
 
 /**
  * @hidden
  */
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const boxen = require('boxen')
 
 export default async function displayUsage(commands: {

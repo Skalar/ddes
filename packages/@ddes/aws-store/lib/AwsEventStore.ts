@@ -22,6 +22,7 @@ import {
 } from './types'
 import * as utils from './utils'
 import chronologicalPartitionIterator from './utils/chronologicalPartitionIterator'
+import {stringcrementor} from '@ddes/core/lib/utils'
 
 /**
  * Interface for EventStore powered by AWS DynamoDB
@@ -122,9 +123,7 @@ export default class AwsEventStore extends EventStore {
     } catch (error) {
       if (error.code === 'ConditionalCheckFailedException') {
         throw new VersionConflictError(
-          `${commit.aggregateType}[${
-            commit.aggregateKey
-          }] already has a version ${commit.aggregateVersion} commit`
+          `${commit.aggregateType}[${commit.aggregateKey}] already has a version ${commit.aggregateVersion} commit`
         )
       }
 
@@ -177,7 +176,7 @@ export default class AwsEventStore extends EventStore {
     timeDriftCompensation?: number
     filterAggregateTypes?: AggregateType[]
   }) {
-    const store = this
+    const store = this // eslint-disable-line @typescript-eslint/no-this-alias
 
     const {
       group = 'default',
@@ -211,7 +210,7 @@ export default class AwsEventStore extends EventStore {
 
     return new AwsEventStoreQueryResponse(
       this,
-      (async function*() {
+      (async function* () {
         let commitCount = 0
 
         for (const partition of chronologicalPartitionIterator({
@@ -232,11 +231,9 @@ export default class AwsEventStore extends EventStore {
               : undefined,
             queryVariables: {
               ':p': partition.key,
-              ':min': exclusiveMin
-                ? utils.stringcrementor(minSortKey)
-                : minSortKey,
+              ':min': exclusiveMin ? stringcrementor(minSortKey) : minSortKey,
               ':max': exclusiveMax
-                ? utils.stringcrementor(maxSortKey, -1)
+                ? stringcrementor(maxSortKey, -1)
                 : maxSortKey,
               ...(params.filterAggregateTypes &&
                 params.filterAggregateTypes.reduce(
@@ -290,11 +287,11 @@ export default class AwsEventStore extends EventStore {
       ':a': type,
     }
     const filterExpressions: string[] = []
-    const store = this
+    const store = this // eslint-disable-line @typescript-eslint/no-this-alias
 
     return new AwsEventStoreQueryResponse(
       this,
-      (async function*() {
+      (async function* () {
         let instanceCount = 0
         for await (const instanceQueryResult of store.request('query', {
           IndexName: 'instances',

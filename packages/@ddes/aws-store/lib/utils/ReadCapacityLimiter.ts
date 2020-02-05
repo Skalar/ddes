@@ -7,14 +7,11 @@
  */
 export default class ReadCapacityLimiter {
   private averageCapacityPerItem: number
-  private capacityRemainder: number = 0
-  private lastSampleSecond: number = 0
-  private capacityLimit: number = 0
+  private capacityRemainder = 0
+  private lastSampleSecond = 0
+  private capacityLimit = 0
 
-  constructor(
-    capacityLimit: number,
-    initialCapacityPerItemAssumption: number = 1
-  ) {
+  constructor(capacityLimit: number, initialCapacityPerItemAssumption = 1) {
     this.averageCapacityPerItem = initialCapacityPerItemAssumption
     this.capacityLimit = capacityLimit
   }
@@ -56,6 +53,7 @@ export default class ReadCapacityLimiter {
 
     const w = Math.pow(2, -1 / 0.5)
     this.averageCapacityPerItem =
-      w * this.averageCapacityPerItem + (1.0 - w) * consumedCapacity / itemCount
+      w * this.averageCapacityPerItem +
+      ((1.0 - w) * consumedCapacity) / itemCount
   }
 }

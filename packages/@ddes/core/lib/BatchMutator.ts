@@ -6,9 +6,9 @@ import Commit from './Commit'
 import {MarshalledCommit} from './types'
 
 export default abstract class BatchMutator<T = MarshalledCommit> {
-  public writeCount: number = 0
-  public deleteCount: number = 0
-  public throttleCount: number = 0
+  public writeCount = 0
+  public deleteCount = 0
+  public throttleCount = 0
   public drained?: Promise<void>
   public abstract put(commits: Array<Commit | T> | Commit | T): Promise<void>
   public abstract delete(commits: Array<Commit | T> | Commit | T): Promise<void>

@@ -2,7 +2,7 @@
  * @module @ddes/core
  */
 
-import * as debug from 'debug'
+import debug from 'debug'
 import Commit from './Commit'
 import EventStore from './EventStore'
 import {
@@ -29,25 +29,25 @@ export default class StorePoller {
    * Initial number of milliseconds to wait before polling again,
    * after store has no more commits to yield.
    */
-  protected initalSleepPeriod: number = 10
+  protected initalSleepPeriod = 10
 
   /**
    * Maximum number of milliseconds to wait before polling again,
    * after store has no more commits to yield.
    */
-  protected maxSleepPeriod: number = 1000
+  protected maxSleepPeriod = 1000
 
   /**
    * Exponent to use when increasing sleep period from initialSleepPeriod to maxSleepPeriod
    */
-  protected sleepPeriodBackoffExponent: number = 2
+  protected sleepPeriodBackoffExponent = 2
 
-  protected isPolling: boolean = false
+  protected isPolling = false
 
-  protected chronologicalGroup: string = 'default'
+  protected chronologicalGroup = 'default'
   protected filterAggregateTypes?: AggregateType[]
   protected upcasters?: AggregateEventUpcasters
-  protected initialPoll: boolean = true
+  protected initialPoll = true
 
   constructor(params: StorePollerParams) {
     const {eventStore, ...rest} = params
@@ -144,6 +144,7 @@ export default class StorePoller {
     this.debug('shouldPoll is false, pollingLoop halted')
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async processCommit(commit: Commit) {
     // void
   }

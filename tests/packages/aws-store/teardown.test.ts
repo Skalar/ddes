@@ -1,9 +1,10 @@
-import {describeWithResources} from 'support'
-import {aws} from 'support/stores'
+import {describeWithResources} from 'tests/support'
+import {aws} from 'tests/support/stores'
 
 describeWithResources('AwsEventStore', {}, context => {
   test('teardown() [withServices]', async () => {
-    const eventStore = aws.eventStore(context, {
+    const AwsStores = new aws(context.testId)
+    const eventStore = AwsStores.eventStore({
       initialCapacity: {
         tableRead: 1,
         tableWrite: 2,

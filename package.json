@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "scripts/build.js",
-    "test": "scripts/test"
+    "test": "jest"
   },
   "release": {
     "verifyConditions": [
@@ -28,27 +28,39 @@
     ]
   },
   "devDependencies": {
-    "@async-generators/timeout": "^0.2.0",
+    "@async-generators/timeout": "^0.3.0",
+    "@babel/core": "^7.9.0",
+    "@babel/plugin-proposal-decorators": "^7.8.3",
+    "@babel/preset-env": "^7.9.5",
+    "@babel/preset-typescript": "^7.9.0",
+    "@databases/pg": "^2.1.1",
+    "@databases/pg-test": "^2.0.0",
     "@lerna/collect-packages": "^3.0.0-beta.17",
-    "@semantic-release/git": "^4.0.2",
-    "@types/jest": "^22.2.2",
-    "@types/lodash": "^4.14.106",
-    "@types/node": "^9.6.1",
-    "@types/semver": "^5.5.0",
-    "debug": "^3.1.0",
-    "env-ci": "^1.7.1",
-    "glob": "^7.1.2",
-    "jest": "^22.4.3",
-    "lodash": "^4.17.10",
-    "ora": "^2.0.0",
-    "semantic-release": "^15.1.7",
-    "semantic-release-github-pr": "^5.0.1",
-    "travis-deploy-once": "^4.4.1",
-    "ts-jest": "^22.4.4",
-    "tslint": "^5.9.1",
-    "typedoc": "^0.11.1",
-    "typedoc-plugin-external-module-name": "^1.1.1",
-    "typescript": "^2.8.1"
+    "@semantic-release/git": "^9.0.0",
+    "@types/jest": "^25.2.1",
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^13.11.0",
+    "@types/semver": "^7.1.0",
+    "@typescript-eslint/eslint-plugin": "^2.26.0",
+    "@typescript-eslint/parser": "^2.26.0",
+    "babel-jest": "^26.0.1",
+    "debug": "^4.1.1",
+    "env-ci": "^5.0.2",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "glob": "^7.1.6",
+    "jest": "^25.2.7",
+    "lodash": "^4.17.15",
+    "ora": "^4.0.3",
+    "prettier": "^2.0.2",
+    "semantic-release": "^17.0.2",
+    "semantic-release-github-pr": "^6.0.0",
+    "travis-deploy-once": "^5.0.11",
+    "tsconfig-paths": "^3.9.0",
+    "typedoc": "^0.17.3",
+    "typedoc-plugin-external-module-name": "^3.0.0",
+    "typescript": "^3.8.3"
   },
   "npmClient": "yarn",
   "useWorkspaces": true,
@@ -58,10 +70,7 @@
     "packages/@ddes/aws-store",
     "packages/@ddes/aws-lambda-transformer",
     "packages/@ddes/store-transformations",
-    "packages/@ddes/event-streaming"
-  ],
-  "jest": {
-    "testEnvironment": "node",
-    "transform": {}
-  }
+    "packages/@ddes/event-streaming",
+    "packages/@ddes/postgres-store"
+  ]
 }

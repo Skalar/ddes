@@ -3,7 +3,7 @@
  */
 
 import {pickBy} from 'lodash'
-import * as parseArgs from 'minimist'
+import parseArgs from 'minimist'
 import displayUsage from './displayUsage'
 import loadCommands from './loadCommands'
 

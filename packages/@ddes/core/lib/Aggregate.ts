@@ -40,7 +40,7 @@ export default class Aggregate {
   /**
    * Which chronological group to place commits in
    */
-  public static chronologicalGroup: string = 'default'
+  public static chronologicalGroup = 'default'
 
   /**
    * The SnapshotStore to use for instances of this aggregate class.
@@ -60,7 +60,7 @@ export default class Aggregate {
   /**
    * Whether to perform in-place store transformation of upcasted commits
    */
-  public static lazyTransformation: boolean = false
+  public static lazyTransformation = false
 
   public static defaultRetryOptions = {
     backoffExponent: 2,
@@ -96,7 +96,7 @@ export default class Aggregate {
    */
   public static async load<T extends Aggregate>(
     this: AggregateStatic<T>,
-    loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKey
+    loadSpecification?: (AggregateKeyProps & HydrateOptions) | AggregateKey
   ): Promise<T | null> {
     let key: AggregateKey | undefined
     let hydrateOptions: HydrateOptions | undefined
@@ -183,7 +183,7 @@ export default class Aggregate {
 
   public static async getState<T extends Aggregate>(
     this: AggregateStatic<T>,
-    loadSpecification?: AggregateKeyProps & HydrateOptions | AggregateKey
+    loadSpecification?: (AggregateKeyProps & HydrateOptions) | AggregateKey
   ) {
     const instance = await this.load(loadSpecification)
 
@@ -320,7 +320,7 @@ export default class Aggregate {
 
   public readonly type: AggregateType
   public readonly key: AggregateKey
-  public version: number = 0
+  public version = 0
   public timestamp?: Timestamp
   public eventStore: EventStore
   public snapshotStore?: SnapshotStore

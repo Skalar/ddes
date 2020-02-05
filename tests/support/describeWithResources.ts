@@ -2,14 +2,16 @@ import {EventStore, MetaStore, SnapshotStore} from '@ddes/core'
 import {randomBytes} from 'crypto'
 import * as Resources from './resources'
 import * as stores from './stores'
+import Store from './stores/Store'
 
 enum ResourceName {
   eventStreamServer = 'eventStreamServer',
 }
 
-const storeTypes = ['aws']
+const storeTypes = ['aws', 'postgres']
 
 export interface TestWithResourcesContext {
+  store: Store
   eventStore: EventStore
   snapshotStore: SnapshotStore
   metaStore: MetaStore
@@ -30,19 +32,25 @@ export function describeWithResources( // describe with resources
       eventStore?: EventStore
       metaStore?: MetaStore
       snapshotStore?: SnapshotStore
-    } = {}
+    } = {},
+    store?: Store,
   ) => {
     const testId = randomBytes(8).toString('hex')
     const createdResources: {[resourceName: string]: any} = {}
     const teardownFunctions: Array<() => Promise<void>> = []
     const testContext = {
       ...storeInstances,
+      store,
       testId,
       teardownFunctions,
     } as TestWithResourcesContext
 
     describe(description, () => {
       beforeAll(async () => {
+        if (store) {
+          await store.setup()
+          teardownFunctions.push(store.teardown)
+        }
         await Promise.all([
           ...Object.entries(resources).map(
             async ([resourceName, resourceOptions]) => {
@@ -53,8 +61,7 @@ export function describeWithResources( // describe with resources
                 teardownFunctions.push(teardown)
               }
               createdResources[resourceName] = resource
-            }
-          ),
+          }),
           ...Object.values(storeInstances).map(
             storeInstance =>
               storeInstance ? storeInstance.setup() : Promise.resolve()
@@ -65,7 +72,7 @@ export function describeWithResources( // describe with resources
 
       afterAll(async () => {
         await Promise.all([
-          ...teardownFunctions.map(teardownFn => teardownFn()),
+          ...teardownFunctions.map(async teardownFn => await teardownFn()),
           ...Object.values(storeInstances).map(
             storeInstance =>
               storeInstance ? storeInstance.teardown() : Promise.resolve()
@@ -87,17 +94,16 @@ export function describeWithResources( // describe with resources
 
       const testId = randomBytes(8).toString('hex')
 
-      const eventStore = (stores as any)[storeTypeName].eventStore({testId})
-      const metaStore = (stores as any)[storeTypeName].metaStore({testId})
-      const snapshotStore = (stores as any)[storeTypeName].snapshotStore({
-        testId,
-      })
+      const store = new (stores as any)[storeTypeName](testId) as Store
+      const eventStore = store.eventStore()
+      const metaStore = store.metaStore()
+      const snapshotStore = store.snapshotStore()
 
       describeBlock(`${what} (store=${storeTypeName})`, {
         eventStore,
         metaStore,
         snapshotStore,
-      })
+      }, store)
     }
   } else {
     describeBlock(what)

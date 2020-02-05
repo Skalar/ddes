@@ -2,9 +2,7 @@ sudo: required
 
 language: node_js
 node_js:
-  - "8.10"
-  - "9"
-  - "10"
+  - "12"
 
 services:
   - docker
@@ -17,8 +15,8 @@ before_script:
   - docker-compose ps
 
 script:
+  - npm run test
   - scripts/build
-  - scripts/test
 
 after_script:
   - docker-compose kill

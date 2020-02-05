@@ -1,7 +1,9 @@
 const semver = require('semver')
 
-Symbol.asyncIterator =
-  Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator')
+if (typeof Symbol.asyncIterator === 'undefined') {
+  Symbol.asyncIterator =
+    Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator')
+}
 
 if (semver.satisfies(process.versions.node, '<8.10')) {
   throw new Error('NodeJS >=8.10 or newer is required')

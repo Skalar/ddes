@@ -1,1 +1,19 @@
-tsconfig.node-10.json
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "experimentalDecorators": true,
+    "rootDir": ".",
+    "baseUrl": ".",
+    "strict": true,
+    "sourceMap": true,
+    "declaration": true,
+    "outDir": "dist",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

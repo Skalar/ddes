@@ -1,4 +1,4 @@
-import {describeWithResources, iterableToArray} from 'support'
+import {describeWithResources, iterableToArray} from 'tests/support'
 
 describeWithResources('Meta stores', {stores: true}, context => {
   test('put()', async () => {
