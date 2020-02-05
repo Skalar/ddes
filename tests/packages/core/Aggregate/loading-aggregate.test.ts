@@ -5,7 +5,7 @@ import {
   EventWithMetadata,
   utils,
 } from '@ddes/core'
-import {describeWithResources} from 'support'
+import {describeWithResources} from 'tests/support'
 
 class TestAggregate extends Aggregate {
   public static eventStore = {} as EventStore
@@ -92,6 +92,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
       },
       timestamp: utils.toTimestamp('2018-01-02'),
     })
+
+    const snapshot = await TestAggregate.snapshotStore.readSnapshot('TestAggregate', 'a')
 
     expect(
       (await TestAggregate.load({

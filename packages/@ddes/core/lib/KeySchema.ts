@@ -8,10 +8,7 @@ export default class KeySchema {
   protected properties: Array<KeySchemaProperty | string>
   protected separator: string
 
-  constructor(
-    properties: Array<KeySchemaProperty | string>,
-    separator: string = '.'
-  ) {
+  constructor(properties: Array<KeySchemaProperty | string>, separator = '.') {
     this.properties = properties
     this.separator = separator
   }

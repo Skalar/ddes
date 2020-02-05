@@ -9,7 +9,7 @@ import {
 } from '@ddes/store-transformations'
 import {AWSError, Lambda, Request} from 'aws-sdk'
 import {ConfigurationOptions} from 'aws-sdk/lib/config'
-import * as debug from 'debug'
+import debug from 'debug'
 import * as lambdaFunction from './lambdaFunction'
 import {LambdaTransformerConfig} from './types'
 

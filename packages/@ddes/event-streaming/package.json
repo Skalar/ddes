@@ -19,11 +19,11 @@
   },
   "dependencies": {
     "@ddes/core": "^3.1.1",
-    "@types/debug": "^0.0.30",
-    "@types/ws": "^4.0.2",
-    "debug": "^3.1.0",
-    "lodash": "^4.17.5",
-    "ws": "^5.1.1"
+    "@types/debug": "^4.1.5",
+    "@types/ws": "^7.2.1",
+    "debug": "^4.1.1",
+    "lodash": "^4.17.15",
+    "ws": "^7.2.1"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
@@ -37,6 +37,9 @@
   ],
   "devDependencies": {
     "@types/ws": "^4.0.2",
-    "typescript": "^2.8.3"
+    "typescript": "^3.8.3"
+  },
+  "eslintConfig": {
+    "extends": "../../../eslintrc.json"
   }
 }

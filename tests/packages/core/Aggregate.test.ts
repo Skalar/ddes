@@ -7,7 +7,7 @@ import {
   VersionConflictError,
 } from '@ddes/core'
 import {randomBytes} from 'crypto'
-import {commitYielder} from 'support'
+import {commitYielder} from 'tests/support'
 
 function createTestAggregateClass(options?: {eventStore?: object}) {
   class TestAggregate extends Aggregate {

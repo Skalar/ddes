@@ -1,5 +1,5 @@
 import {AggregateEventUpcasters, Commit, utils} from '@ddes/core'
-import {describeWithResources, iterableToArray} from 'support'
+import {describeWithResources, iterableToArray} from 'tests/support'
 
 const commits = [
   new Commit({

@@ -1,7 +1,7 @@
 // tslint:disable:max-classes-per-file
 
 import {Aggregate} from '@ddes/core'
-import {describeWithResources, iterableToArray} from 'support'
+import {describeWithResources, iterableToArray} from 'tests/support'
 
 describeWithResources('Aggregate', {stores: true}, context => {
   test('commit()', async () => {

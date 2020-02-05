@@ -85,8 +85,6 @@ export default async function createTable(
   }
 
   throw new Error(
-    `Timed out while waiting for table ${
-      tableSpecification.TableName
-    } to become active.`
+    `Timed out while waiting for table ${tableSpecification.TableName} to become active.`
   )
 }

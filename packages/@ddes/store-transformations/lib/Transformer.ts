@@ -3,7 +3,7 @@
  */
 
 import {randomBytes} from 'crypto'
-import * as debug from 'debug'
+import debug from 'debug'
 import {existsSync, writeFile as writeFileCb} from 'fs'
 import {join} from 'path'
 import {promisify} from 'util'
@@ -53,16 +53,16 @@ export default class Transformer {
     throttledWrites: 0,
   }
   public sourceStatus: StoreState = StoreState.Unknown
-  public sourceCommitCount: number = 0
+  public sourceCommitCount = 0
   public targetStatus: StoreState = StoreState.Unknown
-  public targetCommitCount: number = 0
+  public targetCommitCount = 0
   public countersUpdatedAt?: number
   public executionStartedTimestamp?: number
   public transformation: Transformation
   public state: State = State.Idle
-  public workerTimeout: number = 30000
+  public workerTimeout = 30000
   public readonly workerCount: number
-  public activeWorkers: number = 0
+  public activeWorkers = 0
 
   protected runId: string
   protected terminationRequestedTimestamp?: number
@@ -99,9 +99,7 @@ export default class Transformer {
 
       if (loadedStates.length !== this.workerCount) {
         throw new Error(
-          `Configured for ${
-            this.workerCount
-          } workers, but state file contains state for ${loadedStates.length}.`
+          `Configured for ${this.workerCount} workers, but state file contains state for ${loadedStates.length}.`
         )
       }
       this.workerStates = loadedStates

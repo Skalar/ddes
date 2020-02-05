@@ -30,7 +30,7 @@ export default class Projector extends StorePoller {
         )
 
         return aggregateTypes
-      }, new Set()),
+      }, new Set<string>()),
     ]
 
     this.queues = this.projections.reduce(
@@ -41,7 +41,7 @@ export default class Projector extends StorePoller {
             maxQueueSize: params.maxQueueSize || 100,
           })
         ),
-      new Set()
+      new Set<ProjectionWorker>()
     )
   }
 
@@ -62,7 +62,7 @@ export default class Projector extends StorePoller {
         aggregateVersion,
         timestamp,
         sortKey,
-        commitEventIndex: parseInt(index, 10)
+        commitEventIndex: parseInt(index, 10),
       }
 
       for (const queue of this.queues) {
@@ -81,8 +81,8 @@ export default class Projector extends StorePoller {
     const headSortKeys = await Promise.all(
       this.projections.map(projection => projection.getHeadSortKey())
     )
-    this.sortKeyCursor = headSortKeys.reduce(
-      (minSortKey, sortKey) => (sortKey <= minSortKey ? sortKey : minSortKey)
+    this.sortKeyCursor = headSortKeys.reduce((minSortKey, sortKey) =>
+      sortKey <= minSortKey ? sortKey : minSortKey
     )
 
     super.start()

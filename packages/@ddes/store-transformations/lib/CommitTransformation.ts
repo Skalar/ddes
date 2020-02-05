@@ -3,7 +3,7 @@
  */
 
 import {AggregateType, Commit, EventStore, MarshalledCommit} from '@ddes/core'
-import * as debug from 'debug'
+import debug from 'debug'
 import {TransformationWorkerInput} from '.'
 import Transformation from './Transformation'
 

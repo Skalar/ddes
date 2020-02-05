@@ -2,8 +2,8 @@
 
 import {Commit} from '@ddes/core'
 import {CommitTransformation, Transformer} from '@ddes/store-transformations'
-import {describeWithResources, iterableToArray} from 'support'
-import {aws} from 'support/stores'
+import {describeWithResources, iterableToArray} from 'tests/support'
+import {aws} from 'tests/support/stores'
 
 describeWithResources(
   'scenarios/store-transformations: commit copy-and-transformation',
@@ -12,7 +12,8 @@ describeWithResources(
     // we need to get target store
     test(`modifying commit`, async () => {
       const {eventStore: source} = context
-      const target = aws.eventStore({testId: context.testId + '-target'}, {})
+      const extraStore = context.store.eventStore({testId: context.testId + '-target'})
+      const target = extraStore
       context.teardownFunctions.push(() => target.teardown())
       await target.setup()
 
@@ -100,7 +101,8 @@ describeWithResources(
   context => {
     test('deleting commit', async () => {
       const {eventStore: source} = context
-      const target = aws.eventStore({testId: context.testId + '-target'}, {})
+      const AwsStores = new aws(context.testId + '-target')
+      const target = AwsStores.eventStore({})
       context.teardownFunctions.push(() => target.teardown())
       await target.setup()
 
@@ -171,7 +173,8 @@ describeWithResources(
   context => {
     test('creating new commits', async () => {
       const {eventStore: source} = context
-      const target = aws.eventStore({testId: context.testId + '-target'}, {})
+      const AwsStores = new aws(context.testId + '-target')
+      const target = AwsStores.eventStore({})
       context.teardownFunctions.push(() => target.teardown())
       await target.setup()
 
@@ -233,14 +236,12 @@ describeWithResources(
           aggregateKey: 'key',
           aggregateType: 'AggregateC',
           aggregateVersion: 1,
-
           events: [{properties: {}, type: 'Created', version: 1}],
         },
         {
           aggregateKey: 'key',
           aggregateType: 'AggregateD',
           aggregateVersion: 1,
-
           events: [{properties: {}, type: 'Created', version: 1}],
         },
       ])

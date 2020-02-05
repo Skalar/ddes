@@ -8,7 +8,7 @@ import {
   StorePoller,
   StorePollerParams,
 } from '@ddes/core'
-import * as debug from 'debug'
+import debug from 'debug'
 import {IncomingMessage} from 'http'
 import {get} from 'lodash'
 import {Server as WebSocketServer} from 'ws'
@@ -42,7 +42,7 @@ export default class EventStreamer {
     this.wss.on('connection', this.onClientConnected.bind(this))
     this.chronologicalGroups = chronologicalGroups
 
-    for (const chronologicalGroup of chronologicalGroups) {
+    for (const _ of chronologicalGroups) {
       this.storePollers.push(
         new StorePoller({
           ...storePollerParams,
@@ -71,7 +71,6 @@ export default class EventStreamer {
       aggregateKey,
       aggregateVersion,
       timestamp,
-      sortKey,
     } = commit
 
     for (const [commitEventIndex, event] of Object.entries(events)) {
@@ -135,6 +134,7 @@ export default class EventStreamer {
     client.on('message', (json: string) => {
       this.debug(`filter sets for ${clientAddress} set to ${json}`)
       client.filterSets = JSON.parse(json)
+      client.send('READY')
     })
 
     client.on('close', this.onClientDisconnected.bind(this))

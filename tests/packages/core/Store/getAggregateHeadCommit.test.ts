@@ -1,5 +1,5 @@
 import {Commit} from '@ddes/core'
-import {describeWithResources} from 'support'
+import {describeWithResources} from 'tests/support'
 
 describeWithResources('Stores', {stores: true}, context => {
   test('getAggregateHeadCommit()', async () => {

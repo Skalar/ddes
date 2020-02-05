@@ -1,2 +1,4 @@
-import * as aws from './aws'
-export {aws}
+import aws from './aws'
+import postgres from './postgres'
+
+export {aws, postgres}

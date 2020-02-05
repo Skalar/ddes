@@ -3,14 +3,16 @@
  */
 
 import {EventEmitter} from 'events'
-import * as WebSocket from 'ws'
+import WebSocket from 'ws'
 import {FilterSet} from './types'
 
 export default class EventSubscriber extends EventEmitter {
-  public maxQueueSize: number = 1000
+  public maxQueueSize = 1000
 
   private socket?: WebSocket
   private queue: object[] = []
+  public isReady: Promise<boolean>
+  public ready = false
 
   constructor(
     params: {
@@ -36,33 +38,43 @@ export default class EventSubscriber extends EventEmitter {
     this.setMaxListeners(0)
 
     this.socket = new WebSocket(params.wsUrl, websocketClientOptions)
+    this.isReady = new Promise(resolve => {
+      this.socket!.on('open', () => {
+        // Tell the server which events we care about
+        this.socket!.send(JSON.stringify(filterSets))
+      })
 
-    this.socket.on('open', () => {
-      // Tell the server which events we care about
-      this.socket!.send(JSON.stringify(filterSets))
+      this.socket!.once('message', message => {
+        if (message === 'READY') {
+          this.ready = true
+          this.socket!.on('message', json => {
+            if (this.ready) {
+              const event = JSON.parse(json as string)
+              this.emit('event', event)
+              if (this.queue.length < this.maxQueueSize) {
+                this.queue.push(event)
+              } else {
+                this.emit(
+                  'error',
+                  new Error(
+                    `Max queue size of ${this.maxQueueSize} reached, dropping event`
+                  )
+                )
+              }
+            }
+          })
+          resolve(true)
+        }
+      })
     })
 
-    this.socket.on('message', json => {
-      const event = JSON.parse(json as string)
-      this.emit('event', event)
-
-      if (this.queue.length < this.maxQueueSize) {
-        this.queue.push(event)
-      } else {
-        this.emit(
-          'error',
-          new Error(
-            `Max queue size of ${this.maxQueueSize} reached, dropping event`
-          )
-        )
-      }
+    this.socket.on('error', () => {
+      this.socket = undefined
     })
-
-    this.socket.on('error', () => (this.socket = undefined))
-    this.socket.on(
-      'close',
-      () => (this.emit('close'), (this.socket = undefined))
-    )
+    this.socket.on('close', () => {
+      this.emit('close')
+      this.socket = undefined
+    })
   }
 
   public close() {
@@ -73,12 +85,14 @@ export default class EventSubscriber extends EventEmitter {
    * @hidden
    */
   public [Symbol.asyncIterator]() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const eventStream = this
 
     if (!this.socket) {
       throw new Error('No active socket')
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const subscriber = this
 
     return {
