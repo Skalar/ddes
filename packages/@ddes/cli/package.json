@@ -31,7 +31,7 @@
     "find-up": "^2.1.0",
     "lodash": "^4.17.10",
     "matchdep": "^2.0.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.2",
     "semver": "^5.5.0"
   },
   "repository": "skalar/ddes",
