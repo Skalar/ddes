@@ -1,6 +1,6 @@
 {
   "name": "@ddes/cli",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "engines": {
     "node": ">=8.10"
   },
@@ -22,7 +22,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^3.2.0",
+    "@ddes/core": "^3.2.1",
     "boxen": "^4.2.0",
     "chalk": "^3.0.0",
     "columnify": "^1.5.4",
