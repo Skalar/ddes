@@ -1,6 +1,6 @@
 {
   "name": "@ddes/store-transformations",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "engines": {
     "node": ">=8.10"
   },
@@ -19,7 +19,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^3.2.1",
+    "@ddes/core": "^3.2.2",
     "aws-sdk": "^2.612.0",
     "blessed": "^0.1.81",
     "debug": "^4.1.1",
