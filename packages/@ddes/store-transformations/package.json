@@ -14,7 +14,7 @@
     "package.json",
     "README.md"
   ],
-  "types": "./dist/node-10/index.d.ts",
+  "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public"
   },

@@ -17,7 +17,7 @@
   "bin": {
     "ddes": "./cli.js"
   },
-  "types": "./dist/node-10/index.d.ts",
+  "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public"
   },

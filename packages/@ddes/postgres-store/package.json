@@ -13,13 +13,12 @@
     "package.json",
     "README.md"
   ],
-  "types": "./dist/node-10/index.d.ts",
+  "types": "./dist/index.d.ts",
   "publishConfig": {
     "access": "public"
   },
   "dependencies": {
     "@ddes/core": "^3.2.4",
-    "knex": "^0.20.13",
     "pg": "^8.0.0",
     "pg-query-stream": "^3.0.4",
     "pg-sql": "^1.1.0",
