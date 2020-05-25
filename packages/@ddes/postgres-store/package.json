@@ -1,6 +1,6 @@
 {
   "name": "@ddes/postgres-store",
-  "version": "3.2.4",
+  "version": "3.2.5",
   "engines": {
     "node": ">=8.10"
   },
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^3.2.4",
+    "@ddes/core": "^3.2.5",
     "pg": "^8.0.0",
     "pg-query-stream": "^3.0.4",
     "pg-sql": "^1.1.0",
