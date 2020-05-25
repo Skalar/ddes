@@ -4,7 +4,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "scripts/build.js",
+    "build": "scripts/build",
     "test": "jest"
   },
   "release": {
