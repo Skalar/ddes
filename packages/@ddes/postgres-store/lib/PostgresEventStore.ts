@@ -188,7 +188,7 @@ export default class PostgresEventStore extends EventStore {
     }
 
     const query = sql`
-      SELECT DISCTINCT "aggregate_type", "aggregate_key"
+      SELECT DISTINCT "aggregate_type", "aggregate_key"
       FROM ${sql.ident(this.tableName)} WHERE "aggregate_type" = ${type}
     `
 
