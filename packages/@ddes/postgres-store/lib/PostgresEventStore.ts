@@ -68,8 +68,8 @@ export default class PostgresEventStore extends EventStore {
    * Remove PostgresQL table
    */
   public async teardown() {
-    // const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
-    // await this.client.query(query.text, query.values)
+    const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
+    await this.client.query(query.text, query.values)
   }
 
   /**

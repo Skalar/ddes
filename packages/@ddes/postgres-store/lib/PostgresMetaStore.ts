@@ -108,8 +108,8 @@ export default class PostgresMetaStore extends MetaStore {
   }
 
   public async teardown() {
-    // const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
-    // await this.client.query(query.text)
+    const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
+    await this.client.query(query.text)
   }
 
   public toString(): string {
