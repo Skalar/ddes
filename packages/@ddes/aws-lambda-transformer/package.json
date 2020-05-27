@@ -1,6 +1,6 @@
 {
   "name": "@ddes/aws-lambda-transformer",
-  "version": "3.2.7",
+  "version": "3.2.8",
   "engines": {
     "node": ">=8.10"
   },
@@ -18,8 +18,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^3.2.7",
-    "@ddes/store-transformations": "^3.2.7",
+    "@ddes/core": "^3.2.8",
+    "@ddes/store-transformations": "^3.2.8",
     "archiver": "^3.1.1",
     "aws-sdk": "^2.612.0",
     "debug": "^4.1.1",
