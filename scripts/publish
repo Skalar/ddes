@@ -1,0 +1,15 @@
+#!/bin/bash
+
+root=$PWD
+
+if [[ $1 != "clean" ]]; then
+  echo -n "publishing packages"
+  cd $root/packages/@ddes/core && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  cd $root/packages/@ddes/aws-store && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  cd $root/packages/@ddes/event-streaming && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  cd $root/packages/@ddes/aws-lambda-transformer && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  cd $root/packages/@ddes/store-transformations && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  cd $root/packages/@ddes/cli && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  cd $root/packages/@ddes/postgres-store && npm whoami --userconfig $root/.npmrc && npm publish --userconfig $root/.npmrc
+  echo "done."
+fi
