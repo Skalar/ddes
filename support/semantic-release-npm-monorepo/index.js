@@ -1,6 +1,6 @@
 const npmPlugin = require('@semantic-release/npm')
 const collectPackages = require('@lerna/collect-packages')
-const {readJson, writeJson} = require('fs-extra')
+const {readJson, writeJson, writeFileSync} = require('fs-extra')
 
 async function prepare(pluginConfig, context) {
   const {
@@ -50,18 +50,15 @@ async function prepare(pluginConfig, context) {
 }
 
 async function publish(pluginConfig, context) {
-  const {
-    nextRelease: {version},
-    logger,
-  } = context
-
   const packages = await collectPackages(process.cwd(), ['packages/**/*'])
 
   for (const package of packages) {
+    const pkgRoot = `packages/${package.name}`
+    writeFileSync(`${pkgRoot}/.npmrc`, `//registry.npmjs.org/:_authToken=${process.env.NPM_TOKEN}`)
     await npmPlugin.publish(
       {
         ...pluginConfig,
-        pkgRoot: `packages/${package.name}`,
+        pkgRoot,
       },
       context
     )
