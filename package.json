@@ -51,7 +51,7 @@
     "eslint-plugin-prettier": "^3.1.2",
     "glob": "^7.1.6",
     "jest": "^25.2.7",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "ora": "^4.0.3",
     "prettier": "^2.0.2",
     "semantic-release": "^17.0.2",
