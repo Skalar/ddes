@@ -17,11 +17,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@types/debug": "^4.1.5",
-    "debug": "^4.1.1",
-    "semver": "^7.1.2"
-  },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
   "keywords": [
@@ -31,7 +26,12 @@
     "aws",
     "cqrs"
   ],
+  "dependencies": {
+    "debug": "^4.1.1",
+    "semver": "^7.1.2"
+  },
   "devDependencies": {
+    "@types/debug": "^4.1.5",
     "typescript": "^4.0.2"
   },
   "scripts": {

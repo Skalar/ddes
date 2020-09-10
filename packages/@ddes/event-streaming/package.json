@@ -17,12 +17,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@ddes/core": "^4.0.0",
-    "debug": "^4.1.1",
-    "lodash": "^4.17.15",
-    "ws": "^7.2.1"
-  },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
   "keywords": [
@@ -33,6 +27,12 @@
     "event store",
     "cqrs"
   ],
+  "dependencies": {
+    "@ddes/core": "^4.0.0",
+    "debug": "^4.1.1",
+    "lodash": "^4.17.15",
+    "ws": "^7.2.1"
+  },
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "@types/ws": "^7.2.1",
