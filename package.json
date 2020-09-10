@@ -7,7 +7,7 @@
     "lint": "yarn workspaces run lint",
     "build": "yarn clean && yarn workspaces run build",
     "clean": "rm -fr packages/@ddes/*/dist",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "release": {
     "verifyConditions": [
