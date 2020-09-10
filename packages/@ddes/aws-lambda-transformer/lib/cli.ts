@@ -37,9 +37,11 @@ const cli = {
         const {transformationPath, transformerOptions} = params
 
         // Load at runtime to avoid dependencies in lambda package
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const TransformerGui = require('@ddes/store-transformations/gui')
           .default
 
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const transformationModule = require(join(
           process.cwd(),
           transformationPath
@@ -50,7 +52,7 @@ const cli = {
           transformationPath,
           transformerOptions
         )
-        const gui = new TransformerGui(transformer)
+        new TransformerGui(transformer)
 
         await transformer.execute()
       },

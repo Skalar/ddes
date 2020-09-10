@@ -10,7 +10,7 @@ import Transformation from './Transformation'
 /**
  * @hidden
  */
-const log = debug('@ddes/store-transformations:CommitTransformation')
+debug('@ddes/store-transformations:CommitTransformation')
 
 /**
  * For transformations operating on the [[Commit]] level.

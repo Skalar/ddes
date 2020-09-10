@@ -37,9 +37,11 @@ const cli = {
         const {transformationPath, transformerOptions} = params
 
         // Load at runtime to avoid dependency on cli
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const TransformerGui = require('@ddes/store-transformations/gui')
           .default
 
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const transformationModule = require(join(
           process.cwd(),
           transformationPath
@@ -54,6 +56,7 @@ const cli = {
 
         try {
           await transformer.execute()
+          // eslint-disable-next-line no-console
           console.log('Transformation completed successfully.')
         } finally {
           gui.terminate()

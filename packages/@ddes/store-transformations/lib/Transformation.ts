@@ -53,7 +53,7 @@ class Transformation {
   }
 
   public async perform(
-    input: TransformationWorkerInput
+    _input: TransformationWorkerInput
   ): Promise<TransformationWorkerResult> {
     throw new Error(`perform() must be specified in transformation`)
   }

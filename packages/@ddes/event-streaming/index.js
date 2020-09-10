@@ -1,6 +1,8 @@
+/* eslint-disable */
 const semver = require('semver')
 
 if (typeof Symbol.asyncIterator === 'undefined') {
+  // @ts-ignore
   Symbol.asyncIterator =
     Symbol.asyncIterator || Symbol.for('Symbol.asyncIterator')
 }
