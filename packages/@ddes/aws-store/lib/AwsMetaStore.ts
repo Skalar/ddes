@@ -4,7 +4,7 @@
 
 import {MetaStore, MetaStoreKey} from '@ddes/core'
 import {DynamoDB} from 'aws-sdk'
-import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 import {AutoscalingConfig, StoreCapacityConfig} from './types'
 import * as utils from './utils'
 

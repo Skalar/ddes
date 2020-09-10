@@ -11,7 +11,7 @@ import {
 } from '@ddes/core'
 
 import {DynamoDB} from 'aws-sdk'
-import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 import AwsEventStoreBatchMutator from './AwsEventStoreBatchMutator'
 import AwsEventStoreQueryResponse from './AwsEventStoreQueryResponse'
 import {

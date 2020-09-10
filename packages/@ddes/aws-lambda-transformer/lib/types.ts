@@ -2,7 +2,7 @@
  * @module @ddes/aws-lambda-transformer
  */
 
-import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 
 export interface LambdaTransformerConfig {
   fileRoot?: string
