@@ -12,7 +12,7 @@ import {
 
 import {SnapshotStore} from '@ddes/core'
 import {S3} from 'aws-sdk'
-import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 import {createBucket, deleteBucket} from './utils'
 
 /**

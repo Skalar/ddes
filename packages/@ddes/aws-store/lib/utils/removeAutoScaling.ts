@@ -3,7 +3,7 @@
  */
 
 import {ApplicationAutoScaling, IAM} from 'aws-sdk'
-import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 
 /**
  * @hidden

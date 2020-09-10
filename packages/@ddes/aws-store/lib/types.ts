@@ -3,7 +3,7 @@
  */
 
 import {DynamoDB, S3} from 'aws-sdk'
-import {ConfigurationOptions} from 'aws-sdk/lib/config'
+import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 
 export interface AutoscalingConfig {
   tableReadMin: number
