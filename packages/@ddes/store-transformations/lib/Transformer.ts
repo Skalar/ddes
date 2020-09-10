@@ -22,7 +22,7 @@ const writeFile = promisify(writeFileCb)
 /**
  * @hidden
  */
-const log = debug('@ddes/store-transformations:Transformer')
+debug('@ddes/store-transformations:Transformer')
 
 /**
  * Used to execute [[Transformation]]s.
@@ -95,6 +95,7 @@ export default class Transformer {
     }
 
     if (this.stateFilePath && existsSync(this.stateFilePath)) {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const loadedStates = require(this.stateFilePath)
 
       if (loadedStates.length !== this.workerCount) {
@@ -169,7 +170,6 @@ export default class Transformer {
     this.sourceStatus = StoreState.Preparing
     this.targetStatus = StoreState.Preparing
 
-    const promises = []
     if (this.setupTarget) {
       await this.transformation.target.setup()
     }

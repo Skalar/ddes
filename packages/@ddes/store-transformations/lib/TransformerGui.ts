@@ -4,7 +4,6 @@
 
 import * as blessed from 'blessed'
 import chalk from 'chalk'
-import {on} from 'cluster'
 import {randomBytes} from 'crypto'
 import {tmpdir} from 'os'
 import {join} from 'path'
@@ -53,7 +52,7 @@ export default class TransformerGui {
     process.on('SIGINT', () => this.terminate)
     process.on('SIGTERM', () => this.terminate)
 
-    this.screen.key(['escape', 'q', 'C-c'], (ch, key) => {
+    this.screen.key(['escape', 'q', 'C-c'], () => {
       this.terminate()
     })
 
@@ -76,7 +75,9 @@ export default class TransformerGui {
     const stateFilePath = join(tmpdir(), randomBytes(8).toString('hex'))
 
     await this.transformer.writeStateFile(stateFilePath)
+    // eslint-disable-next-line no-console
     console.log(`Wrote state to ${stateFilePath}`)
+    // eslint-disable-next-line no-console
     console.log('Waiting for transformer termination...')
 
     await this.transformer.terminate()
@@ -96,7 +97,7 @@ export default class TransformerGui {
       height: 25,
     })
 
-    const title = blessed
+    blessed
       .box({
         parent: centeredContainer,
         width: '100%',
@@ -239,7 +240,7 @@ export default class TransformerGui {
       commitsDeleted,
       throttledReads,
       throttledWrites,
-      workerInvocations,
+      /* workerInvocations, */
     } = this.transformer.counters
     return [
       [' Status', ` ${this.transformer.statusDescription}`],

@@ -84,9 +84,7 @@ export default class Aggregate {
       )
     }
 
-    return createHash('md5')
-      .update(JSON.stringify(components))
-      .digest('base64')
+    return createHash('md5').update(JSON.stringify(components)).digest('base64')
   }
 
   /**
@@ -290,7 +288,7 @@ export default class Aggregate {
    */
   protected static stateReducer(
     internalState: InternalState,
-    event: EventWithMetadata
+    _event: EventWithMetadata
   ): object {
     return internalState
   }
@@ -557,7 +555,7 @@ export default class Aggregate {
     this.timestamp = undefined
   }
 
-  public async create(...args: any[]): Promise<Commit> {
+  public async create(..._args: any[]): Promise<Commit> {
     throw new Error(
       `You need to implement your own create() for ${this.constructor.name}`
     )
@@ -567,7 +565,7 @@ export default class Aggregate {
     return obj
   }
 
-  protected convertFromInternalState(internalState: any): object {
+  protected convertFromInternalState(_internalState: any): object {
     return this.internalState
   }
 }

@@ -53,7 +53,9 @@
     "@types/minimist": "^1.2.0",
     "typescript": "^4.0.2"
   },
-  "eslintConfig": {
-    "extends": "../../../eslintrc.json"
+  "scripts": {
+    "lint": "eslint lib --ext ts",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -fr dist"
   }
 }

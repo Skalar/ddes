@@ -4,7 +4,9 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "scripts/build",
+    "lint": "yarn workspaces run lint",
+    "build": "yarn clean && yarn workspaces run build",
+    "clean": "rm -fr packages/@ddes/*/dist",
     "test": "jest"
   },
   "release": {
@@ -65,12 +67,6 @@
   "npmClient": "yarn",
   "useWorkspaces": true,
   "workspaces": [
-    "packages/@ddes/core",
-    "packages/@ddes/cli",
-    "packages/@ddes/aws-store",
-    "packages/@ddes/aws-lambda-transformer",
-    "packages/@ddes/store-transformations",
-    "packages/@ddes/event-streaming",
-    "packages/@ddes/postgres-store"
+    "packages/@ddes/*"
   ]
 }

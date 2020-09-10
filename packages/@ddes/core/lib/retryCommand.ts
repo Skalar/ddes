@@ -21,7 +21,7 @@ export default function retryCommand(options?: Partial<RetryConfig>) {
   ) => {
     const method = descriptor.value
 
-    descriptor.value = async function(this: Aggregate, ...commandArgs: any[]) {
+    descriptor.value = async function (this: Aggregate, ...commandArgs: any[]) {
       return await jitteredRetry(() => method!.apply(this, commandArgs), {
         errorIsRetryable: error => error instanceof VersionConflictError,
         beforeRetry: () => this.hydrate(),

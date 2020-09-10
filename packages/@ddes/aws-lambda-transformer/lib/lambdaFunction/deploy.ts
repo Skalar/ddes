@@ -32,7 +32,9 @@ export default async function deploy(
     environment = {},
   } = config
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const archiver = require('archiver')
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const glob = promisify(require('glob'))
 
   const baseFiles = [
@@ -105,16 +107,16 @@ export default async function deploy(
     })
     .promise()
 
-  const accountId = Role.split(':')[4]
+  // commented: not used
+  // const accountId = Role.split(':')[4]
 
   try {
-    let lambdaFunction = null
     let attempt = 0
     while (true) {
       attempt++
 
       try {
-        lambdaFunction = await lambda
+        await lambda
           .createFunction({
             Code: {S3Bucket: id, S3Key: 'transformationFunction.zip'},
             FunctionName: id,

@@ -1,9 +1,7 @@
+/* eslint-disable no-console */
 /**
  * @module @ddes/cli
  */
-
-// tslint:disable:no-var-requires
-
 import chalk from 'chalk'
 import {pointer} from 'figures'
 import findUp from 'find-up'
@@ -25,6 +23,7 @@ export default async function displayUsage(commands: {
   [commandName: string]: CliCommand
 }) {
   const packageJsonPath = await findUp('package.json', {cwd: __dirname})
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const version = require(packageJsonPath!).version
   console.log(
     boxen(

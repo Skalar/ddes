@@ -58,7 +58,9 @@
     "typedoc-plugin-external-module-name": "^4.0.3",
     "typescript": "^4.0.2"
   },
-  "eslintConfig": {
-    "extends": "../../../eslintrc.json"
+  "scripts": {
+    "lint": "eslint lib",
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -fr dist"
   }
 }

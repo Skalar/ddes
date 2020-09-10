@@ -25,6 +25,7 @@ export default async function lambdaHandler(
     throw new Error(`'TRANSFORMATION_PATH' env var not defined`)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const transformationModule = require(join(
     process.cwd(),
     process.env.TRANSFORMATION_PATH

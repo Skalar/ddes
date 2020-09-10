@@ -124,8 +124,14 @@ export default class LambdaTransformer extends Transformer {
         log(`awaiting request promise ${index}`)
         const workerResult = await request.promise()
         log(`workerResult ${index}`, workerResult)
-        const {StatusCode, FunctionError, LogResult, Payload} = workerResult
-        const logResult = Buffer.from(LogResult!, 'base64').toString('utf8')
+        const {
+          /* LogResult, */
+          StatusCode,
+          FunctionError,
+          Payload,
+        } = workerResult
+        // Commented out because it was unused
+        // const logResult = Buffer.from(LogResult!, 'base64').toString('utf8')
 
         if (StatusCode !== 200) {
           throw workerResult.FunctionError
