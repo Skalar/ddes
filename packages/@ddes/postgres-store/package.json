@@ -17,13 +17,6 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-    "@ddes/core": "^4.0.0",
-    "pg": "^8.0.0",
-    "pg-query-stream": "^3.0.4",
-    "pg-sql": "^1.1.0",
-    "stream-to-async-iterator": "^0.2.0"
-  },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
   "keywords": [
@@ -34,6 +27,13 @@
     "event sourcing",
     "cqrs"
   ],
+  "dependencies": {
+    "@ddes/core": "^4.0.0",
+    "pg": "^8.0.0",
+    "pg-query-stream": "^3.0.4",
+    "pg-sql": "^1.1.0",
+    "stream-to-async-iterator": "^0.2.0"
+  },
   "devDependencies": {
     "@types/node": "^14",
     "@types/pg": "^7.14.3",
