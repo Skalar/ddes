@@ -1,6 +1,6 @@
 {
   "name": "@ddes/event-streaming",
-  "version": "3.2.9",
+  "version": "3.2.10",
   "engines": {
     "node": ">=8.10"
   },
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^3.2.9",
+    "@ddes/core": "^3.2.10",
     "@types/debug": "^4.1.5",
     "@types/ws": "^7.2.1",
     "debug": "^4.1.1",
