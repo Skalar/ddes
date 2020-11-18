@@ -54,7 +54,7 @@
     "lodash": "^4.17.15",
     "ora": "^4.0.3",
     "prettier": "^2.0.2",
-    "semantic-release": "^17.0.2",
+    "semantic-release": "^17.2.3",
     "semantic-release-github-pr": "^6.0.0",
     "travis-deploy-once": "^5.0.11",
     "tsconfig-paths": "^3.9.0",
