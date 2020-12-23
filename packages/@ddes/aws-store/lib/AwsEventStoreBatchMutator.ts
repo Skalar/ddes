@@ -1,10 +1,10 @@
 /**
  * @module @ddes/aws-store
  */
-
 import {BatchMutator, Commit} from '@ddes/core'
 import debug from 'debug'
 import equal from 'fast-deep-equal'
+
 import AwsEventStore from './AwsEventStore'
 import {AwsEventStoreBatchMutatorQueueItem, MarshalledCommit} from './types'
 import {marshallCommit} from './utils'
@@ -14,9 +14,7 @@ import {marshallCommit} from './utils'
  */
 const log = debug('@ddes/aws-store:AwsEventStoreBatchMutator')
 
-export default class AwsEventStoreBatchMutator extends BatchMutator<
-  MarshalledCommit
-> {
+export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCommit> {
   protected store: AwsEventStore
   protected queue: Set<AwsEventStoreBatchMutatorQueueItem> = new Set()
   protected maxItemsPerRequest = 25
