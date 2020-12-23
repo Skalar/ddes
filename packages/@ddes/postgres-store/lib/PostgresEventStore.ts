@@ -199,12 +199,12 @@ export default class PostgresEventStore extends EventStore {
     return new PostgresEventStoreQueryResponse(
       (async function* () {
         let instanceCount = 0
-        for await (const {aggregateType, aggregateKey} of stream) {
+        for await (const {aggregate_type, aggregate_key} of stream) {
           instanceCount++
           const instanceQuery = sql`
             SELECT * FROM ${sql.ident(tableName)}
-            WHERE "aggregate_type" = ${aggregateType}
-            AND "aggregate_key" = ${aggregateKey}
+            WHERE "aggregate_type" = ${aggregate_type}
+            AND "aggregate_key" = ${aggregate_key}
             AND (expires_at > ${Date.now()} OR expires_at IS NULL)
           `
 
