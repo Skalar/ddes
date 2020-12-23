@@ -50,7 +50,7 @@ export default class PostgresEventStore extends EventStore {
           aggregate_version   bigint NOT NULL,
           sort_key            text NOT NULL,
           chronological_group text NOT NULL,
-          events              jsonb[] NOT NULL,
+          events              jsonb NOT NULL,
           timestamp           bigint NOT NULL,
           expires_at          bigint,
           PRIMARY KEY(aggregate_type, aggregate_key, aggregate_version)
@@ -103,7 +103,7 @@ export default class PostgresEventStore extends EventStore {
         ${aggregateVersion},
         ${sortKey},
         ${chronologicalGroup},
-        ${events},
+        ${JSON.stringify(events)},
         ${new Date(timestamp).getTime()},
         ${expiresAt || null}
       )`
