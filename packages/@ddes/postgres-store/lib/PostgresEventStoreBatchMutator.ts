@@ -73,7 +73,7 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
           ${aggregateVersion},
           ${sortKey},
           ${chronologicalGroup},
-          ${events},
+          ${JSON.stringify(events)},
           ${timestamp}${
         expiresAt ? sql`, ${new Date(expiresAt).getTime()}` : sql``
       })
