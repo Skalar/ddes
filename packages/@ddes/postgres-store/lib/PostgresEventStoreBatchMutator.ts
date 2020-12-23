@@ -1,11 +1,12 @@
 /**
  * @module @ddes/postgres-store
  */
-import debug from 'debug'
 import {BatchMutator, Commit} from '@ddes/core'
-import {Row, PostgresStoreBatchMutatorQueueItem} from './types'
-import PostgresEventStore from './PostgresEventStore'
+import debug from 'debug'
 import {sql} from 'pg-sql'
+
+import PostgresEventStore from './PostgresEventStore'
+import {PostgresStoreBatchMutatorQueueItem, Row} from './types'
 
 /**
  * @hidden
@@ -105,11 +106,11 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
   }
 
   private addToQueue(query: string, variables: any[]) {
-    let startedResolver!: () => void
+    let startedResolver!: (value?: unknown) => void
     const startedPromise = new Promise(resolve => {
       startedResolver = resolve
     })
-    let processedResolver!: () => void
+    let processedResolver!: (value?: unknown) => void
     const processedPromise = new Promise(resolve => {
       processedResolver = resolve
     })
