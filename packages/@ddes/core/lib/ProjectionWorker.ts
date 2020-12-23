@@ -1,7 +1,6 @@
 /**
  * @module @ddes/core
  */
-
 import Projection from './Projection'
 import {EventWithMetadata} from './types'
 
@@ -9,7 +8,7 @@ export default class ProjectionWorker {
   public projection: Projection
   private queue: Set<EventWithMetadata>
   private maxQueueSize: number
-  private addToQueueWaitResolvers: Array<() => void> = []
+  private addToQueueWaitResolvers: Array<(value?: unknown) => void> = []
   private workerLoopRunning = false
 
   constructor(params: {projection: Projection; maxQueueSize: number}) {

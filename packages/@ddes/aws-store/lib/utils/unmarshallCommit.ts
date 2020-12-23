@@ -1,11 +1,11 @@
 /**
  * @module @ddes/aws-store
  */
-
 import {Commit, Event} from '@ddes/core'
 import {DynamoDB} from 'aws-sdk'
 import {promisify} from 'util'
 import {gunzip as gunzipCb} from 'zlib'
+
 import {MarshalledCommit} from '../types'
 
 /**
@@ -28,7 +28,9 @@ export default async function unmarshallCommit(
     aggregateVersion: unmarshalled.v,
     expiresAt: unmarshalled.x,
     timestamp: unmarshalled.t,
-    events: JSON.parse((await gunzip(unmarshalled.e)) as string).map(
+    events: JSON.parse(
+      ((await gunzip(unmarshalled.e)) as unknown) as string
+    ).map(
       ({
         t: type,
         v: version = 1,

@@ -101,11 +101,11 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
   }
 
   private addToQueue(item: object, capacityUnits: number) {
-    let startedResolver!: () => void
+    let startedResolver!: (value?: unknown) => void
     const startedPromise = new Promise(resolve => {
       startedResolver = resolve
     })
-    let processedResolver!: () => void
+    let processedResolver!: (value?: unknown) => void
     const processedPromise = new Promise(resolve => {
       processedResolver = resolve
     })
