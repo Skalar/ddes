@@ -3,6 +3,7 @@ import {PostgresEventStore, PostgresMetaStore, PostgresSnapshotStore} from '@dde
 
 import Store from './Store'
 
+console.log(`DATABASE_URL: ${process.env.DATABASE_URL}`)
 const database: string | ConnectionPoolConfig = process.env.DATABASE_URL || {
   bigIntMode: 'number',
   host: 'localhost',
@@ -15,17 +16,11 @@ const database: string | ConnectionPoolConfig = process.env.DATABASE_URL || {
 type PgStore = PostgresEventStore | PostgresMetaStore | PostgresSnapshotStore
 
 export default class PostgresStores extends Store<PgStore> {
-  constructor(testId?: string) {
-    super(testId)
-    process.once('SIGTERM', async () => {
-      for await (const store of this.stores) {
-        try {
-          await store.shutdown()
-        } catch (error) {
-          console.error(error)
-        }
-      }
-    })
+  public async teardown() {
+    await super.teardown()
+    for (const store of this.stores) {
+      await store.shutdown()
+    }
   }
 
   public eventStore(config?: any) {
