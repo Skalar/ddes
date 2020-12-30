@@ -3,7 +3,6 @@ import {PostgresEventStore, PostgresMetaStore, PostgresSnapshotStore} from '@dde
 
 import Store from './Store'
 
-console.log(`DATABASE_URL: ${process.env.DATABASE_URL}`)
 const database: string | ConnectionPoolConfig = process.env.DATABASE_URL || {
   bigIntMode: 'number',
   host: 'localhost',
