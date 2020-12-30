@@ -19,10 +19,7 @@ export default class Projection {
    */
   public dependencies?: {
     [dependerType: string]: {
-      [dependeeType: string]: (
-        dependerEvent: EventWithMetadata,
-        dependeeEvent: EventWithMetadata
-      ) => boolean
+      [dependeeType: string]: (dependerEvent: EventWithMetadata, dependeeEvent: EventWithMetadata) => boolean
     }
   } = {}
 
@@ -41,12 +38,7 @@ export default class Projection {
       timeout?: number
     } = {}
   ): Promise<boolean> {
-    const {
-      initialDelay = 10,
-      maxDelay = 500,
-      backoffExponent = 2,
-      timeout = 10000,
-    } = options
+    const {initialDelay = 10, maxDelay = 500, backoffExponent = 2, timeout = 10000} = options
 
     const startedAt = Date.now()
 
@@ -90,17 +82,11 @@ export default class Projection {
   }
 
   public async setHeadSortKey(sortKey: string) {
-    await this.metaStore.put(
-      [`Projection:${this.name}`, 'headSortKey'],
-      sortKey
-    )
+    await this.metaStore.put([`Projection:${this.name}`, 'headSortKey'], sortKey)
   }
 
   public async getHeadSortKey(fail = true) {
-    const sortKey = await this.metaStore.get([
-      `Projection:${this.name}`,
-      'headSortKey',
-    ])
+    const sortKey = await this.metaStore.get([`Projection:${this.name}`, 'headSortKey'])
 
     if (!sortKey && fail) {
       throw new Error('Projection has not been setup')
@@ -116,11 +102,7 @@ export default class Projection {
     const {startsAt} = params
 
     if (!(await this.getHeadSortKey(false))) {
-      await this.setHeadSortKey(
-        startsAt instanceof Date
-          ? startsAt.toISOString().replace(/[^0-9]/g, '')
-          : startsAt
-      )
+      await this.setHeadSortKey(startsAt instanceof Date ? startsAt.toISOString().replace(/[^0-9]/g, '') : startsAt)
     }
   }
 

@@ -2,11 +2,7 @@
  * @module @ddes/aws-lambda-transformer
  */
 
-import {
-  Transformation,
-  Transformer,
-  TransformerState as State,
-} from '@ddes/store-transformations'
+import {Transformation, Transformer, TransformerState as State} from '@ddes/store-transformations'
 import {AWSError, Lambda, Request} from 'aws-sdk'
 import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 import debug from 'debug'
@@ -35,26 +31,16 @@ const log = debug('@ddes/aws-store-lambda-transformer:LambdaTransformer')
  * ```
  */
 export default class LambdaTransformer extends Transformer {
-  private activeRequests: Set<
-    Request<Lambda.InvocationResponse, AWSError>
-  > = new Set()
+  private activeRequests: Set<Request<Lambda.InvocationResponse, AWSError>> = new Set()
 
   private awsConfig?: ConfigurationOptions
   private config: LambdaTransformerConfig
   private transformationPath: string
 
-  constructor(
-    transformation: Transformation,
-    transformationPath: string,
-    options: LambdaTransformerConfig
-  ) {
+  constructor(transformation: Transformation, transformationPath: string, options: LambdaTransformerConfig) {
     super(transformation, options)
     this.transformationPath = transformationPath
-    this.config = Object.assign(
-      {},
-      this.transformation.transformerConfig.lambda,
-      options
-    ) as LambdaTransformerConfig
+    this.config = Object.assign({}, this.transformation.transformerConfig.lambda, options) as LambdaTransformerConfig
   }
 
   public async terminate(options: {skipCleanup?: boolean} = {}) {
@@ -77,11 +63,7 @@ export default class LambdaTransformer extends Transformer {
 
   protected async deployFunction() {
     try {
-      await lambdaFunction.deploy(
-        this.runId,
-        this.transformationPath,
-        this.config
-      )
+      await lambdaFunction.deploy(this.runId, this.transformationPath, this.config)
     } catch (error) {
       await lambdaFunction.clean(this.runId, this.config)
       throw error
@@ -110,9 +92,7 @@ export default class LambdaTransformer extends Transformer {
         Payload: JSON.stringify({
           segment: index,
           totalSegments: this.workerCount,
-          readCapacityLimit: this.readCapacityLimit
-            ? Math.floor(this.readCapacityLimit / this.workerCount)
-            : undefined,
+          readCapacityLimit: this.readCapacityLimit ? Math.floor(this.readCapacityLimit / this.workerCount) : undefined,
           writeCapacityLimit: this.writeCapacityLimit
             ? Math.floor(this.writeCapacityLimit / this.workerCount)
             : undefined,
@@ -142,9 +122,7 @@ export default class LambdaTransformer extends Transformer {
         if (!Payload) {
           throw new Error('Worker completed without a payload')
         }
-        const {completed, state: newState, ...counters} = JSON.parse(
-          Payload as string
-        )
+        const {completed, state: newState, ...counters} = JSON.parse(Payload as string)
 
         this.bumpCounters(counters as any)
 
@@ -159,8 +137,7 @@ export default class LambdaTransformer extends Transformer {
       } catch (error) {
         if (
           error.code === 'AccessDeniedException' &&
-          error.message ===
-            'The role defined for the function cannot be assumed by Lambda.'
+          error.message === 'The role defined for the function cannot be assumed by Lambda.'
         ) {
           await new Promise(r => setTimeout(r, 1000))
         } else if (error.code === 'ServiceException') {

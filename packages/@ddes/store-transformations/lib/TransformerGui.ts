@@ -150,9 +150,7 @@ export default class TransformerGui {
 
     this.intervals.push(
       (setInterval(() => {
-        spinner.setContent(
-          chalk.yellow.bold(this.spinnerAnimationFrames[spinnerFrameIndex])
-        )
+        spinner.setContent(chalk.yellow.bold(this.spinnerAnimationFrames[spinnerFrameIndex]))
         this.screen.render()
         spinnerFrameIndex++
         if (spinnerFrameIndex >= this.spinnerAnimationFrames.length) {
@@ -179,8 +177,7 @@ export default class TransformerGui {
         this.table.setData(this.getTableData())
         this.progressBar.setProgress(
           this.transformer.sourceCommitCount
-            ? this.transformer.counters.commitsScanned /
-                this.transformer.sourceCommitCount
+            ? this.transformer.counters.commitsScanned / this.transformer.sourceCommitCount
             : 0
         )
       }, 1000)
@@ -220,16 +217,13 @@ export default class TransformerGui {
   }
 
   get elapsedTime() {
-    const diff =
-      Date.now() - (this.transformer.executionStartedTimestamp || Date.now())
+    const diff = Date.now() - (this.transformer.executionStartedTimestamp || Date.now())
 
     const hours = Math.floor((diff % 86400000) / 3600000)
     const minutes = Math.round(((diff % 86400000) % 3600000) / 60000)
     const seconds = Math.round((((diff % 86400000) % 3600000) % 60000) / 1000)
 
-    return [hours, minutes, seconds]
-      .map(v => v.toString().padStart(2, '0'))
-      .join(':')
+    return [hours, minutes, seconds].map(v => v.toString().padStart(2, '0')).join(':')
   }
 
   private getTableData() {
@@ -248,34 +242,11 @@ export default class TransformerGui {
       [' Source', ` ${this.sourceInfo}`],
       [' Target', ` ${this.targetInfo}`],
       [' Elapsed time', ` ${this.elapsedTime}`],
-      [
-        ' Commits scanned',
-        ` ${commitsScanned.toLocaleString()} ${this.counterPerSecond(
-          'commitsScanned'
-        )}`,
-      ],
-      [
-        ' Commits read',
-        ` ${commitsRead.toLocaleString()} ${this.counterPerSecond(
-          'commitsRead'
-        )}`,
-      ],
-      [
-        ' Commits written',
-        ` ${commitsWritten.toLocaleString()} ${this.counterPerSecond(
-          'commitsWritten'
-        )}`,
-      ],
-      [
-        ' Commits deleted',
-        ` ${commitsDeleted.toLocaleString()} ${this.counterPerSecond(
-          'commitsDeleted'
-        )}`,
-      ],
-      [
-        ' Throttled requests',
-        ` read: ${throttledReads.toLocaleString()} write: ${throttledWrites.toLocaleString()}`,
-      ],
+      [' Commits scanned', ` ${commitsScanned.toLocaleString()} ${this.counterPerSecond('commitsScanned')}`],
+      [' Commits read', ` ${commitsRead.toLocaleString()} ${this.counterPerSecond('commitsRead')}`],
+      [' Commits written', ` ${commitsWritten.toLocaleString()} ${this.counterPerSecond('commitsWritten')}`],
+      [' Commits deleted', ` ${commitsDeleted.toLocaleString()} ${this.counterPerSecond('commitsDeleted')}`],
+      [' Throttled requests', ` read: ${throttledReads.toLocaleString()} write: ${throttledWrites.toLocaleString()}`],
     ]
   }
 
@@ -287,15 +258,10 @@ export default class TransformerGui {
     const counterValue = this.transformer.counters[counterName]
 
     const mesurementPeriodInSeconds =
-      (this.transformer.countersUpdatedAt -
-        this.transformer.executionStartedTimestamp!) /
-      1000
+      (this.transformer.countersUpdatedAt - this.transformer.executionStartedTimestamp!) / 1000
 
     const value = counterValue / mesurementPeriodInSeconds
 
-    return ` / ${(value > 1
-      ? Math.floor(value)
-      : '< 1'
-    ).toLocaleString()} per second`
+    return ` / ${(value > 1 ? Math.floor(value) : '< 1').toLocaleString()} per second`
   }
 }

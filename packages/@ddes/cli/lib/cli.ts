@@ -19,9 +19,7 @@ export default async function cli() {
   }
 
   if (!command) {
-    displayUsage(
-      Object.keys(matchingCommands).length ? matchingCommands : commands
-    )
+    displayUsage(Object.keys(matchingCommands).length ? matchingCommands : commands)
   } else {
     try {
       const params = command.params(parseArgs(process.argv.slice(3)))

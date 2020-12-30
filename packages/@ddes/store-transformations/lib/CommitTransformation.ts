@@ -34,9 +34,7 @@ class CommitTransformation extends Transformation {
   public aggregateTypes?: AggregateType[]
   public marshalled?: boolean
   public marshalledKeyProps?: [string, string]
-  public transform!: (
-    commit: MarshalledCommit | Commit
-  ) => Promise<Array<MarshalledCommit | Commit>>
+  public transform!: (commit: MarshalledCommit | Commit) => Promise<Array<MarshalledCommit | Commit>>
 
   protected softInternalDeadline: number
   protected hardInternalDeadline: number
@@ -45,9 +43,7 @@ class CommitTransformation extends Transformation {
     name: string
     source: EventStore
     target: EventStore
-    transform: (
-      commit: MarshalledCommit | Commit
-    ) => Promise<Array<MarshalledCommit | Commit>>
+    transform: (commit: MarshalledCommit | Commit) => Promise<Array<MarshalledCommit | Commit>>
     transformerConfig?: any
     aggregateTypes?: AggregateType[]
     marshalled?: boolean
@@ -67,9 +63,7 @@ class CommitTransformation extends Transformation {
     super(superParams)
 
     if (marshalled && !marshalledKeyProps) {
-      throw new Error(
-        'You need to specify marshalledKeyProps when marshalled= true'
-      )
+      throw new Error('You need to specify marshalledKeyProps when marshalled= true')
     }
     this.aggregateTypes = aggregateTypes
     this.marshalled = marshalled
@@ -80,14 +74,7 @@ class CommitTransformation extends Transformation {
   }
 
   public async perform(params: TransformationWorkerInput) {
-    const {
-      totalSegments,
-      segment,
-      state,
-      deadline,
-      readCapacityLimit,
-      writeCapacityLimit,
-    } = params
+    const {totalSegments, segment, state, deadline, readCapacityLimit, writeCapacityLimit} = params
     const {aggregateTypes, target, marshalled} = this
 
     const targetMutator = target.createBatchMutator({
@@ -109,25 +96,17 @@ class CommitTransformation extends Transformation {
       commitsScanned += resultSet.scannedCount
       throttledReads += resultSet.throttleCount
 
-      for await (const commit of marshalled
-        ? resultSet.items
-        : resultSet.commits) {
+      for await (const commit of marshalled ? resultSet.items : resultSet.commits) {
         commitsRead++
 
         const outputCommits = await this.transform(commit)
 
         if (!Array.isArray(outputCommits)) {
-          throw new Error(
-            'CommitTransformation#transform() must return an array'
-          )
+          throw new Error('CommitTransformation#transform() must return an array')
         }
 
         if (this.isInPlaceTransformation) {
-          if (
-            !outputCommits.find(outputCommit =>
-              Commit.hasSameKey(outputCommit, commit)
-            )
-          ) {
+          if (!outputCommits.find(outputCommit => Commit.hasSameKey(outputCommit, commit))) {
             await targetMutator.delete(commit)
           }
         }

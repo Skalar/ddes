@@ -8,11 +8,7 @@ import {existsSync, writeFile as writeFileCb} from 'fs'
 import {join} from 'path'
 import {promisify} from 'util'
 import Transformation from './Transformation'
-import {
-  StoreState,
-  StoreTransformationCounters,
-  TransformerState as State,
-} from './types'
+import {StoreState, StoreTransformationCounters, TransformerState as State} from './types'
 
 /**
  * @hidden
@@ -195,18 +191,12 @@ export default class Transformer {
 
   protected async workerLoop(index: number) {
     while (this.state === State.Running) {
-      const {
-        completed,
-        state: newState,
-        ...counters
-      } = await this.transformation.perform({
+      const {completed, state: newState, ...counters} = await this.transformation.perform({
         state: this.workerStates[index],
         totalSegments: this.workerCount,
         segment: index,
         deadline: Date.now() + this.workerTimeout,
-        readCapacityLimit: this.readCapacityLimit
-          ? Math.floor(this.readCapacityLimit / this.activeWorkers)
-          : undefined,
+        readCapacityLimit: this.readCapacityLimit ? Math.floor(this.readCapacityLimit / this.activeWorkers) : undefined,
         writeCapacityLimit: this.writeCapacityLimit
           ? Math.floor(this.writeCapacityLimit / this.activeWorkers)
           : undefined,

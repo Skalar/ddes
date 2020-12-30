@@ -36,13 +36,7 @@ class Transformation {
     perform?: Transformation['perform']
     transformerConfig?: any
   }) {
-    const {
-      name,
-      source,
-      target,
-      perform,
-      transformerConfig,
-    } = transformationSpec
+    const {name, source, target, perform, transformerConfig} = transformationSpec
     this.name = name
     this.source = source
     this.target = target
@@ -52,9 +46,7 @@ class Transformation {
     }
   }
 
-  public async perform(
-    _input: TransformationWorkerInput
-  ): Promise<TransformationWorkerResult> {
+  public async perform(_input: TransformationWorkerInput): Promise<TransformationWorkerResult> {
     throw new Error(`perform() must be specified in transformation`)
   }
 

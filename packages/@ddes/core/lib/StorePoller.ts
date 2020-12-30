@@ -5,11 +5,7 @@
 import debug from 'debug'
 import Commit from './Commit'
 import EventStore from './EventStore'
-import {
-  AggregateEventUpcasters,
-  AggregateType,
-  StorePollerParams,
-} from './types'
+import {AggregateEventUpcasters, AggregateType, StorePollerParams} from './types'
 import upcastCommits from './upcastCommits'
 import * as utils from './utils'
 

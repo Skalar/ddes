@@ -8,18 +8,13 @@ import {LambdaTransformerConfig} from '../types'
 /**
  * @hidden
  */
-export default async function clean(
-  id: string,
-  config: LambdaTransformerConfig
-) {
+export default async function clean(id: string, config: LambdaTransformerConfig) {
   const lambda = new Lambda(config.awsConfig)
   const s3 = new S3(config.awsConfig)
   const iam = new IAM(config.awsConfig)
 
   try {
-    await s3
-      .deleteObject({Bucket: id, Key: 'transformationFunction.zip'})
-      .promise()
+    await s3.deleteObject({Bucket: id, Key: 'transformationFunction.zip'}).promise()
   } catch (error) {
     // console.dir({errorObject: error}, {showHidden: false, depth: null})
   }

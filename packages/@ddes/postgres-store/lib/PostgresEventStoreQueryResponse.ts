@@ -1,13 +1,7 @@
-import {
-  StoreQueryResponse,
-  StoreQueryResultSet,
-  Event,
-  Commit,
-} from '@ddes/core'
+import {StoreQueryResponse, StoreQueryResultSet, Event, Commit} from '@ddes/core'
 import {rowToCommit} from './utils'
 
-export default class PostgresEventStoreQueryResponse
-  implements StoreQueryResponse {
+export default class PostgresEventStoreQueryResponse implements StoreQueryResponse {
   constructor(private responseIterator: AsyncIterableIterator<any>) {}
 
   public get commits() {

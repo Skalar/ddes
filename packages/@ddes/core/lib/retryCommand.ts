@@ -14,11 +14,7 @@ import {jitteredRetry} from './utils'
  * By default retries on VersionConflictError
  */
 export default function retryCommand(options?: Partial<RetryConfig>) {
-  return (
-    target: Aggregate,
-    propertyKey: string,
-    descriptor: PropertyDescriptor
-  ) => {
+  return (target: Aggregate, propertyKey: string, descriptor: PropertyDescriptor) => {
     const method = descriptor.value
 
     descriptor.value = async function (this: Aggregate, ...commandArgs: any[]) {

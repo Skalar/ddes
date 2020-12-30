@@ -12,9 +12,7 @@ export default abstract class BatchMutator<T = MarshalledCommit> {
   public abstract put(commits: Array<Commit | T> | Commit | T): Promise<void>
   public abstract delete(commits: Array<Commit | T> | Commit | T): Promise<void>
 
-  protected asIterable(
-    commits: Array<Commit | T> | Commit | T
-  ): Iterable<Commit | T> {
+  protected asIterable(commits: Array<Commit | T> | Commit | T): Iterable<Commit | T> {
     if (Array.isArray(commits)) {
       return commits
     } else if ((commits as any).next) {

@@ -2,12 +2,7 @@
  * @module @ddes/aws-store
  */
 
-import {
-  Commit,
-  Event,
-  StoreQueryResponse,
-  StoreQueryResultSet,
-} from '@ddes/core'
+import {Commit, Event, StoreQueryResponse, StoreQueryResultSet} from '@ddes/core'
 import {DynamoDB} from 'aws-sdk'
 import AwsEventStore from './AwsEventStore'
 import {MarshalledCommit} from './types'
@@ -24,9 +19,7 @@ export default class AwsEventStoreQueryResponse implements StoreQueryResponse {
 
   constructor(
     store: AwsEventStore,
-    responseIterator: AsyncIterableIterator<
-      DynamoDB.QueryOutput & {throttleCount: number}
-    >
+    responseIterator: AsyncIterableIterator<DynamoDB.QueryOutput & {throttleCount: number}>
   ) {
     this.responseIterator = responseIterator
     this.store = store
@@ -74,13 +67,10 @@ export default class AwsEventStoreQueryResponse implements StoreQueryResponse {
         scannedCount: rawQueryResult.ScannedCount || 0,
         ...(rawQueryResult.ConsumedCapacity && {
           consumedCapacity: {
-            table: rawQueryResult.ConsumedCapacity.Table
-              ? rawQueryResult.ConsumedCapacity.Table.CapacityUnits
-              : 0,
+            table: rawQueryResult.ConsumedCapacity.Table ? rawQueryResult.ConsumedCapacity.Table.CapacityUnits : 0,
             chronological:
               rawQueryResult.ConsumedCapacity.GlobalSecondaryIndexes &&
-              rawQueryResult.ConsumedCapacity.GlobalSecondaryIndexes
-                .chronological!.CapacityUnits,
+              rawQueryResult.ConsumedCapacity.GlobalSecondaryIndexes.chronological!.CapacityUnits,
           },
         }),
 

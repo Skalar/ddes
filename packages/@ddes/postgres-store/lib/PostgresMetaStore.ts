@@ -37,11 +37,7 @@ export default class PostgresMetaStore extends MetaStore {
     return result.rows[0].data
   }
 
-  public async put(
-    key: MetaStoreKey,
-    value: any,
-    options: {expiresAt?: Date} = {}
-  ) {
+  public async put(key: MetaStoreKey, value: any, options: {expiresAt?: Date} = {}) {
     const expiresAt = options.expiresAt
 
     const values = [key[0], key[1], JSON.stringify(value)] as any[]

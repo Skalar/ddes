@@ -16,9 +16,7 @@ const gunzip = promisify(gunzipCb)
 /**
  * @hidden
  */
-export default async function unmarshallCommit(
-  marshalledCommit: MarshalledCommit
-): Promise<Commit> {
+export default async function unmarshallCommit(marshalledCommit: MarshalledCommit): Promise<Commit> {
   const unmarshalled = DynamoDB.Converter.unmarshall(marshalledCommit)
   const [, aggregateType, aggregateKey] = unmarshalled.s.match(/^([^:]*):(.*)$/)
 
@@ -28,18 +26,8 @@ export default async function unmarshallCommit(
     aggregateVersion: unmarshalled.v,
     expiresAt: unmarshalled.x,
     timestamp: unmarshalled.t,
-    events: JSON.parse(
-      ((await gunzip(unmarshalled.e)) as unknown) as string
-    ).map(
-      ({
-        t: type,
-        v: version = 1,
-        p: properties,
-      }: {
-        t: string
-        v: number
-        p: object
-      }) =>
+    events: JSON.parse(((await gunzip(unmarshalled.e)) as unknown) as string).map(
+      ({t: type, v: version = 1, p: properties}: {t: string; v: number; p: object}) =>
         ({
           type,
           version,

@@ -8,10 +8,7 @@ import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 /**
  * @hidden
  */
-export default async function removeAutoScaling(
-  tableName: string,
-  awsConfig?: ConfigurationOptions
-) {
+export default async function removeAutoScaling(tableName: string, awsConfig?: ConfigurationOptions) {
   const RoleName = `${tableName}_DDBAutoScalingRole`
 
   const iam = new IAM(awsConfig)

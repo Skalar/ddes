@@ -52,8 +52,6 @@ export default class ReadCapacityLimiter {
     this.lastSampleSecond = thisSecond
 
     const w = Math.pow(2, -1 / 0.5)
-    this.averageCapacityPerItem =
-      w * this.averageCapacityPerItem +
-      ((1.0 - w) * consumedCapacity) / itemCount
+    this.averageCapacityPerItem = w * this.averageCapacityPerItem + ((1.0 - w) * consumedCapacity) / itemCount
   }
 }

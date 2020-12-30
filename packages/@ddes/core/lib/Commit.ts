@@ -76,15 +76,7 @@ export default class Commit {
   }
 
   public toJSON() {
-    const {
-      aggregateType,
-      aggregateKey,
-      aggregateVersion,
-      timestamp,
-      expiresAt,
-      events,
-      chronologicalGroup,
-    } = this
+    const {aggregateType, aggregateKey, aggregateVersion, timestamp, expiresAt, events, chronologicalGroup} = this
     return {
       aggregateType,
       aggregateKey,

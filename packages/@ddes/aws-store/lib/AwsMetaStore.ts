@@ -75,11 +75,7 @@ export default class AwsMetaStore extends MetaStore {
     return JSON.parse(item.v)
   }
 
-  public async put(
-    key: MetaStoreKey,
-    value: any,
-    options: {expiresAt?: Date} = {}
-  ) {
+  public async put(key: MetaStoreKey, value: any, options: {expiresAt?: Date} = {}) {
     await this.dynamodb
       .putItem({
         TableName: this.tableName,

@@ -2,24 +2,13 @@
  * @module @ddes/aws-store
  */
 
-import {
-  AggregateKey,
-  AggregateType,
-  Commit,
-  EventStore,
-  VersionConflictError,
-} from '@ddes/core'
+import {AggregateKey, AggregateType, Commit, EventStore, VersionConflictError} from '@ddes/core'
 
 import {DynamoDB} from 'aws-sdk'
 import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 import AwsEventStoreBatchMutator from './AwsEventStoreBatchMutator'
 import AwsEventStoreQueryResponse from './AwsEventStoreQueryResponse'
-import {
-  AutoscalingConfig,
-  AwsEventStoreConfig,
-  StoreCapacityConfig,
-  StoreQueryParams,
-} from './types'
+import {AutoscalingConfig, AwsEventStoreConfig, StoreCapacityConfig, StoreQueryParams} from './types'
 import * as utils from './utils'
 import chronologicalPartitionIterator from './utils/chronologicalPartitionIterator'
 import {stringcrementor} from '@ddes/core/lib/utils'
@@ -96,9 +85,7 @@ export default class AwsEventStore extends EventStore {
    * Get commit count (can be up to 6 hours out of date)
    */
   public async bestEffortCount() {
-    const {Table} = await this.dynamodb
-      .describeTable({TableName: this.tableName})
-      .promise()
+    const {Table} = await this.dynamodb.describeTable({TableName: this.tableName}).promise()
 
     if (!Table) {
       throw new Error('table does not exist')
@@ -178,35 +165,19 @@ export default class AwsEventStore extends EventStore {
   }) {
     const store = this // eslint-disable-line @typescript-eslint/no-this-alias
 
-    const {
-      group = 'default',
-      min,
-      descending,
-      limit,
-      exclusiveMin,
-      exclusiveMax,
-      timeDriftCompensation = 500,
-    } = params
+    const {group = 'default', min, descending, limit, exclusiveMin, exclusiveMax, timeDriftCompensation = 500} = params
     const {max = new Date(Date.now() + timeDriftCompensation)} = params
 
     if (!min) {
       throw new Error('You must specify the "min" parameter')
     }
 
-    const maxDate =
-      max instanceof Date
-        ? max
-        : new Date(max.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
-    const maxSortKey =
-      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') + ';' : max
+    const maxDate = max instanceof Date ? max : new Date(max.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
+    const maxSortKey = max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') + ';' : max
 
-    const minDate =
-      min instanceof Date
-        ? min
-        : new Date(min.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
+    const minDate = min instanceof Date ? min : new Date(min.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
 
-    const minSortKey =
-      min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
+    const minSortKey = min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
 
     return new AwsEventStoreQueryResponse(
       this,
@@ -223,18 +194,12 @@ export default class AwsEventStore extends EventStore {
             IndexName: 'chronological',
             keyExpressions: ['p = :p', 'g BETWEEN :min AND :max'],
             filterExpressions: params.filterAggregateTypes
-              ? [
-                  `a IN (${params.filterAggregateTypes.map(
-                    (aggregateType, i) => `:a${i}`
-                  )})`,
-                ]
+              ? [`a IN (${params.filterAggregateTypes.map((aggregateType, i) => `:a${i}`)})`]
               : undefined,
             queryVariables: {
               ':p': partition.key,
               ':min': exclusiveMin ? stringcrementor(minSortKey) : minSortKey,
-              ':max': exclusiveMax
-                ? stringcrementor(maxSortKey, -1)
-                : maxSortKey,
+              ':max': exclusiveMax ? stringcrementor(maxSortKey, -1) : maxSortKey,
               ...(params.filterAggregateTypes &&
                 params.filterAggregateTypes.reduce(
                   (vars: object, type: string, i: number) => ({
@@ -256,8 +221,7 @@ export default class AwsEventStore extends EventStore {
                 queryResult.Items && queryResult.Items.length
                   ? queryResult.Items[0].g.S
                   : new Date(
-                      partition.endsAt.valueOf() + timeDriftCompensation <
-                      Date.now()
+                      partition.endsAt.valueOf() + timeDriftCompensation < Date.now()
                         ? partition.endsAt
                         : partition.startsAt
                     )
@@ -350,10 +314,7 @@ export default class AwsEventStore extends EventStore {
       throw new Error('You need to specify "type" and "key"')
     }
 
-    const keyExpressions = [
-      's = :streamId',
-      'v BETWEEN :minVersion and :maxVersion',
-    ]
+    const keyExpressions = ['s = :streamId', 'v BETWEEN :minVersion and :maxVersion']
     const queryVariables: {[key: string]: string | number} = {
       ':streamId': [type, key].join(':'),
       ':minVersion': minVersion,
@@ -482,8 +443,7 @@ export default class AwsEventStore extends EventStore {
 
   protected async *request(
     type: 'scan' | 'query',
-    params: StoreQueryParams &
-      (Partial<DynamoDB.QueryInput> | Partial<DynamoDB.ScanInput>) = {}
+    params: StoreQueryParams & (Partial<DynamoDB.QueryInput> | Partial<DynamoDB.ScanInput>) = {}
   ): AsyncIterableIterator<DynamoDB.QueryOutput & {throttleCount: number}> {
     const {
       startKey,
@@ -542,23 +502,15 @@ export default class AwsEventStore extends EventStore {
       }
 
       request.on('retry', response => {
-        if (
-          response.error &&
-          response.error.code === 'ProvisionedThroughputExceededException'
-        ) {
+        if (response.error && response.error.code === 'ProvisionedThroughputExceededException') {
           throttleCount++
         }
       })
 
-      const result:
-        | DynamoDB.QueryOutput
-        | DynamoDB.ScanOutput = await request.promise()
+      const result: DynamoDB.QueryOutput | DynamoDB.ScanOutput = await request.promise()
 
       if (result.Count && result.ConsumedCapacity && readCapacityLimiter) {
-        readCapacityLimiter.registerConsumption(
-          result.ConsumedCapacity.CapacityUnits!,
-          result.Count
-        )
+        readCapacityLimiter.registerConsumption(result.ConsumedCapacity.CapacityUnits!, result.Count)
       }
 
       yield {...result, throttleCount}

@@ -16,9 +16,7 @@ const gzip = promisify(gzipCb)
 /**
  * @hidden
  */
-export default async function marshallCommit(
-  commit: Commit
-): Promise<MarshalledCommit> {
+export default async function marshallCommit(commit: Commit): Promise<MarshalledCommit> {
   const {
     aggregateType,
     aggregateKey,
@@ -47,9 +45,6 @@ export default async function marshallCommit(
       )
     ),
     x: expiresAt,
-    p: `${new Date(timestamp)
-      .toISOString()
-      .split('T')[0]
-      .replace(/\-/g, '')}${chronologicalGroup}`,
+    p: `${new Date(timestamp).toISOString().split('T')[0].replace(/\-/g, '')}${chronologicalGroup}`,
   }) as MarshalledCommit
 }

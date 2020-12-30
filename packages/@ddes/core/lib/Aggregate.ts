@@ -137,14 +137,9 @@ export default class Aggregate {
     return instance as T
   }
 
-  public static async create<T extends Aggregate>(
-    this: AggregateStatic<T>,
-    props: object = {}
-  ) {
+  public static async create<T extends Aggregate>(this: AggregateStatic<T>, props: object = {}) {
     if (!this.keySchema) {
-      throw new Error(
-        `To use ${this.name}.create(), you need to define a keySchema`
-      )
+      throw new Error(`To use ${this.name}.create(), you need to define a keySchema`)
     }
     const keyProps = this.keySchema.keyPropsFromObject(props)
     const instance = new this(this.keySchema.keyStringFromKeyProps(keyProps))
@@ -172,10 +167,7 @@ export default class Aggregate {
     return instance as T
   }
 
-  public static async loadOrCreate<T extends Aggregate>(
-    this: AggregateStatic<T>,
-    props: object
-  ): Promise<T> {
+  public static async loadOrCreate<T extends Aggregate>(this: AggregateStatic<T>, props: object): Promise<T> {
     return ((await this.load(props)) as T) || ((await this.create(props)) as T)
   }
 
@@ -191,10 +183,7 @@ export default class Aggregate {
   /**
    * Commit aggregate events to the store without loading all commits
    */
-  public static async commit(
-    events: EventInput[],
-    retryOptions?: RetryConfig
-  ): Promise<Commit>
+  public static async commit(events: EventInput[], retryOptions?: RetryConfig): Promise<Commit>
   public static async commit(
     aggregateKey: AggregateKey | AggregateKeyProps,
     events: EventInput[],
@@ -211,15 +200,10 @@ export default class Aggregate {
       key = this.singletonKeyString
     } else {
       if (!this.keySchema) {
-        throw new Error(
-          'You cannot specify aggregateKey when Aggregate has no keySchema'
-        )
+        throw new Error('You cannot specify aggregateKey when Aggregate has no keySchema')
       }
 
-      key =
-        typeof args[0] === 'string'
-          ? args[0]
-          : this.keySchema.keyStringFromObject(args[0])
+      key = typeof args[0] === 'string' ? args[0] : this.keySchema.keyStringFromObject(args[0])
       events = args[1]
       retryOptions = args[2]
     }
@@ -241,8 +225,7 @@ export default class Aggregate {
 
     let currentAggregate = null
 
-    const commits = this.eventStore.scanAggregateInstances(this.name, {})
-      .commits
+    const commits = this.eventStore.scanAggregateInstances(this.name, {}).commits
 
     let aggregateCount = 0
 
@@ -286,21 +269,12 @@ export default class Aggregate {
   /**
    * Function that reduces events to the desireable aggregate state
    */
-  protected static stateReducer(
-    internalState: InternalState,
-    _event: EventWithMetadata
-  ): object {
+  protected static stateReducer(internalState: InternalState, _event: EventWithMetadata): object {
     return internalState
   }
 
-  private static async commitEvents(
-    aggregateKey: AggregateKey,
-    events: EventInput[]
-  ) {
-    const headCommit = await this.eventStore.getAggregateHeadCommit(
-      this.name,
-      aggregateKey
-    )
+  private static async commitEvents(aggregateKey: AggregateKey, events: EventInput[]) {
+    const headCommit = await this.eventStore.getAggregateHeadCommit(this.name, aggregateKey)
     const aggregateVersion = headCommit ? headCommit.aggregateVersion + 1 : 1
 
     const commit = new Commit({
@@ -373,10 +347,7 @@ export default class Aggregate {
     let shouldRewriteSnapshot = false
 
     if (this.snapshotStore && options.useSnapshots !== false) {
-      const snapshot = await this.snapshotStore.readSnapshot(
-        this.type,
-        this.key
-      )
+      const snapshot = await this.snapshotStore.readSnapshot(this.type, this.key)
 
       if (snapshot) {
         let snapshotIsUsable = false
@@ -401,23 +372,18 @@ export default class Aggregate {
     }
 
     if (!options.version || options.version > this.version) {
-      const commits = this.eventStore.queryAggregateCommits(
-        this.type,
-        this.key,
-        {
-          minVersion: this.version + 1,
-          ...(options.version && {maxVersion: options.version}),
-          ...(options.time && {
-            maxTime: toTimestamp(options.time),
-          }),
-          ...(typeof options.consistentRead !== 'undefined' && {
-            consistentRead: options.consistentRead,
-          }),
-        }
-      ).commits
+      const commits = this.eventStore.queryAggregateCommits(this.type, this.key, {
+        minVersion: this.version + 1,
+        ...(options.version && {maxVersion: options.version}),
+        ...(options.time && {
+          maxTime: toTimestamp(options.time),
+        }),
+        ...(typeof options.consistentRead !== 'undefined' && {
+          consistentRead: options.consistentRead,
+        }),
+      }).commits
 
-      for await (const commit of (this
-        .constructor as typeof Aggregate).upcastCommits(commits)) {
+      for await (const commit of (this.constructor as typeof Aggregate).upcastCommits(commits)) {
         await this.processCommit(commit)
       }
     }
@@ -442,27 +408,22 @@ export default class Aggregate {
       version,
       state,
       timestamp: timestamp!,
-      compatibilityChecksum: (this.constructor as typeof Aggregate)
-        .snapshotCompatChecksum,
+      compatibilityChecksum: (this.constructor as typeof Aggregate).snapshotCompatChecksum,
     })
   }
 
-  public async commit(
-    events: EventInput[] | EventInput,
-    options: {skipSnapshot?: boolean} = {}
-  ): Promise<Commit> {
+  public async commit(events: EventInput[] | EventInput, options: {skipSnapshot?: boolean} = {}): Promise<Commit> {
     if (this.commitInFlight) {
       throw new AlreadyCommittingError(
-        `Already committing version ${
-          this.commitInFlight.aggregateVersion
-        }: ${this.commitInFlight.events.map(ev => ev.type).join(', ')}`
+        `Already committing version ${this.commitInFlight.aggregateVersion}: ${this.commitInFlight.events
+          .map(ev => ev.type)
+          .join(', ')}`
       )
     }
 
     try {
       const {type, key, version} = this
-      const {eventStore, chronologicalGroup} = this
-        .constructor as typeof Aggregate
+      const {eventStore, chronologicalGroup} = this.constructor as typeof Aggregate
 
       const commit = new Commit({
         aggregateType: type,
@@ -482,11 +443,7 @@ export default class Aggregate {
 
       const {snapshotsFrequency} = this.constructor as typeof Aggregate
 
-      if (
-        this.snapshotStore &&
-        !options.skipSnapshot &&
-        this.version % snapshotsFrequency === 0
-      ) {
+      if (this.snapshotStore && !options.skipSnapshot && this.version % snapshotsFrequency === 0) {
         await this.writeSnapshot()
       }
 
@@ -509,25 +466,16 @@ export default class Aggregate {
     if (!(this as any)[params.name]) {
       throw new Error(`no such command '${params.name}'`)
     }
-    return await jitteredRetry(
-      () => (this as any)[params.name](...commandArgs),
-      {
-        ...(this.constructor as typeof Aggregate).defaultRetryOptions,
-        ...params.retryConfig,
-        errorIsRetryable: error => error instanceof VersionConflictError,
-        beforeRetry: () => this.hydrate(),
-      }
-    )
+    return await jitteredRetry(() => (this as any)[params.name](...commandArgs), {
+      ...(this.constructor as typeof Aggregate).defaultRetryOptions,
+      ...params.retryConfig,
+      errorIsRetryable: error => error instanceof VersionConflictError,
+      beforeRetry: () => this.hydrate(),
+    })
   }
 
   public async processCommit(commit: Commit) {
-    const {
-      events,
-      aggregateType,
-      aggregateKey,
-      aggregateVersion,
-      timestamp,
-    } = commit
+    const {events, aggregateType, aggregateKey, aggregateVersion, timestamp} = commit
 
     this.internalState = events.reduce((state, event, commitEventIndex) => {
       const eventWithMetadata: EventWithMetadata = {
@@ -556,9 +504,7 @@ export default class Aggregate {
   }
 
   public async create(..._args: any[]): Promise<Commit> {
-    throw new Error(
-      `You need to implement your own create() for ${this.constructor.name}`
-    )
+    throw new Error(`You need to implement your own create() for ${this.constructor.name}`)
   }
 
   protected convertToInternalState(obj: object): any {

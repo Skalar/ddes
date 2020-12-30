@@ -4,12 +4,7 @@
 
 import BatchMutator from './BatchMutator'
 import Commit from './Commit'
-import {
-  AggregateKey,
-  AggregateType,
-  MarshalledCommit,
-  StoreQueryResponse,
-} from './types'
+import {AggregateKey, AggregateType, MarshalledCommit, StoreQueryResponse} from './types'
 
 /**
  * Abstract interface for an Event Store
@@ -64,17 +59,12 @@ export default abstract class EventStore {
   /**
    * Get most recent commit for an [[Aggregate]] instance
    */
-  public abstract getAggregateHeadCommit(
-    type: AggregateType,
-    key: AggregateKey
-  ): Promise<Commit | null>
+  public abstract getAggregateHeadCommit(type: AggregateType, key: AggregateKey): Promise<Commit | null>
 
   /**
    * Get the most recent commit in the given chronological group
    */
-  public abstract getHeadCommit(
-    chronologicalGroup?: string
-  ): Promise<Commit | null>
+  public abstract getHeadCommit(chronologicalGroup?: string): Promise<Commit | null>
 
   /**
    * Scan store commits
@@ -91,9 +81,7 @@ export default abstract class EventStore {
   /**
    * Get a [[BatchMutator]] for the store
    */
-  public abstract createBatchMutator(params?: {
-    capacityLimit?: number
-  }): BatchMutator<MarshalledCommit>
+  public abstract createBatchMutator(params?: {capacityLimit?: number}): BatchMutator<MarshalledCommit>
 
   /**
    * Retrieve commits from the store chronologically

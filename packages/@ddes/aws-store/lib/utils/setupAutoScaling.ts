@@ -195,9 +195,7 @@ export default async function setupAutoScaling(
         error.code !== 'ValidationException' ||
         !(
           error.message.startsWith('Unable to assume IAM role') ||
-          error.message.includes(
-            'Reason: The security token included in the request is invalid.'
-          )
+          error.message.includes('Reason: The security token included in the request is invalid.')
         )
       ) {
         throw error

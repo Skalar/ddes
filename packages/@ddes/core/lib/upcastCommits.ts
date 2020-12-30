@@ -20,9 +20,7 @@ export default async function* upcastCommits(
       let upcaster
       while (true) {
         const version = processedEvent.version || 1
-        upcaster =
-          aggregateUpcasters[processedEvent.type] &&
-          aggregateUpcasters[processedEvent.type][version]
+        upcaster = aggregateUpcasters[processedEvent.type] && aggregateUpcasters[processedEvent.type][version]
 
         if (upcaster) {
           upcasted = true
@@ -40,13 +38,7 @@ export default async function* upcastCommits(
     })
 
     if (upcasted) {
-      const {
-        aggregateType,
-        aggregateKey,
-        aggregateVersion,
-        timestamp,
-        expiresAt,
-      } = commit
+      const {aggregateType, aggregateKey, aggregateVersion, timestamp, expiresAt} = commit
       const upcastedCommit = new Commit({
         aggregateType,
         aggregateKey,

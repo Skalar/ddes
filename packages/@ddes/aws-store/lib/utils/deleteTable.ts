@@ -15,11 +15,7 @@ export default async function deleteTable(
     dynamodbClientConfiguration?: DynamoDB.ClientConfiguration
   } = {}
 ) {
-  const {
-    waitTimeout = 30000,
-    statusCheckInterval = 1000,
-    dynamodbClientConfiguration,
-  } = options
+  const {waitTimeout = 30000, statusCheckInterval = 1000, dynamodbClientConfiguration} = options
 
   const dynamodb = new DynamoDB(dynamodbClientConfiguration)
 
@@ -35,21 +31,15 @@ export default async function deleteTable(
     }, waitTimeout * 1000)
 
     while (!timedOut) {
-      const {Table} = await dynamodb
-        .describeTable({TableName: tableName})
-        .promise()
+      const {Table} = await dynamodb.describeTable({TableName: tableName}).promise()
 
       if (Table) {
         switch (Table.TableStatus) {
           case 'DELETING':
-            await new Promise(resolve =>
-              setTimeout(resolve, statusCheckInterval)
-            )
+            await new Promise(resolve => setTimeout(resolve, statusCheckInterval))
             continue
           default: {
-            throw new Error(
-              'Invalid status ${TableStatus} while waiting for table to be deleteTableed'
-            )
+            throw new Error('Invalid status ${TableStatus} while waiting for table to be deleteTableed')
           }
         }
       }
@@ -57,9 +47,7 @@ export default async function deleteTable(
       return
     }
 
-    throw new Error(
-      `Timed out while waiting for table ${tableName} to be deleted.`
-    )
+    throw new Error(`Timed out while waiting for table ${tableName} to be deleted.`)
   } catch (error) {
     if (error.code === 'ResourceNotFoundException') {
       if (timer) {

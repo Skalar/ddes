@@ -2,13 +2,7 @@
  * @module @ddes/aws-store
  */
 
-import {
-  AggregateKey,
-  AggregateSnapshot,
-  AggregateType,
-  Timestamp,
-  utils as coreutils,
-} from '@ddes/core'
+import {AggregateKey, AggregateSnapshot, AggregateType, Timestamp, utils as coreutils} from '@ddes/core'
 
 import {SnapshotStore} from '@ddes/core'
 import {S3} from 'aws-sdk'
@@ -74,10 +68,7 @@ export default class AwsSnapshotStore extends SnapshotStore {
    * @param type e.g. 'Account'
    * @param key  e.g. '1234'
    */
-  public async readSnapshot(
-    type: AggregateType,
-    key: AggregateKey
-  ): Promise<AggregateSnapshot | null> {
+  public async readSnapshot(type: AggregateType, key: AggregateKey): Promise<AggregateSnapshot | null> {
     try {
       const {Body: snapshotJSON} = await this.s3
         .getObject({
@@ -90,12 +81,7 @@ export default class AwsSnapshotStore extends SnapshotStore {
         return null
       }
 
-      const {
-        version,
-        state,
-        timestamp: timestampString,
-        compatibilityChecksum,
-      } = JSON.parse(snapshotJSON as string)
+      const {version, state, timestamp: timestampString, compatibilityChecksum} = JSON.parse(snapshotJSON as string)
 
       return {
         version,
@@ -123,9 +109,7 @@ export default class AwsSnapshotStore extends SnapshotStore {
         .listObjectsV2({
           Bucket: this.bucketName,
           Prefix: this.keyPrefix,
-          ContinuationToken: listResult
-            ? listResult.NextContinuationToken
-            : undefined,
+          ContinuationToken: listResult ? listResult.NextContinuationToken : undefined,
         })
         .promise()
 

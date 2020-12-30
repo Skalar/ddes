@@ -32,9 +32,7 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
   }
 
   public get drained() {
-    return Promise.all(
-      [...this.queue.values()].map(queueItem => queueItem.processedPromise)
-    ).then(() => undefined)
+    return Promise.all([...this.queue.values()].map(queueItem => queueItem.processedPromise)).then(() => undefined)
   }
 
   public get itemsBeingProcessed() {
@@ -47,24 +45,12 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
 
   public async put(commits: Array<Row | Commit> | Row | Commit) {
     for await (const item of this.asIterable(commits)) {
-      const {
-        aggregateType,
-        aggregateKey,
-        aggregateVersion,
-        sortKey,
-        chronologicalGroup,
-        events,
-        timestamp,
-        expiresAt,
-      } =
+      const {aggregateType, aggregateKey, aggregateVersion, sortKey, chronologicalGroup, events, timestamp, expiresAt} =
         item instanceof Commit
           ? item
           : new Commit({
               ...item,
-              chronologicalGroup: item.partitionKey.substr(
-                8,
-                item.partitionKey.length - 8
-              ),
+              chronologicalGroup: item.partitionKey.substr(8, item.partitionKey.length - 8),
             })
 
       const query = sql`
@@ -75,9 +61,7 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
           ${sortKey},
           ${chronologicalGroup},
           ${JSON.stringify(events)},
-          ${timestamp}${
-        expiresAt ? sql`, ${new Date(expiresAt).getTime()}` : sql``
-      })
+          ${timestamp}${expiresAt ? sql`, ${new Date(expiresAt).getTime()}` : sql``})
         ON CONFLICT (aggregate_type, aggregate_key, aggregate_version) DO UPDATE
           SET "events" = excluded."events",
           "chronological_group" = excluded."chronological_group",
@@ -127,8 +111,7 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
 
     let promise
     if (this.queue.size >= this.bufferSize) {
-      promise = [...this.queue.values()][this.queue.size - this.bufferSize]
-        .startedPromise
+      promise = [...this.queue.values()][this.queue.size - this.bufferSize].startedPromise
     } else {
       promise = Promise.resolve()
     }

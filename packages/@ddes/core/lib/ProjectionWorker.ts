@@ -55,27 +55,19 @@ export default class ProjectionWorker {
             continue queue // we can only do one event per streamId at a time
           }
 
-          const dependencies =
-            this.projection.dependencies &&
-            this.projection.dependencies[event.aggregateType]
+          const dependencies = this.projection.dependencies && this.projection.dependencies[event.aggregateType]
 
           if (dependencies) {
             for (const eventToProcess of eventsToProcess) {
               if (dependencies[eventToProcess.aggregateType]) {
-                const dependerAggregateClass = this.projection.aggregateClasses[
-                  event.aggregateType
-                ]
-                const dependeeAggregateClass = this.projection.aggregateClasses[
-                  eventToProcess.aggregateType
-                ]
+                const dependerAggregateClass = this.projection.aggregateClasses[event.aggregateType]
+                const dependeeAggregateClass = this.projection.aggregateClasses[eventToProcess.aggregateType]
 
                 const dependerData = {...event}
                 const dependeeData = {...eventToProcess}
 
                 if (dependerAggregateClass.keySchema) {
-                  dependerData.keyProps = dependerAggregateClass.keySchema.keyPropsFromString(
-                    event.aggregateKey
-                  )
+                  dependerData.keyProps = dependerAggregateClass.keySchema.keyPropsFromString(event.aggregateKey)
                 }
 
                 if (dependeeAggregateClass.keySchema) {
@@ -84,12 +76,7 @@ export default class ProjectionWorker {
                   )
                 }
 
-                if (
-                  dependencies[eventToProcess.aggregateType](
-                    dependerData,
-                    dependeeData
-                  )
-                ) {
+                if (dependencies[eventToProcess.aggregateType](dependerData, dependeeData)) {
                   eventSkipped = true
                   continue queue // this event depends on one or more events in eventsToProcess
                 }
@@ -101,10 +88,7 @@ export default class ProjectionWorker {
             pessimisticHeadSortKey = event.sortKey
           }
 
-          if (
-            !highestSortKeyProcessed ||
-            event.sortKey > highestSortKeyProcessed
-          ) {
+          if (!highestSortKeyProcessed || event.sortKey > highestSortKeyProcessed) {
             highestSortKeyProcessed = event.sortKey
           }
 
@@ -120,18 +104,12 @@ export default class ProjectionWorker {
         await this.projection.processEvents(eventsToProcess)
         await this.projection.setHeadSortKey(pessimisticHeadSortKey)
 
-        while (
-          this.queue.size <= this.maxQueueSize &&
-          this.addToQueueWaitResolvers.length
-        ) {
+        while (this.queue.size <= this.maxQueueSize && this.addToQueueWaitResolvers.length) {
           this.addToQueueWaitResolvers.shift()!()
         }
       }
 
-      if (
-        highestSortKeyProcessed &&
-        highestSortKeyProcessed > pessimisticHeadSortKey
-      ) {
+      if (highestSortKeyProcessed && highestSortKeyProcessed > pessimisticHeadSortKey) {
         await this.projection.setHeadSortKey(highestSortKeyProcessed)
       }
     } finally {

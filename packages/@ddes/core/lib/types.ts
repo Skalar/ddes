@@ -28,10 +28,7 @@ export interface RetryConfig {
 }
 
 export type EventWithMetadata = Event &
-  Pick<
-    Commit,
-    'aggregateType' | 'aggregateKey' | 'aggregateVersion' | 'timestamp'
-  > & {
+  Pick<Commit, 'aggregateType' | 'aggregateKey' | 'aggregateVersion' | 'timestamp'> & {
     commitEventIndex: number
   }
 
@@ -145,10 +142,7 @@ export interface ProjectionParams {
 
   dependencies?: {
     [dependerType: string]: {
-      [dependeeType: string]: (
-        dependerEvent: EventWithMetadata,
-        dependeeEvent: EventWithMetadata
-      ) => boolean
+      [dependeeType: string]: (dependerEvent: EventWithMetadata, dependeeEvent: EventWithMetadata) => boolean
     }
   }
 

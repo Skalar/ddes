@@ -2,12 +2,7 @@
  * @module @ddes/core
  */
 
-import {
-  AggregateKey,
-  AggregateSnapshot,
-  AggregateType,
-  Timestamp,
-} from './types'
+import {AggregateKey, AggregateSnapshot, AggregateType, Timestamp} from './types'
 
 /**
  * Abstract interface for a store that holds aggregate snapshots
@@ -46,10 +41,7 @@ export default abstract class SnapshotStore {
    * @param type e.g. 'Account'
    * @param key  e.g. '1234'
    */
-  public abstract readSnapshot(
-    type: AggregateType,
-    key: AggregateKey
-  ): Promise<AggregateSnapshot | null>
+  public abstract readSnapshot(type: AggregateType, key: AggregateKey): Promise<AggregateSnapshot | null>
 
   /**
    * Delete store snapshots

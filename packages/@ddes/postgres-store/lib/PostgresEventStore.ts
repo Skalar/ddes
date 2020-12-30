@@ -1,13 +1,7 @@
 /**
  * @module @ddes/postgres-store
  */
-import {
-  EventStore,
-  Commit,
-  AggregateKey,
-  AggregateType,
-  VersionConflictError,
-} from '@ddes/core'
+import {EventStore, Commit, AggregateKey, AggregateType, VersionConflictError} from '@ddes/core'
 import {PostgresEventStoreConfig} from './types'
 import {Client} from 'pg'
 import QueryStream from 'pg-query-stream'
@@ -137,13 +131,7 @@ export default class PostgresEventStore extends EventStore {
       descending?: boolean
     } = {}
   ): PostgresEventStoreQueryResponse {
-    const {
-      minVersion = 1,
-      maxVersion = Number.MAX_SAFE_INTEGER,
-      maxTime,
-      descending,
-      limit,
-    } = options
+    const {minVersion = 1, maxVersion = Number.MAX_SAFE_INTEGER, maxTime, descending, limit} = options
 
     if (!type || !key) {
       throw new Error(`You need to specify 'type' and 'key'`)
@@ -155,9 +143,7 @@ export default class PostgresEventStore extends EventStore {
       AND "aggregate_key" = ${key}
       AND "aggregate_version" BETWEEN ${minVersion} AND ${maxVersion}
       AND (expires_at > ${Date.now()} OR expires_at IS NULL)
-      ${
-        maxTime ? sql`and "timestamp" <= ${new Date(maxTime).getTime()}` : sql``
-      }
+      ${maxTime ? sql`and "timestamp" <= ${new Date(maxTime).getTime()}` : sql``}
       ORDER BY "timestamp" ${descending ? sql`DESC` : sql`ASC`}
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
@@ -178,10 +164,7 @@ export default class PostgresEventStore extends EventStore {
   /**
    * Retrieve ordered commits for each aggregate instance of [[AggregateType]]
    */
-  public scanAggregateInstances(
-    type: string,
-    options: {instanceLimit?: number} = {}
-  ) {
+  public scanAggregateInstances(type: string, options: {instanceLimit?: number} = {}) {
     const {client, tableName} = this
     if (!type) {
       throw new Error(`You need to specify 'type'`)
@@ -208,10 +191,7 @@ export default class PostgresEventStore extends EventStore {
             AND (expires_at > ${Date.now()} OR expires_at IS NULL)
           `
 
-          const instanceQueryStream = new QueryStream(
-            instanceQuery.text,
-            instanceQuery.values
-          )
+          const instanceQueryStream = new QueryStream(instanceQuery.text, instanceQuery.values)
 
           for await (const row of client.query(instanceQueryStream)) {
             yield row
@@ -269,9 +249,7 @@ export default class PostgresEventStore extends EventStore {
     const {totalSegments = 1, limit, filterAggregateTypes} = options || {}
 
     if (totalSegments > 1) {
-      throw new Error(
-        'PostgresEventStore does not currently support more than 1 segment'
-      )
+      throw new Error('PostgresEventStore does not currently support more than 1 segment')
     }
 
     const query = sql`
@@ -337,25 +315,13 @@ export default class PostgresEventStore extends EventStore {
       throw new Error('You must specify the "min" parameter')
     }
 
-    const maxDate =
-      max instanceof Date
-        ? max
-        : new Date(
-            max.toString().replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3')
-          )
+    const maxDate = max instanceof Date ? max : new Date(max.toString().replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
 
-    const maxSortKey =
-      max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') : max
+    const maxSortKey = max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') : max
 
-    const minDate =
-      min instanceof Date
-        ? min
-        : new Date(
-            min.toString().replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3')
-          )
+    const minDate = min instanceof Date ? min : new Date(min.toString().replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
 
-    const minSortKey =
-      min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
+    const minSortKey = min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
 
     const orderByDir = descending ? 'DESC' : 'ASC'
 

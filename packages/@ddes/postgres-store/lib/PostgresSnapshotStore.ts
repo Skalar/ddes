@@ -66,9 +66,7 @@ export default class PostgresSnapshotStore extends SnapshotStore {
 
     const query = sql`
       INSERT INTO ${sql.ident(this.tableName)}
-      VALUES(${type}, ${key}, ${version}, ${JSON.stringify(
-      state
-    )}, ${timestamp}, ${compatibilityChecksum})
+      VALUES(${type}, ${key}, ${version}, ${JSON.stringify(state)}, ${timestamp}, ${compatibilityChecksum})
       ON CONFLICT (aggregate_type, aggregate_key) DO UPDATE
         SET "aggregate_version" = excluded."aggregate_version",
         "state" = excluded."state",

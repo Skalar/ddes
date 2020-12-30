@@ -25,21 +25,13 @@ export function jitteredBackoff(params: {
     return params.initialValue
   }
 
-  return Math.min(
-    params.maxValue,
-    randomIntInRange(
-      0,
-      params.initialValue * params.backoffExponent ** params.attempt
-    )
-  )
+  return Math.min(params.maxValue, randomIntInRange(0, params.initialValue * params.backoffExponent ** params.attempt))
 }
 
 /**
  * @hidden
  */
-export function toTimestamp(
-  obj: string | Date | undefined | number
-): Timestamp {
+export function toTimestamp(obj: string | Date | undefined | number): Timestamp {
   if (!obj) {
     return new Date().valueOf()
   } else if (obj instanceof Date) {
@@ -54,10 +46,7 @@ export function toTimestamp(
 /**
  * @hidden
  */
-export async function jitteredRetry(
-  fn: () => Promise<any>,
-  options: RetryConfig
-) {
+export async function jitteredRetry(fn: () => Promise<any>, options: RetryConfig) {
   const startedAt = Date.now()
   let attempt = 0
 
@@ -80,9 +69,7 @@ export async function jitteredRetry(
 
       const timeleft = startedAt + options.timeout - Date.now()
 
-      await new Promise(resolve =>
-        setTimeout(resolve, Math.min(delay, timeleft))
-      )
+      await new Promise(resolve => setTimeout(resolve, Math.min(delay, timeleft)))
 
       if (options.beforeRetry) {
         await options.beforeRetry()

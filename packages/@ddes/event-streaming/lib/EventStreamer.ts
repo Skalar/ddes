@@ -2,12 +2,7 @@
  * @module @ddes/event-streaming
  */
 
-import {
-  Commit,
-  EventWithMetadata,
-  StorePoller,
-  StorePollerParams,
-} from '@ddes/core'
+import {Commit, EventWithMetadata, StorePoller, StorePollerParams} from '@ddes/core'
 import debug from 'debug'
 import {IncomingMessage} from 'http'
 import {get} from 'lodash'
@@ -24,11 +19,7 @@ export default class EventStreamer {
     params: StorePollerParams & {
       chronologicalGroups?: string[]
       port: number
-      authenticateClient?: (info: {
-        origin: string
-        req: IncomingMessage
-        secure: boolean
-      }) => boolean
+      authenticateClient?: (info: {origin: string; req: IncomingMessage; secure: boolean}) => boolean
     }
   ) {
     const {
@@ -65,13 +56,7 @@ export default class EventStreamer {
   }
 
   public async processCommit(commit: Commit) {
-    const {
-      events,
-      aggregateType,
-      aggregateKey,
-      aggregateVersion,
-      timestamp,
-    } = commit
+    const {events, aggregateType, aggregateKey, aggregateVersion, timestamp} = commit
 
     for (const [commitEventIndex, event] of Object.entries(events)) {
       this.publishEventToSubscribers({
@@ -103,12 +88,7 @@ export default class EventStreamer {
               continue filtersets
             }
           } else if (typeof filterValue === 'object' && filterValue.regexp) {
-            if (
-              !(
-                typeof eventValue === 'string' &&
-                eventValue.match(filterValue.regexp)
-              )
-            ) {
+            if (!(typeof eventValue === 'string' && eventValue.match(filterValue.regexp))) {
               continue filtersets
             }
           } else {

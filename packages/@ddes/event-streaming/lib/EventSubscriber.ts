@@ -23,12 +23,7 @@ export default class EventSubscriber extends EventEmitter {
   ) {
     super()
 
-    const {
-      wsUrl,
-      maxQueueSize,
-      events: filterSets,
-      ...websocketClientOptions
-    } = params
+    const {wsUrl, maxQueueSize, events: filterSets, ...websocketClientOptions} = params
 
     if (maxQueueSize) {
       this.maxQueueSize = maxQueueSize
@@ -54,12 +49,7 @@ export default class EventSubscriber extends EventEmitter {
               if (this.queue.length < this.maxQueueSize) {
                 this.queue.push(event)
               } else {
-                this.emit(
-                  'error',
-                  new Error(
-                    `Max queue size of ${this.maxQueueSize} reached, dropping event`
-                  )
-                )
+                this.emit('error', new Error(`Max queue size of ${this.maxQueueSize} reached, dropping event`))
               }
             }
           })

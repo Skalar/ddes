@@ -30,27 +30,17 @@ const cli = {
         return {transformationPath, transformerOptions}
       },
 
-      async handler(params: {
-        transformationPath: string
-        transformerOptions: any
-      }) {
+      async handler(params: {transformationPath: string; transformerOptions: any}) {
         const {transformationPath, transformerOptions} = params
 
         // Load at runtime to avoid dependency on cli
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const TransformerGui = require('@ddes/store-transformations/gui')
-          .default
+        const TransformerGui = require('@ddes/store-transformations/gui').default
 
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const transformationModule = require(join(
-          process.cwd(),
-          transformationPath
-        ))
+        const transformationModule = require(join(process.cwd(), transformationPath))
 
-        const transformer = new Transformer(
-          transformationModule.default || transformationModule,
-          transformerOptions
-        )
+        const transformer = new Transformer(transformationModule.default || transformationModule, transformerOptions)
 
         const gui = new TransformerGui(transformer, () => process.exit(0))
 

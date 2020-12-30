@@ -19,29 +19,18 @@ const columnify = require('columnify')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const boxen = require('boxen')
 
-export default async function displayUsage(commands: {
-  [commandName: string]: CliCommand
-}) {
+export default async function displayUsage(commands: {[commandName: string]: CliCommand}) {
   const packageJsonPath = await findUp('package.json', {cwd: __dirname})
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const version = require(packageJsonPath!).version
   console.log(
-    boxen(
-      `${chalk.blueBright(pointer)} ${chalk.bold.blueBright(
-        'DDES CLI'
-      )} ${chalk.white(`v${version}`)}`,
-      {
-        borderColor: 'white',
-        padding: {left: 8, top: 1, bottom: 1, right: 12},
-      }
-    )
+    boxen(`${chalk.blueBright(pointer)} ${chalk.bold.blueBright('DDES CLI')} ${chalk.white(`v${version}`)}`, {
+      borderColor: 'white',
+      padding: {left: 8, top: 1, bottom: 1, right: 12},
+    })
   )
 
-  console.log(
-    `\n${chalk.greenBright.bold('$')} ${chalk.bold.blue(
-      'ddes'
-    )} <command> [...args]\n`
-  )
+  console.log(`\n${chalk.greenBright.bold('$')} ${chalk.bold.blue('ddes')} <command> [...args]\n`)
 
   if (Object.keys(commands).length) {
     const commandTable = columnify(

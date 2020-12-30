@@ -2,10 +2,7 @@
  * @module @ddes/aws-lambda-transformer
  */
 
-import {
-  Transformation,
-  TransformationWorkerResult,
-} from '@ddes/store-transformations'
+import {Transformation, TransformationWorkerResult} from '@ddes/store-transformations'
 import {join} from 'path'
 
 /**
@@ -26,13 +23,9 @@ export default async function lambdaHandler(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const transformationModule = require(join(
-    process.cwd(),
-    process.env.TRANSFORMATION_PATH
-  ))
+  const transformationModule = require(join(process.cwd(), process.env.TRANSFORMATION_PATH))
 
-  const transformation = (transformationModule.default ||
-    transformationModule) as Transformation
+  const transformation = (transformationModule.default || transformationModule) as Transformation
 
   return await transformation.perform({
     ...input,

@@ -15,19 +15,14 @@ export default class Projector extends StorePoller {
   private projections: Projection[]
   private queues: Set<ProjectionWorker>
 
-  constructor(
-    projections: Projection[],
-    params: StorePollerParams & {maxQueueSize?: number}
-  ) {
+  constructor(projections: Projection[], params: StorePollerParams & {maxQueueSize?: number}) {
     super(params)
 
     this.projections = projections
 
     this.filterAggregateTypes = [
       ...projections.reduce((aggregateTypes, projection) => {
-        Object.keys(projection.aggregateClasses).forEach(aggregateType =>
-          aggregateTypes.add(aggregateType)
-        )
+        Object.keys(projection.aggregateClasses).forEach(aggregateType => aggregateTypes.add(aggregateType))
 
         return aggregateTypes
       }, new Set<string>()),
@@ -47,13 +42,7 @@ export default class Projector extends StorePoller {
 
   public async processCommit(commit: Commit) {
     for (const [index, event] of Object.entries(commit.events)) {
-      const {
-        aggregateType,
-        aggregateKey,
-        aggregateVersion,
-        timestamp,
-        sortKey,
-      } = commit
+      const {aggregateType, aggregateKey, aggregateVersion, timestamp, sortKey} = commit
 
       const eventWithMetadata = {
         ...event,
@@ -66,11 +55,7 @@ export default class Projector extends StorePoller {
       }
 
       for (const queue of this.queues) {
-        if (
-          Object.keys(queue.projection.aggregateClasses).includes(
-            eventWithMetadata.aggregateType
-          )
-        ) {
+        if (Object.keys(queue.projection.aggregateClasses).includes(eventWithMetadata.aggregateType)) {
           await queue.addToQueue(eventWithMetadata)
         }
       }
@@ -78,12 +63,8 @@ export default class Projector extends StorePoller {
   }
 
   public async start() {
-    const headSortKeys = await Promise.all(
-      this.projections.map(projection => projection.getHeadSortKey())
-    )
-    this.sortKeyCursor = headSortKeys.reduce((minSortKey, sortKey) =>
-      sortKey <= minSortKey ? sortKey : minSortKey
-    )
+    const headSortKeys = await Promise.all(this.projections.map(projection => projection.getHeadSortKey()))
+    this.sortKeyCursor = headSortKeys.reduce((minSortKey, sortKey) => (sortKey <= minSortKey ? sortKey : minSortKey))
 
     super.start()
   }

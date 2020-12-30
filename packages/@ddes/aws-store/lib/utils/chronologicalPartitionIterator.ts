@@ -20,15 +20,10 @@ export default function* chronologicalPartitionIterator(params: {
     endsAt.setUTCHours(23, 59, 59, 999)
 
     yield {
-      key: `${partitionCursor
-        .toISOString()
-        .split('T')[0]
-        .replace(/\-/g, '')}${group}`,
+      key: `${partitionCursor.toISOString().split('T')[0].replace(/\-/g, '')}${group}`,
       startsAt: partitionCursor,
       endsAt,
     }
-    partitionCursor = new Date(
-      partitionCursor.valueOf() + 24 * 60 * 60 * 1000 * (descending ? -1 : 1)
-    )
+    partitionCursor = new Date(partitionCursor.valueOf() + 24 * 60 * 60 * 1000 * (descending ? -1 : 1))
   }
 }

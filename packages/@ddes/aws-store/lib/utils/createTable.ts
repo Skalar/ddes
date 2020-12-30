@@ -16,11 +16,7 @@ export default async function createTable(
     ttl?: boolean
   } = {}
 ) {
-  const {
-    waitTimeout = 30000,
-    statusCheckInterval = 1000,
-    dynamodbClientConfiguration,
-  } = options
+  const {waitTimeout = 30000, statusCheckInterval = 1000, dynamodbClientConfiguration} = options
 
   const dynamodb = new DynamoDB(dynamodbClientConfiguration)
 
@@ -74,9 +70,7 @@ export default async function createTable(
         case 'CREATING':
           break
         default: {
-          throw new Error(
-            'Invalid status ${TableStatus} while waiting for table to be created'
-          )
+          throw new Error('Invalid status ${TableStatus} while waiting for table to be created')
         }
       }
     }
@@ -84,7 +78,5 @@ export default async function createTable(
     await new Promise(resolve => setTimeout(resolve, statusCheckInterval))
   }
 
-  throw new Error(
-    `Timed out while waiting for table ${tableSpecification.TableName} to become active.`
-  )
+  throw new Error(`Timed out while waiting for table ${tableSpecification.TableName} to become active.`)
 }

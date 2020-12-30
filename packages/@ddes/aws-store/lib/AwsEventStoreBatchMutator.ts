@@ -52,28 +52,19 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
     return false
   }
 
-  public async delete(
-    commits: Array<Commit | MarshalledCommit> | Commit | MarshalledCommit
-  ) {
+  public async delete(commits: Array<Commit | MarshalledCommit> | Commit | MarshalledCommit) {
     for await (const commit of this.asIterable(commits)) {
-      const marshalledCommit =
-        commit instanceof Commit ? await marshallCommit(commit) : commit
+      const marshalledCommit = commit instanceof Commit ? await marshallCommit(commit) : commit
 
       const {s, v} = marshalledCommit
 
-      await this.addToQueue(
-        {DeleteRequest: {Key: {s, v}}},
-        this.capacityUnitsForItem(marshalledCommit)
-      )
+      await this.addToQueue({DeleteRequest: {Key: {s, v}}}, this.capacityUnitsForItem(marshalledCommit))
     }
   }
 
-  public async put(
-    commits: Array<Commit | MarshalledCommit> | Commit | MarshalledCommit
-  ): Promise<void> {
+  public async put(commits: Array<Commit | MarshalledCommit> | Commit | MarshalledCommit): Promise<void> {
     for await (const commit of this.asIterable(commits)) {
-      const marshalledCommit =
-        commit instanceof Commit ? await marshallCommit(commit) : commit
+      const marshalledCommit = commit instanceof Commit ? await marshallCommit(commit) : commit
 
       await this.addToQueue(
         {
@@ -87,9 +78,7 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
   }
 
   public get drained() {
-    return Promise.all(
-      [...this.queue.values()].map(queueItem => queueItem.processedPromise)
-    ).then(() => undefined)
+    return Promise.all([...this.queue.values()].map(queueItem => queueItem.processedPromise)).then(() => undefined)
   }
 
   public get itemsBeingProcessed() {
@@ -123,8 +112,7 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
 
     let promise
     if (this.queue.size >= this.bufferSize) {
-      promise = [...this.queue.values()][this.queue.size - this.bufferSize]
-        .startedPromise
+      promise = [...this.queue.values()][this.queue.size - this.bufferSize].startedPromise
     } else {
       promise = Promise.resolve()
     }
@@ -150,10 +138,7 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
       const thisSecond = Math.floor(Date.now() / 1000)
 
       if (this.capacityLimit) {
-        if (
-          !this.remainingCapacity ||
-          this.remainingCapacity.second !== thisSecond
-        ) {
+        if (!this.remainingCapacity || this.remainingCapacity.second !== thisSecond) {
           this.remainingCapacity = {
             second: thisSecond,
             units: this.capacityLimit,
@@ -182,20 +167,14 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
           queueItemsToProcess.push(queueItem)
           queueItem.processing = true
         } else {
-          if (
-            this.capacityLimit &&
-            queueItem.capacityUnits > this.capacityLimit
-          ) {
+          if (this.capacityLimit && queueItem.capacityUnits > this.capacityLimit) {
             throw new Error(
               `Commit required ${queueItem.capacityUnits} which is higher than the capacity consumption target`
             )
           }
           if (queueItemsToProcess.length === 0) {
             // we didn't have capacity for anything, wait remainder of window
-            setTimeout(
-              () => this.processQueue(),
-              1000 - (Date.now() - thisSecond * 1000)
-            )
+            setTimeout(() => this.processQueue(), 1000 - (Date.now() - thisSecond * 1000))
             return
           }
         }
@@ -227,8 +206,7 @@ export default class AwsEventStoreBatchMutator extends BatchMutator<MarshalledCo
       .promise()
 
     requestPromise.then(({UnprocessedItems}) => {
-      const itemsToRequeue =
-        (UnprocessedItems && UnprocessedItems[this.store.tableName]) || []
+      const itemsToRequeue = (UnprocessedItems && UnprocessedItems[this.store.tableName]) || []
 
       for (const queueItem of queueItemsToSend) {
         if (itemsToRequeue.find(item => equal(item, queueItem.item))) {
