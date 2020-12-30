@@ -1,7 +1,6 @@
 /**
  * @module @ddes/core
  */
-
 import BatchMutator from './BatchMutator'
 import Commit from './Commit'
 import {AggregateKey, AggregateType, MarshalledCommit, StoreQueryResponse} from './types'

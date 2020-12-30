@@ -1,10 +1,8 @@
 import {Aggregate, KeySchema} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'tests/support'
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore}) => {
   test('static commit() - no keySchema', async () => {
-    const {eventStore} = context
-
     class TestAggregate extends Aggregate {
       public static eventStore = eventStore
     }
@@ -23,10 +21,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
   })
 })
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore}) => {
   test('static commit() - with keySchema', async () => {
-    const {eventStore} = context
-
     class TestAggregate extends Aggregate {
       public static keySchema = new KeySchema(['id'])
       public static eventStore = eventStore
@@ -44,10 +40,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
   })
 })
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore}) => {
   test('static commit() - custom chronological group', async () => {
-    const {eventStore} = context
-    //
     class TestAggregate extends Aggregate {
       public static keySchema = new KeySchema(['id'])
       public static eventStore = eventStore

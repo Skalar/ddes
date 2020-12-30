@@ -18,11 +18,9 @@ const commits = [
   }),
 ]
 
-describeWithResources('Stores', {stores: true}, context => {
+describeWithResources('Stores', ({eventStore}) => {
   describe('BatchMutator', () => {
     test('without target capacity', async () => {
-      const {eventStore} = context
-
       for (const commit of commits) {
         await eventStore.commit(commit)
       }
@@ -59,11 +57,9 @@ describeWithResources('Stores', {stores: true}, context => {
   })
 })
 
-describeWithResources('Stores', {stores: true}, context => {
+describeWithResources('Stores', ({eventStore}) => {
   describe('BatchMutator', () => {
     test('with target capacity', async () => {
-      const {eventStore} = context
-
       for (const commit of commits) {
         await eventStore.commit(commit)
       }

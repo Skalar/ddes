@@ -1,9 +1,15 @@
 import {EventStore} from '@ddes/core'
 import {EventStreamer} from '@ddes/event-streaming'
 
-export async function eventStreamServer(context: {eventStore: EventStore}) {
-  const {eventStore} = context
+export interface EventStreamServer {
+  resource: {
+    server: EventStreamer
+    port: number
+  }
+  teardown: () => Promise<void>
+}
 
+export async function eventStreamServer(eventStore: EventStore): Promise<EventStreamServer> {
   const server = new EventStreamer({
     eventStore,
     port: 0,

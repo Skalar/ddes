@@ -12,7 +12,7 @@ env:
   - GIT_USERNAME=ddes-ci GIT_EMAIL=ci@ddes.io
 
 before_script:
-  - docker-compose up --build -d dynamodb s3
+  - docker-compose up --build -d dynamodb s3 postgres
   - docker-compose ps
 
 script:

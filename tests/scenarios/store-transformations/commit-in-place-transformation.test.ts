@@ -2,10 +2,8 @@ import {Commit} from '@ddes/core'
 import {CommitTransformation, Transformer} from '@ddes/store-transformations'
 import {describeWithResources, iterableToArray} from 'tests/support'
 
-describeWithResources('scenarios/store-transformations: commit in-place-transformation', {stores: true}, context => {
+describeWithResources('scenarios/store-transformations: commit in-place-transformation', ({eventStore}) => {
   test(`modifying commit`, async () => {
-    const {eventStore} = context
-
     await eventStore.commit(
       new Commit({
         aggregateType: 'AggregateA',
@@ -72,10 +70,8 @@ describeWithResources('scenarios/store-transformations: commit in-place-transfor
   })
 })
 
-describeWithResources('scenarios/store-transformations: commit in-place-transformation', {stores: true}, context => {
+describeWithResources('scenarios/store-transformations: commit in-place-transformation', ({eventStore}) => {
   test('deleting commit', async () => {
-    const {eventStore} = context
-
     await eventStore.commit(
       new Commit({
         aggregateType: 'AggregateA',

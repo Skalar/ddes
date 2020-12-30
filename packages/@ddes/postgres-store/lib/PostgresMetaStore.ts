@@ -1,23 +1,25 @@
 /**
  * @module @ddes/postgres-store
  */
-
+import createPgPool, {ConnectionPool, sql} from '@databases/pg'
 import {MetaStore, MetaStoreKey} from '@ddes/core'
-import {Client} from 'pg'
-import QueryStream from 'pg-query-stream'
-import {sql} from 'pg-sql'
+
+import {PostgresStoreConfig} from './types'
 
 /**
  * Interface for MetaStore powered by PostgreSQL
  */
 export default class PostgresMetaStore extends MetaStore {
   public tableName!: string
-  public client!: Client
+  public pool: ConnectionPool
 
-  constructor(config: {tableName: string; client: Client}) {
+  constructor(config: PostgresStoreConfig) {
     super()
+    if (!config.tableName) throw new Error(`'tableName' must be specified`)
+    if (!config.database) throw new Error(`'database' must be specified`)
+
     this.tableName = config.tableName
-    this.client = config.client
+    this.pool = createPgPool(config.database)
   }
 
   public async get(key: MetaStoreKey) {
@@ -27,14 +29,8 @@ export default class PostgresMetaStore extends MetaStore {
       AND secondary_key = ${key[1]}
       AND (expires_at > ${Date.now()} or expires_at IS NULL)
     `
-
-    const result = await this.client.query(query.text, query.values)
-
-    if (result.rows.length === 0) {
-      return null
-    }
-
-    return result.rows[0].data
+    const result = await this.pool.query(query)
+    return result.length === 0 ? null : result[0].data
   }
 
   public async put(key: MetaStoreKey, value: any, options: {expiresAt?: Date} = {}) {
@@ -56,17 +52,15 @@ export default class PostgresMetaStore extends MetaStore {
       "expires_at" = excluded."expires_at"
     `
 
-    await this.client.query(query.text, query.values)
+    await this.pool.query(query)
   }
 
   public async delete(key: MetaStoreKey) {
-    const query = sql`
+    await this.pool.query(sql`
       DELETE FROM ${sql.ident(this.tableName)}
       WHERE primary_key = ${key[0]}
       AND secondary_key = ${key[1]}
-    `
-
-    await this.client.query(query.text, query.values)
+    `)
   }
 
   public async *list(primaryKey: string): AsyncIterableIterator<[string, any]> {
@@ -76,36 +70,33 @@ export default class PostgresMetaStore extends MetaStore {
       AND (expires_at > ${Date.now()} or expires_at IS NULL)
     `
 
-    const queryStream = new QueryStream(query.text, query.values)
-
-    for await (const row of this.client.query(queryStream)) {
+    const rows = this.pool.queryStream(query, {})
+    for await (const row of rows) {
       yield [row.secondary_key, row.data]
     }
   }
 
   public async setup() {
-    try {
-      const query = sql`
-        CREATE TABLE IF NOT EXISTS ${sql.ident(this.tableName)} (
-          primary_key		text NOT NULL,
-          secondary_key	text NOT NULL,
-          data		      jsonb NOT NULL,
-          expires_at    bigint,
-          PRIMARY KEY(primary_key, secondary_key)
-        );
-      `
-
-      await this.client.query(query.text)
-    } catch (error) {
-      if (error.code !== '42P04') {
-        throw error
-      } // db exists
-    }
+    await this.pool.query(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.ident(this.tableName)} (
+        primary_key		text NOT NULL,
+        secondary_key	text NOT NULL,
+        data		      jsonb NOT NULL,
+        expires_at    bigint,
+        PRIMARY KEY(primary_key, secondary_key)
+      );
+    `)
   }
 
   public async teardown() {
-    const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
-    await this.client.query(query.text)
+    await this.pool.query(sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`)
+  }
+
+  /**
+   * Shutdown postgres connection pool
+   */
+  public async shutdown() {
+    await this.pool.dispose()
   }
 
   public toString(): string {

@@ -3,13 +3,12 @@ import {CommitTransformation, Transformer} from '@ddes/store-transformations'
 import {describeWithResources, iterableToArray} from 'tests/support'
 import {aws} from 'tests/support/stores'
 
-describeWithResources('scenarios/store-transformations: commit copy-and-transformation', {stores: true}, context => {
+describeWithResources('scenarios/store-transformations: commit copy-and-transformation', context => {
   // we need to get target store
   test(`modifying commit`, async () => {
     const {eventStore: source} = context
     const extraStore = context.store.eventStore({testId: context.testId + '-target'})
     const target = extraStore
-    context.teardownFunctions.push(() => target.teardown())
     await target.setup()
 
     const dataForCommits = [
@@ -85,12 +84,11 @@ describeWithResources('scenarios/store-transformations: commit copy-and-transfor
   })
 })
 
-describeWithResources('scenarios/store-transformations: commit copy-and-transformation', {stores: true}, context => {
+describeWithResources('scenarios/store-transformations: commit copy-and-transformation', context => {
   test('deleting commit', async () => {
     const {eventStore: source} = context
     const AwsStores = new aws(context.testId + '-target')
-    const target = AwsStores.eventStore({})
-    context.teardownFunctions.push(() => target.teardown())
+    const target = AwsStores.eventStore()
     await target.setup()
 
     const testCommits = [
@@ -149,12 +147,11 @@ describeWithResources('scenarios/store-transformations: commit copy-and-transfor
   })
 })
 
-describeWithResources('scenarios/store-transformations: commit copy-and-transformation', {stores: true}, context => {
+describeWithResources('scenarios/store-transformations: commit copy-and-transformation', context => {
   test('creating new commits', async () => {
     const {eventStore: source} = context
     const AwsStores = new aws(context.testId + '-target')
     const target = AwsStores.eventStore({})
-    context.teardownFunctions.push(() => target.teardown())
     await target.setup()
 
     const testCommits = [

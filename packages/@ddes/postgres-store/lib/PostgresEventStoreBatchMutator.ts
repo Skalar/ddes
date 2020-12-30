@@ -1,9 +1,9 @@
 /**
  * @module @ddes/postgres-store
  */
+import {sql, SQLQuery} from '@databases/pg'
 import {BatchMutator, Commit} from '@ddes/core'
 import debug from 'debug'
-import {sql} from 'pg-sql'
 
 import PostgresEventStore from './PostgresEventStore'
 import {PostgresStoreBatchMutatorQueueItem, Row} from './types'
@@ -70,7 +70,7 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
           "expires_at" = excluded."expires_at"
       `
 
-      await this.addToQueue(query.text, query.values)
+      await this.addToQueue(query)
     }
   }
 
@@ -85,11 +85,11 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
         AND "aggregate_version" = ${aggregateVersion}
       `
 
-      await this.addToQueue(query.text, query.values)
+      await this.addToQueue(query)
     }
   }
 
-  private addToQueue(query: string, variables: any[]) {
+  private addToQueue(query: SQLQuery) {
     let startedResolver!: (value?: unknown) => void
     const startedPromise = new Promise(resolve => {
       startedResolver = resolve
@@ -105,7 +105,6 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
       processedPromise,
       processedResolver,
       query,
-      variables,
       processing: false,
     })
 
@@ -157,25 +156,22 @@ export default class PostgresEventStoreBatchMutator extends BatchMutator<Row> {
 
   private async sendRequest(queueItems: PostgresStoreBatchMutatorQueueItem[]) {
     log(`Starting transaction with ${queueItems.length} items`)
-    const client = this.store.client
+    const {pool} = this.store
 
     try {
-      await client.query('BEGIN')
-
-      for (const queueItem of queueItems) {
-        await client.query(queueItem.query, queueItem.variables)
-      }
-
-      await client.query('COMMIT')
+      await pool.tx(async client => {
+        for (const queueItem of queueItems) {
+          await client.query(queueItem.query)
+        }
+      })
     } catch (e) {
-      await client.query('ROLLBACK')
       log(`Failed transaction with ${queueItems.length} items, rolling back`)
     } finally {
       for (const queueItem of queueItems) {
         queueItem.processing = false
         queueItem.processedResolver()
         this.queue.delete(queueItem)
-        if (queueItem.query.startsWith('INSERT')) {
+        if (queueItem.query.toString().startsWith('INSERT')) {
           this.writeCount++
         } else {
           this.deleteCount++

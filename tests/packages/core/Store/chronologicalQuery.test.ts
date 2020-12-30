@@ -47,18 +47,14 @@ const commits = {
   }),
 }
 
-describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context => {
+describeWithResources('eventStore.chronologicalQuery()', ({eventStore}) => {
   beforeAll(async () => {
-    const {eventStore} = context
-
     for (const commit of Object.values(commits)) {
       await eventStore.commit(commit)
     }
   })
 
   test('inclusive range in ascending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -70,8 +66,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('inclusive range in descending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -84,8 +78,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('exclusiveMin = true in ascending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -98,8 +90,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('exclusiveMin = true in descending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -113,8 +103,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('exclusiveMax = true in ascending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -127,8 +115,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('exclusiveMax = true in descending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -142,8 +128,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('non-default partition', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -156,8 +140,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('limit and ascending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({
@@ -170,8 +152,6 @@ describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context
   })
 
   test('limit and descending order', async () => {
-    const {eventStore} = context
-
     await expect(
       iterableToArray(
         eventStore.chronologicalQuery({

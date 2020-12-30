@@ -1,14 +1,14 @@
 /**
  * @module @ddes/core
  */
-
 import {createHash} from 'crypto'
 import {inspect} from 'util'
+
 import Commit from './Commit'
+import {AlreadyCommittingError, VersionConflictError} from './errors'
 import EventStore from './EventStore'
 import KeySchema from './KeySchema'
 import SnapshotStore from './SnapshotStore'
-import {AlreadyCommittingError, VersionConflictError} from './errors'
 import {
   AggregateEventUpcasters,
   AggregateKey,

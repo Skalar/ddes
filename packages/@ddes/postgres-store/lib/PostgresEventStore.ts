@@ -1,81 +1,71 @@
 /**
  * @module @ddes/postgres-store
  */
-import {EventStore, Commit, AggregateKey, AggregateType, VersionConflictError} from '@ddes/core'
-import {PostgresEventStoreConfig} from './types'
-import {Client} from 'pg'
-import QueryStream from 'pg-query-stream'
-import PostgresEventStoreQueryResponse from './PostgresEventStoreQueryResponse'
+import createPgPool, {ConnectionPool, sql} from '@databases/pg'
+import {AggregateKey, AggregateType, Commit, EventStore, VersionConflictError} from '@ddes/core'
+
 import PostgresEventStoreBatchMutator from './PostgresEventStoreBatchMutator'
-import {sql} from 'pg-sql'
+import PostgresEventStoreQueryResponse from './PostgresEventStoreQueryResponse'
+import {PostgresStoreConfig} from './types'
 
 /**
  * Interface for EventStore powered by PostgresQL
  */
 export default class PostgresEventStore extends EventStore {
-  public tableName!: string
-  public client: Client
+  public tableName: string
+  public pool: ConnectionPool
 
-  constructor(config: PostgresEventStoreConfig) {
+  constructor(config: PostgresStoreConfig) {
     super()
 
-    if (!config.tableName) {
-      throw new Error(`'tableName' must be specified`)
-    }
+    if (!config.tableName) throw new Error(`'tableName' must be specified`)
+    if (!config.database) throw new Error(`'database' must be specified`)
 
-    if (!config.client) {
-      throw new Error(`'client' must be specified`)
-    }
-
-    Object.assign(this, config)
-
-    this.client = config.client
+    this.tableName = config.tableName
+    this.pool = createPgPool(config.database)
   }
 
   /**
    * Create PostgresQL table
    */
   public async setup() {
-    try {
-      const query = sql`
-        CREATE TABLE ${sql.ident(this.tableName)} (
-          aggregate_type      text NOT NULL,
-          aggregate_key       text NOT NULL,
-          aggregate_version   bigint NOT NULL,
-          sort_key            text NOT NULL,
-          chronological_group text NOT NULL,
-          events              jsonb NOT NULL,
-          timestamp           bigint NOT NULL,
-          expires_at          bigint,
-          PRIMARY KEY(aggregate_type, aggregate_key, aggregate_version)
-        );
-      `
-      await this.client.query(query.text, query.values)
-    } catch (error) {
-      if (error.code !== '42P04') {
-        throw error
-      } // db exists
-    }
+    await this.pool.query(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.ident(this.tableName)} (
+        aggregate_type      text NOT NULL,
+        aggregate_key       text NOT NULL,
+        aggregate_version   bigint NOT NULL,
+        sort_key            text NOT NULL,
+        chronological_group text NOT NULL,
+        events              jsonb NOT NULL,
+        timestamp           bigint NOT NULL,
+        expires_at          bigint,
+        PRIMARY KEY(aggregate_type, aggregate_key, aggregate_version)
+      );
+    `)
   }
 
   /**
    * Remove PostgresQL table
    */
   public async teardown() {
-    const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
-    await this.client.query(query.text, query.values)
+    await this.pool.query(sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`)
+  }
+
+  /**
+   * Shutdown postgres connection pool
+   */
+  public async shutdown() {
+    await this.pool.dispose()
   }
 
   /**
    * Get commit count
    */
   public async bestEffortCount() {
-    const query = sql`SELECT COUNT(*) FROM ${sql.ident(this.tableName)}`
-
-    const result = await this.client.query(query.text, query.values)
-
-    return result.rowCount
+    const result = await this.pool.query(sql`SELECT COUNT(*) FROM ${sql.ident(this.tableName)}`)
+    return result[0].count
   }
+
   /**
    * Insert commit into table
    * @param {Object} commit Commit
@@ -102,7 +92,7 @@ export default class PostgresEventStore extends EventStore {
         ${expiresAt || null}
       )`
 
-      await this.client.query(query.text, query.values)
+      await this.pool.query(query)
     } catch (error) {
       if (error.code === '23505') {
         throw new VersionConflictError(
@@ -148,13 +138,11 @@ export default class PostgresEventStore extends EventStore {
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
 
-    const queryStream = new QueryStream(query.text, query.values)
-
-    const stream = this.client.query(queryStream)
+    const rows = this.pool.queryStream(query, {})
 
     return new PostgresEventStoreQueryResponse(
       (async function* () {
-        for await (const row of stream) {
+        for await (const row of rows) {
           yield row
         }
       })()
@@ -165,24 +153,22 @@ export default class PostgresEventStore extends EventStore {
    * Retrieve ordered commits for each aggregate instance of [[AggregateType]]
    */
   public scanAggregateInstances(type: string, options: {instanceLimit?: number} = {}) {
-    const {client, tableName} = this
+    const {pool, tableName} = this
     if (!type) {
       throw new Error(`You need to specify 'type'`)
     }
 
     const query = sql`
       SELECT DISTINCT "aggregate_type", "aggregate_key"
-      FROM ${sql.ident(this.tableName)} WHERE "aggregate_type" = ${type}
+      FROM ${sql.ident(tableName)} WHERE "aggregate_type" = ${type}
     `
 
-    const queryStream = new QueryStream(query.text, query.values)
-
-    const stream = client.query(queryStream)
+    const rows = pool.queryStream(query, {})
 
     return new PostgresEventStoreQueryResponse(
       (async function* () {
         let instanceCount = 0
-        for await (const {aggregate_type, aggregate_key} of stream) {
+        for await (const {aggregate_type, aggregate_key} of rows) {
           instanceCount++
           const instanceQuery = sql`
             SELECT * FROM ${sql.ident(tableName)}
@@ -191,9 +177,9 @@ export default class PostgresEventStore extends EventStore {
             AND (expires_at > ${Date.now()} OR expires_at IS NULL)
           `
 
-          const instanceQueryStream = new QueryStream(instanceQuery.text, instanceQuery.values)
+          const rows = pool.queryStream(instanceQuery, {})
 
-          for await (const row of client.query(instanceQueryStream)) {
+          for await (const row of rows) {
             yield row
           }
 
@@ -244,7 +230,8 @@ export default class PostgresEventStore extends EventStore {
       capacityLimit?: number
     } = {}
   ) {
-    const client = this.client
+    const {pool, tableName} = this
+
     // Fix use of startKey
     const {totalSegments = 1, limit, filterAggregateTypes} = options || {}
 
@@ -253,7 +240,7 @@ export default class PostgresEventStore extends EventStore {
     }
 
     const query = sql`
-      SELECT * FROM ${sql.ident(this.tableName)}
+      SELECT * FROM ${sql.ident(tableName)}
       WHERE (expires_at > ${Date.now()} or expires_at IS NULL)
       ${
         filterAggregateTypes
@@ -267,13 +254,11 @@ export default class PostgresEventStore extends EventStore {
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
 
-    const queryStream = new QueryStream(query.text, query.values)
+    const rows = pool.queryStream(query, {})
 
     return new PostgresEventStoreQueryResponse(
       (async function* () {
-        const stream = client.query(queryStream)
-
-        for await (const row of stream) {
+        for await (const row of rows) {
           yield row
         }
       })()
@@ -299,6 +284,8 @@ export default class PostgresEventStore extends EventStore {
     timeDriftCompensation?: number
     filterAggregateTypes?: AggregateType[]
   }) {
+    const {pool, tableName} = this
+
     const {
       group = 'default',
       min,
@@ -323,10 +310,10 @@ export default class PostgresEventStore extends EventStore {
 
     const minSortKey = min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
 
-    const orderByDir = descending ? 'DESC' : 'ASC'
+    const orderByDir = descending ? sql`DESC` : sql`ASC`
 
     const query = sql`
-      SELECT * FROM ${sql.ident(this.tableName)}
+      SELECT * FROM ${sql.ident(tableName)}
       WHERE "chronological_group" = ${group}
       AND "timestamp" BETWEEN ${minDate.getTime()} AND ${maxDate.getTime()}
       ${exclusiveMin ? sql`AND "sort_key" > ${minSortKey}` : sql``}
@@ -340,16 +327,15 @@ export default class PostgresEventStore extends EventStore {
           : sql``
       }
       AND (expires_at > ${Date.now()} or expires_at IS NULL)
-      ORDER BY "sort_key" ${sql.raw(orderByDir)}
+      ORDER BY sort_key ${orderByDir}
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
-    const queryStream = new QueryStream(query.text, query.values)
 
-    const stream = this.client.query(queryStream)
+    const rows = pool.queryStream(query, {})
 
     return new PostgresEventStoreQueryResponse(
       (async function* () {
-        for await (const row of stream) {
+        for await (const row of rows) {
           yield row
         }
       })()
