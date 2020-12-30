@@ -3,8 +3,7 @@ import {PostgresEventStore, PostgresMetaStore, PostgresSnapshotStore} from '@dde
 
 import Store from './Store'
 
-// const database = process.env.DATABASE_URL!
-const database: ConnectionPoolConfig = {
+const database: string | ConnectionPoolConfig = process.env.DATABASE_URL || {
   bigIntMode: 'number',
   host: 'localhost',
   database: 'ddes',
