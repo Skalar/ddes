@@ -60,14 +60,14 @@ class ForumThread extends Aggregate {
   public static keySchema = new KeySchema(['forumId', 'threadId'])
 }
 
-describeWithResources('Projections', {stores: true}, context => {
+describeWithResources('Projections', ({metaStore, eventStore}) => {
   test('basic projections', async () => {
     const processedEventsA: EventWithMetadata[][] = []
     const processedEventsB: EventWithMetadata[][] = []
 
     const projectionA = new Projection({
       name: 'forums',
-      metaStore: context.metaStore,
+      metaStore,
 
       async processEvents(events: Set<EventWithMetadata>) {
         processedEventsA.push([...events])
@@ -80,7 +80,7 @@ describeWithResources('Projections', {stores: true}, context => {
 
     const projectionB = new Projection({
       name: 'forumthreads',
-      metaStore: context.metaStore,
+      metaStore,
 
       async processEvents(events: Set<EventWithMetadata>) {
         processedEventsB.push([...events])
@@ -92,7 +92,7 @@ describeWithResources('Projections', {stores: true}, context => {
     await projectionB.setup({startsAt: new Date()})
 
     const projector = new Projector([projectionA, projectionB], {
-      eventStore: context.eventStore,
+      eventStore,
     })
 
     projector.start()
@@ -100,7 +100,7 @@ describeWithResources('Projections', {stores: true}, context => {
     const testCommits = []
 
     for (const commit of getTestCommits()) {
-      await context.eventStore.commit(commit)
+      await eventStore.commit(commit)
       testCommits.push(commit)
     }
 

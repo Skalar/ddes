@@ -1,4 +1,5 @@
-import {StoreQueryResponse, StoreQueryResultSet, Event, Commit} from '@ddes/core'
+import {Commit, Event, StoreQueryResponse, StoreQueryResultSet} from '@ddes/core'
+
 import {rowToCommit} from './utils'
 
 export default class PostgresEventStoreQueryResponse implements StoreQueryResponse {

@@ -1,10 +1,8 @@
 import {Commit} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'tests/support'
 
-describeWithResources('Stores', {stores: true}, context => {
+describeWithResources('Stores', ({eventStore}) => {
   test('*queryAggregateCommits()', async () => {
-    const {eventStore} = context
-
     const commits = {
       a1: new Commit({
         aggregateType: 'Test',

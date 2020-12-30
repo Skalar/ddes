@@ -5,6 +5,8 @@ module.exports = {
   // All imported modules in your tests should be mocked automatically
   // automock: false,
 
+  testTimeout: 10000,
+
   // Stop running tests after `n` failures
   // bail: 0,
 
@@ -51,8 +53,8 @@ module.exports = {
   // Force coverage collection from ignored files using an array of glob patterns
   // forceCoverageMatch: [],
 
-  "globalSetup": "<rootDir>/node_modules/@databases/pg-test/jest/globalSetup.js",
-  "globalTeardown": "<rootDir>/node_modules/@databases/pg-test/jest/globalTeardown.js",
+  // globalSetup: '<rootDir>/node_modules/@databases/pg-test/jest/globalSetup.js',
+  // globalTeardown: '<rootDir>/node_modules/@databases/pg-test/jest/globalTeardown.js',
 
   // A set of global variables that need to be available in all test environments
   // globals: {},
@@ -77,8 +79,8 @@ module.exports = {
 
   // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
   moduleNameMapper: {
-    "@ddes/(.*)": "<rootDir>/packages/@ddes/$1",
-    "tests/(.*)": "<rootDir>/tests/$1",
+    '@ddes/(.*)': '<rootDir>/packages/@ddes/$1',
+    'tests/(.*)': '<rootDir>/tests/$1',
   },
 
   // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
@@ -132,7 +134,7 @@ module.exports = {
   // snapshotSerializers: [],
 
   // The test environment that will be used for testing
-  testEnvironment: "node",
+  testEnvironment: 'node',
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
@@ -168,7 +170,7 @@ module.exports = {
 
   // A map from regular expressions to paths to transformers
   transform: {
-    "^.+\\.(js|ts)?$": "babel-jest"
+    '^.+\\.(js|ts)?$': 'babel-jest',
   },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
@@ -187,4 +189,4 @@ module.exports = {
 
   // Whether to use watchman for file crawling
   // watchman: true,
-};
+}

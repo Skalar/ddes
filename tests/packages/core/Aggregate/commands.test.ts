@@ -3,10 +3,8 @@ import {Aggregate, EventWithMetadata, retryCommand as retry, VersionConflictErro
 import {describeWithResources} from 'tests/support'
 
 describe('Aggregate', () => {
-  describeWithResources('executeCommand()', {stores: true}, context => {
+  describeWithResources('executeCommand()', ({eventStore}) => {
     it('hydrates and retries on VersionConflictError', async () => {
-      const {eventStore} = context
-
       class TestAggregate extends Aggregate {
         public static eventStore = eventStore
 
@@ -27,10 +25,8 @@ describe('Aggregate', () => {
     })
   })
 
-  describeWithResources('executeCommand()', {stores: true}, context => {
+  describeWithResources('executeCommand()', ({eventStore}) => {
     it('allows you to ensure consistency', async () => {
-      const {eventStore} = context
-
       class TestAggregate extends Aggregate {
         public static eventStore = eventStore
         public static stateReducer(state = {}, event: EventWithMetadata) {
@@ -64,10 +60,8 @@ describe('Aggregate', () => {
     })
   })
 
-  describeWithResources('commands', {stores: true}, context => {
+  describeWithResources('commands', ({eventStore}) => {
     test('retryCommand decorator', async () => {
-      const {eventStore} = context
-
       class TestAggregate extends Aggregate {
         public static eventStore = eventStore
         public static stateReducer(state = {}, event: EventWithMetadata) {

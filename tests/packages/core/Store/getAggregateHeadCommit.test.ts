@@ -1,10 +1,8 @@
 import {Commit} from '@ddes/core'
 import {describeWithResources} from 'tests/support'
 
-describeWithResources('Stores', {stores: true}, context => {
+describeWithResources('Stores', ({eventStore}) => {
   test('getAggregateHeadCommit()', async () => {
-    const {eventStore} = context
-
     const commits = {
       a1: new Commit({
         aggregateType: 'Test',
@@ -36,7 +34,7 @@ describeWithResources('Stores', {stores: true}, context => {
       }),
     }
 
-    for (const commit of Object.values(commits)) {
+    for await (const commit of Object.values(commits)) {
       await eventStore.commit(commit)
     }
 

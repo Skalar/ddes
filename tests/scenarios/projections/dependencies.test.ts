@@ -71,13 +71,13 @@ class ForumThread extends Aggregate {
   public static keySchema = new KeySchema(['forumId', 'threadId'])
 }
 
-describeWithResources('Projections', {stores: true}, context => {
+describeWithResources('Projections', ({metaStore, eventStore}) => {
   test('projection with dependencies', async () => {
     const processedEvents: EventWithMetadata[][] = []
 
     const projectionA = new Projection({
       name: 'forums',
-      metaStore: context.metaStore,
+      metaStore,
 
       dependencies: {
         ForumThread: {
@@ -95,7 +95,7 @@ describeWithResources('Projections', {stores: true}, context => {
     await projectionA.setup({startsAt: new Date()})
 
     const projector = new Projector([projectionA], {
-      eventStore: context.eventStore,
+      eventStore,
     })
 
     projector.start()
@@ -103,7 +103,7 @@ describeWithResources('Projections', {stores: true}, context => {
     const testCommits = []
 
     for (const commit of getTestCommits()) {
-      await context.eventStore.commit(commit)
+      await eventStore.commit(commit)
       testCommits.push(commit)
     }
 

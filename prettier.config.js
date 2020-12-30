@@ -5,5 +5,5 @@ module.exports = {
   trailingComma: 'es5',
   bracketSpacing: false,
   arrowParens: 'avoid',
-  tabWidth: 2
+  tabWidth: 2,
 }

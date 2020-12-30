@@ -1,9 +1,8 @@
-import {describeWithResources} from 'tests/support'
 import {aws} from 'tests/support/stores'
 
-describeWithResources('AwsEventStore', {}, context => {
+describe('AwsEventStore', () => {
   test.concurrent('setup() [withServices]', async () => {
-    const AwsStores = new aws(context.testId)
+    const AwsStores = new aws()
     const eventStore = AwsStores.eventStore({
       initialCapacity: {
         tableRead: 1,

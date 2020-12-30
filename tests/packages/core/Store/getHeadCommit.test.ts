@@ -1,10 +1,8 @@
 import {Commit} from '@ddes/core'
 import {describeWithResources} from 'tests/support'
 
-describeWithResources('Stores', {stores: true}, context => {
+describeWithResources('Stores', ({eventStore}) => {
   test('getHeadCommit()', async () => {
-    const {eventStore} = context
-
     const commits = {
       a1: {
         aggregateType: 'Test',

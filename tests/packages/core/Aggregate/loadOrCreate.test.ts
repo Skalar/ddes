@@ -24,9 +24,9 @@ class TestAggregate extends Aggregate {
   }
 }
 
-describeWithResources('Aggregate.loadOrCreate()', {stores: true}, context => {
+describeWithResources('Aggregate.loadOrCreate()', ({eventStore}) => {
   beforeAll(() => {
-    TestAggregate.eventStore = context.eventStore
+    TestAggregate.eventStore = eventStore
   })
 
   test('when does not already exist', async () => {
@@ -39,7 +39,7 @@ describeWithResources('Aggregate.loadOrCreate()', {stores: true}, context => {
   })
 
   test('when already exists', async () => {
-    TestAggregate.eventStore = context.eventStore
+    TestAggregate.eventStore = eventStore
 
     await TestAggregate.commit('test', [{type: 'Created', properties: {id: 'test', name: 'initial'}}])
 

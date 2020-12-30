@@ -1,14 +1,13 @@
 /* tslint:disable:max-classes-per-file */
 import {Aggregate, EventWithMetadata, KeySchema, VersionConflictError} from '@ddes/core'
-import {randomBytes} from 'crypto'
-import {commitYielder} from 'tests/support'
+import {commitYielder, generateTestId} from 'tests/support'
 
 function createTestAggregateClass(options?: {eventStore?: object}) {
   class TestAggregate extends Aggregate {
     public static keySchema = new KeySchema([
       {
         name: 'id',
-        value: (props: {id?: string}) => props.id || randomBytes(8).toString('hex'),
+        value: (props: {id?: string}) => props.id || generateTestId(),
       },
     ])
 

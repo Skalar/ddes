@@ -1,58 +1,58 @@
+import {ConnectionPoolConfig} from '@databases/pg'
 import {PostgresEventStore, PostgresMetaStore, PostgresSnapshotStore} from '@ddes/postgres-store'
-import {Client} from 'pg'
+
 import Store from './Store'
 
-export default class PostgresStores implements Store {
-  private client: Client
+// const database = process.env.DATABASE_URL!
+const database: ConnectionPoolConfig = {
+  bigIntMode: 'number',
+  host: 'localhost',
+  database: 'ddes',
+  user: 'ddes',
+  password: 'test',
+  port: 5432,
+}
 
-  constructor(private testId: string) {
-    // this.client = new Client({host: 'localhost', port: 5432, user: 'ddes', password: 'test'})
-    this.client = new Client(process.env.DATABASE_URL)
-    this.client.on('error', error => {
-      if (
-        error &&
-        !(
-          error.message === 'Connection terminated unexpectedly' ||
-          error.message === 'terminating connection due to unexpected postmaster exit'
-        )
-      ) {
-        throw error
+type PgStore = PostgresEventStore | PostgresMetaStore | PostgresSnapshotStore
+
+export default class PostgresStores extends Store<PgStore> {
+  constructor(testId?: string) {
+    super(testId)
+    process.once('SIGTERM', async () => {
+      for await (const store of this.stores) {
+        try {
+          await store.shutdown()
+        } catch (error) {
+          console.error(error)
+        }
       }
     })
   }
 
-  async setup() {
-    await this.client.connect()
+  public eventStore(config?: any) {
+    return this.addStore(
+      new PostgresEventStore({
+        tableName: `ddesevent-${config?.testId || this.testId}`,
+        database,
+      })
+    )
   }
 
-  async teardown() {
-    const client = this.client
-    try {
-      await client.end()
-    } catch (e) {
-      console.log(e)
-      console.log('fail on client end')
-    }
+  public metaStore(config?: any) {
+    return this.addStore(
+      new PostgresMetaStore({
+        tableName: `ddesmeta-${config?.testId || this.testId}`,
+        database,
+      })
+    )
   }
 
-  public eventStore({testId}: {testId?: string} = {}): PostgresEventStore {
-    return new PostgresEventStore({
-      tableName: `ddesevent${testId || this.testId}`,
-      client: this.client,
-    })
-  }
-
-  public metaStore(): PostgresMetaStore {
-    return new PostgresMetaStore({
-      tableName: `ddesmeta${this.testId}`,
-      client: this.client,
-    })
-  }
-
-  public snapshotStore(): PostgresSnapshotStore {
-    return new PostgresSnapshotStore({
-      tableName: `ddessnapshot${this.testId}`,
-      client: this.client,
-    })
+  public snapshotStore(config?: any) {
+    return this.addStore(
+      new PostgresSnapshotStore({
+        tableName: `ddessnapshot-${config?.testId || this.testId}`,
+        database,
+      })
+    )
   }
 }

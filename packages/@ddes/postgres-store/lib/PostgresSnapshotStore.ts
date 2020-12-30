@@ -1,49 +1,50 @@
+import createPgPool, {ConnectionPool, sql} from '@databases/pg'
 import {SnapshotStore} from '@ddes/core'
-import {Client} from 'pg'
-import {sql} from 'pg-sql'
+
+import {PostgresStoreConfig} from './types'
 
 export default class PostgresSnapshotStore extends SnapshotStore {
   public tableName!: string
-  public client!: Client
+  public pool: ConnectionPool
 
-  constructor(config: {tableName: string; client: Client}) {
+  constructor(config: PostgresStoreConfig) {
     super()
+    if (!config.tableName) throw new Error(`'tableName' must be specified`)
+    if (!config.database) throw new Error(`'database' must be specified`)
+
     this.tableName = config.tableName
-    this.client = config.client
+    this.pool = createPgPool(config.database)
   }
 
   /**
    * Create PostgresQL table
    */
   public async setup() {
-    try {
-      const query = sql`
-        CREATE TABLE IF NOT EXISTS ${sql.ident(this.tableName)} (
-          aggregate_type	        text NOT NULL,
-          aggregate_key	          text NOT NULL,
-          aggregate_version	      bigint NOT NULL,
-          state		                jsonb NOT NULL,
-          timestamp               bigint,
-          compatibility_checksum  text NOT NULL,
-          PRIMARY KEY(aggregate_type, aggregate_key)
-        );
-      `
-
-      await this.client.query(query.text, query.values)
-    } catch (error) {
-      if (error.code !== '42P04') {
-        throw error
-      } // db exists
-    }
+    await this.pool.query(sql`
+      CREATE TABLE IF NOT EXISTS ${sql.ident(this.tableName)} (
+        aggregate_type	        text NOT NULL,
+        aggregate_key	          text NOT NULL,
+        aggregate_version	      bigint NOT NULL,
+        state		                jsonb NOT NULL,
+        timestamp               bigint,
+        compatibility_checksum  text NOT NULL,
+        PRIMARY KEY(aggregate_type, aggregate_key)
+      );
+    `)
   }
 
   /**
    * Remove PostgresQL table
    */
   public async teardown() {
-    const query = sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`
+    await this.pool.query(sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`)
+  }
 
-    await this.client.query(query.text, query.values)
+  /**
+   * Shutdown postgres connection pool
+   */
+  public async shutdown() {
+    await this.pool.dispose()
   }
 
   /**
@@ -74,7 +75,7 @@ export default class PostgresSnapshotStore extends SnapshotStore {
         "compatibility_checksum" = excluded."compatibility_checksum"
     `
 
-    await this.client.query(query.text, query.values)
+    await this.pool.query(query)
   }
 
   public async readSnapshot(type: string, key: string) {
@@ -84,13 +85,13 @@ export default class PostgresSnapshotStore extends SnapshotStore {
       AND "aggregate_key" = ${key}
     `
 
-    const results = await this.client.query(query.text, query.values)
+    const rows = await this.pool.query(query)
 
-    if (results.rows.length === 0) {
+    if (rows.length === 0) {
       return null
     }
 
-    const snapshot = results.rows[0]
+    const snapshot = rows[0]
 
     return {
       version: parseInt(snapshot.aggregate_version, 10),
@@ -99,8 +100,12 @@ export default class PostgresSnapshotStore extends SnapshotStore {
       compatibilityChecksum: snapshot.compatibility_checksum,
     }
   }
+
   public async deleteSnapshots() {
-    const query = sql`DELETE FROM ${sql.ident(this.tableName)}`
-    await this.client.query(query.text, query.values)
+    await this.pool.query(sql`DELETE FROM ${sql.ident(this.tableName)}`)
+  }
+
+  public toString(): string {
+    return `PostgresSnapshotStore:${this.tableName}`
   }
 }

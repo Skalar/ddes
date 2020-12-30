@@ -1,4 +1,4 @@
-import {Client} from 'pg'
+import {ConnectionPoolConfig, SQLQuery} from '@databases/pg'
 
 export interface Row {
   compositeId: string
@@ -12,10 +12,9 @@ export interface Row {
   expiresAt?: number
 }
 
-export interface PostgresEventStoreConfig {
+export interface PostgresStoreConfig {
   tableName: string
-  client: Client
-  createdAt?: Date
+  database: string | ConnectionPoolConfig
 }
 
 /**
@@ -27,6 +26,5 @@ export interface PostgresStoreBatchMutatorQueueItem {
   processedPromise: Promise<any>
   processedResolver: () => void
   processing: boolean
-  query: string
-  variables: any[]
+  query: SQLQuery
 }

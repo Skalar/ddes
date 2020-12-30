@@ -1,24 +1,22 @@
-import {describeWithResources} from 'tests/support'
+import {sql} from '@databases/pg'
 import {postgres} from 'tests/support/stores'
 
-describeWithResources('AwsEventStore', {}, context => {
+describe('PostgresEventStore', () => {
   test.concurrent('setup() [withServices]', async () => {
-    const PostgresStores = new postgres(context.testId)
-
-    await PostgresStores.setup()
+    const PostgresStores = new postgres()
 
     const eventStore = PostgresStores.eventStore()
 
-    await eventStore.setup()
+    await PostgresStores.setup()
 
-    const {rows} = await eventStore.client.query(`
+    const rows = await eventStore.pool.query(sql`
       SELECT COLUMN_NAME, DATA_TYPE
-      FROM information_schema.COLUMNS WHERE TABLE_NAME = '${eventStore.tableName}'
+      FROM information_schema.COLUMNS 
+      WHERE TABLE_NAME = ${eventStore.tableName}
     `)
 
     expect(rows.length).toBe(8)
 
-    await eventStore.teardown()
     await PostgresStores.teardown()
   })
 })

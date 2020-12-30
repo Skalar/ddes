@@ -34,9 +34,9 @@ const commits = [
   }),
 ]
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore}) => {
   test('load() with no snapshot', async () => {
-    TestAggregate.eventStore = context.eventStore
+    TestAggregate.eventStore = eventStore
 
     for (const commit of commits) {
       await TestAggregate.eventStore.commit(commit)
@@ -67,10 +67,10 @@ describeWithResources('Aggregate', {stores: true}, context => {
   })
 })
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore, snapshotStore}) => {
   test('load() with snapshot', async () => {
-    TestAggregate.eventStore = context.eventStore
-    TestAggregate.snapshotStore = context.snapshotStore
+    TestAggregate.eventStore = eventStore
+    TestAggregate.snapshotStore = snapshotStore
 
     for (const commit of commits) {
       await TestAggregate.eventStore.commit(commit)
@@ -131,10 +131,10 @@ describeWithResources('Aggregate', {stores: true}, context => {
   })
 })
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore, snapshotStore}) => {
   test('loading via manual instantiation and hydrate()', async () => {
-    TestAggregate.eventStore = context.eventStore
-    TestAggregate.snapshotStore = context.snapshotStore
+    TestAggregate.eventStore = eventStore
+    TestAggregate.snapshotStore = snapshotStore
 
     for (const commit of commits) {
       await TestAggregate.eventStore.commit(commit)

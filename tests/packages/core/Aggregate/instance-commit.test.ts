@@ -1,12 +1,9 @@
 // tslint:disable:max-classes-per-file
-
 import {Aggregate} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'tests/support'
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore}) => {
   test('commit()', async () => {
-    const {eventStore} = context
-    //
     class TestAggregate extends Aggregate {
       public static eventStore = eventStore
     }
@@ -27,10 +24,8 @@ describeWithResources('Aggregate', {stores: true}, context => {
   })
 })
 
-describeWithResources('Aggregate', {stores: true}, context => {
+describeWithResources('Aggregate', ({eventStore}) => {
   test('commit() - custom chronologicalGroup', async () => {
-    const {eventStore} = context
-    //
     class TestAggregate extends Aggregate {
       public static eventStore = eventStore
       public static chronologicalGroup = 'custom'
