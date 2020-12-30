@@ -1,15 +1,10 @@
 import timeout from '@async-generators/timeout'
 
-export default async function<T>(
-  source: AsyncIterable<T>,
-  options: {maxWaitTime?: number} = {}
-) {
+export default async function <T>(source: AsyncIterable<T>, options: {maxWaitTime?: number} = {}) {
   const items: T[] = []
 
   try {
-    for await (const item of options.maxWaitTime
-      ? timeout(source, options.maxWaitTime)
-      : source) {
+    for await (const item of options.maxWaitTime ? timeout(source, options.maxWaitTime) : source) {
       items.push(item)
     }
   } catch (error) {

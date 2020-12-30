@@ -35,9 +35,7 @@ const commits = {
     aggregateType: 'ZebraAggregate',
     aggregateKey: 'a',
     aggregateVersion: 3,
-    events: [
-      {type: 'Published', version: 1, properties: {testProperty: false}},
-    ],
+    events: [{type: 'Published', version: 1, properties: {testProperty: false}}],
     timestamp: '2018-01-05',
   }),
   testA2: new Commit({
@@ -49,144 +47,140 @@ const commits = {
   }),
 }
 
-describeWithResources(
-  'eventStore.chronologicalQuery()',
-  {stores: true},
-  context => {
-    beforeAll(async () => {
-      const {eventStore} = context
+describeWithResources('eventStore.chronologicalQuery()', {stores: true}, context => {
+  beforeAll(async () => {
+    const {eventStore} = context
 
-      for (const commit of Object.values(commits)) {
-        await eventStore.commit(commit)
-      }
-    })
+    for (const commit of Object.values(commits)) {
+      await eventStore.commit(commit)
+    }
+  })
 
-    test('inclusive range in ascending order', async () => {
-      const {eventStore} = context
+  test('inclusive range in ascending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: new Date('2018-01-02'),
-            max: new Date('2018-01-05'),
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.testB1, commits.otherA1, commits.testA2, commits.zebraA3])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: new Date('2018-01-02'),
+          max: new Date('2018-01-05'),
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.testB1, commits.otherA1, commits.testA2, commits.zebraA3])
+  })
 
-    test('inclusive range in descending order', async () => {
-      const {eventStore} = context
+  test('inclusive range in descending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: new Date('2018-01-02'),
-            max: new Date('2018-01-05'),
-            descending: true,
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.zebraA3, commits.testA2, commits.otherA1, commits.testB1])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: new Date('2018-01-02'),
+          max: new Date('2018-01-05'),
+          descending: true,
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.zebraA3, commits.testA2, commits.otherA1, commits.testB1])
+  })
 
-    test('exclusiveMin = true in ascending order', async () => {
-      const {eventStore} = context
+  test('exclusiveMin = true in ascending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: commits.testA2.sortKey,
-            exclusiveMin: true,
-            max: new Date('2018-01-06'),
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.zebraA3])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: commits.testA2.sortKey,
+          exclusiveMin: true,
+          max: new Date('2018-01-06'),
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.zebraA3])
+  })
 
-    test('exclusiveMin = true in descending order', async () => {
-      const {eventStore} = context
+  test('exclusiveMin = true in descending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: commits.testA2.sortKey,
-            exclusiveMin: true,
-            max: new Date('2018-01-06'),
-            descending: true,
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.zebraA3])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: commits.testA2.sortKey,
+          exclusiveMin: true,
+          max: new Date('2018-01-06'),
+          descending: true,
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.zebraA3])
+  })
 
-    test('exclusiveMax = true in ascending order', async () => {
-      const {eventStore} = context
+  test('exclusiveMax = true in ascending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: new Date('2018-01-03'),
-            max: commits.zebraA3.sortKey,
-            exclusiveMax: true,
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.otherA1, commits.testA2])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: new Date('2018-01-03'),
+          max: commits.zebraA3.sortKey,
+          exclusiveMax: true,
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.otherA1, commits.testA2])
+  })
 
-    test('exclusiveMax = true in descending order', async () => {
-      const {eventStore} = context
+  test('exclusiveMax = true in descending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: new Date('2018-01-03'),
-            max: commits.zebraA3.sortKey,
-            exclusiveMax: true,
-            descending: true,
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.testA2, commits.otherA1])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: new Date('2018-01-03'),
+          max: commits.zebraA3.sortKey,
+          exclusiveMax: true,
+          descending: true,
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.testA2, commits.otherA1])
+  })
 
-    test('non-default partition', async () => {
-      const {eventStore} = context
+  test('non-default partition', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            group: 'other',
-            min: new Date('2018-01-02'),
-            max: new Date('2018-01-06'),
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.thirdB1])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          group: 'other',
+          min: new Date('2018-01-02'),
+          max: new Date('2018-01-06'),
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.thirdB1])
+  })
 
-    test('limit and ascending order', async () => {
-      const {eventStore} = context
+  test('limit and ascending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: new Date('2018-01-02'),
-            max: new Date('2018-01-05'),
-            limit: 2,
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.testB1, commits.otherA1])
-    })
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: new Date('2018-01-02'),
+          max: new Date('2018-01-05'),
+          limit: 2,
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.testB1, commits.otherA1])
+  })
 
-    test('limit and descending order', async () => {
-      const {eventStore} = context
+  test('limit and descending order', async () => {
+    const {eventStore} = context
 
-      await expect(
-        iterableToArray(
-          eventStore.chronologicalQuery({
-            min: new Date('2018-01-02'),
-            max: new Date('2018-01-05'),
-            limit: 2,
-            descending: true,
-          }).commits
-        )
-      ).resolves.toMatchObject([commits.zebraA3, commits.testA2])
-    })
-  }
-)
+    await expect(
+      iterableToArray(
+        eventStore.chronologicalQuery({
+          min: new Date('2018-01-02'),
+          max: new Date('2018-01-05'),
+          limit: 2,
+          descending: true,
+        }).commits
+      )
+    ).resolves.toMatchObject([commits.zebraA3, commits.testA2])
+  })
+})

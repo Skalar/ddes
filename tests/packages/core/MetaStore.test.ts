@@ -4,15 +4,9 @@ describeWithResources('Meta stores', {stores: true}, context => {
   test('put()', async () => {
     const {metaStore} = context
 
-    await expect(metaStore.put(['testkey', 'option1'], false)).resolves.toBe(
-      undefined
-    )
+    await expect(metaStore.put(['testkey', 'option1'], false)).resolves.toBe(undefined)
     await expect(
-      metaStore.put(
-        ['testkey', 'option2'],
-        {my: ['object']},
-        {expiresAt: Date.now() + 10000}
-      )
+      metaStore.put(['testkey', 'option2'], {my: ['object']}, {expiresAt: Date.now() + 10000})
     ).resolves.toBe(undefined)
 
     await expect(
@@ -37,15 +31,11 @@ describeWithResources('Meta stores', {stores: true}, context => {
   test('delete()', async () => {
     const {metaStore} = context
 
-    await expect(metaStore.delete(['testkey', 'option1'])).resolves.toBe(
-      undefined
-    )
+    await expect(metaStore.delete(['testkey', 'option1'])).resolves.toBe(undefined)
   })
 
   test('list()', async () => {
     const {metaStore} = context
-    await expect(
-      iterableToArray(metaStore.list('testkey'))
-    ).resolves.toMatchObject([['option2', {my: ['object']}]])
+    await expect(iterableToArray(metaStore.list('testkey'))).resolves.toMatchObject([['option2', {my: ['object']}]])
   })
 })

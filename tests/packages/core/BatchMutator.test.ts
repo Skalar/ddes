@@ -1,4 +1,4 @@
-import {AggregateEventUpcasters, Commit, utils} from '@ddes/core'
+import {Commit, utils} from '@ddes/core'
 import {describeWithResources, iterableToArray} from 'tests/support'
 
 const commits = [
@@ -17,15 +17,6 @@ const commits = [
     events: [{type: 'Updated', properties: {myProperty: 'changed'}}],
   }),
 ]
-
-const upcasters: AggregateEventUpcasters = {
-  TestAggregate: {
-    Created: {
-      1: props => ({...props, wasUpcasted: true}),
-      2: props => ({...props, wasUpcastedASecondTime: true}),
-    },
-  },
-}
 
 describeWithResources('Stores', {stores: true}, context => {
   describe('BatchMutator', () => {
@@ -48,9 +39,7 @@ describeWithResources('Stores', {stores: true}, context => {
       await batchMutator.drained
 
       await expect(
-        iterableToArray(
-          eventStore.queryAggregateCommits('TestAggregate', 'a').commits
-        )
+        iterableToArray(eventStore.queryAggregateCommits('TestAggregate', 'a').commits)
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',
@@ -93,9 +82,7 @@ describeWithResources('Stores', {stores: true}, context => {
       await batchMutator.drained
 
       await expect(
-        iterableToArray(
-          eventStore.queryAggregateCommits('TestAggregate', 'a').commits
-        )
+        iterableToArray(eventStore.queryAggregateCommits('TestAggregate', 'a').commits)
       ).resolves.toMatchObject([
         {
           aggregateKey: 'a',

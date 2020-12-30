@@ -1,13 +1,4 @@
-/* tslint:disable:max-classes-per-file */
-
-import {
-  Aggregate,
-  Commit,
-  EventWithMetadata,
-  KeySchema,
-  Projection,
-  Projector,
-} from '@ddes/core'
+import {Aggregate, Commit, EventWithMetadata, KeySchema, Projection, Projector} from '@ddes/core'
 import {flatten} from 'lodash'
 import {describeWithResources} from 'tests/support'
 import projectorBatchMap from 'tests/support/projectorBatchMap'
@@ -113,18 +104,13 @@ describeWithResources('Projections', {stores: true}, context => {
       testCommits.push(commit)
     }
 
-    await Promise.all([
-      projectionA.commitIsProcessed(testCommits[1]),
-      projectionB.commitIsProcessed(testCommits[3]),
-    ])
+    await Promise.all([projectionA.commitIsProcessed(testCommits[1]), projectionB.commitIsProcessed(testCommits[3])])
 
     projector.stop()
 
     const batchMapA = projectorBatchMap(processedEventsA)
 
-    expect(batchMapA['Forum.forumId1.1.Updated']).toBeGreaterThan(
-      batchMapA['Forum.forumId1.1.Created']
-    )
+    expect(batchMapA['Forum.forumId1.1.Updated']).toBeGreaterThan(batchMapA['Forum.forumId1.1.Created'])
 
     expect(flatten(processedEventsA)).toMatchObject([
       {

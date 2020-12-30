@@ -1,21 +1,19 @@
-import {
-  AwsEventStore,
-  AwsMetaStore,
-  AwsSnapshotStore,
-  AwsEventStoreConfig,
-} from '@ddes/aws-store'
+import {AwsEventStore, AwsEventStoreConfig, AwsMetaStore, AwsSnapshotStore} from '@ddes/aws-store'
+
 import Store from './Store'
 
 export default class AwsStores implements Store {
   constructor(private testId: string) {}
 
-  async setup() {}
+  async setup() {
+    // noop
+  }
 
-  async teardown() {}
+  async teardown() {
+    // noop
+  }
 
-  public eventStore(
-    {testId, ...config}: Partial<AwsEventStoreConfig> & {testId?: string} = {}
-  ) {
+  public eventStore({testId, ...config}: Partial<AwsEventStoreConfig> & {testId?: string} = {}) {
     return new AwsEventStore({
       tableName: `ddes-${testId || this.testId}`,
       ...(!process.env.REAL_SERVICES_TEST && {

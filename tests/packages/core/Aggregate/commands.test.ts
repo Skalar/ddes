@@ -1,11 +1,5 @@
 // tslint:disable:max-classes-per-file
-
-import {
-  Aggregate,
-  EventWithMetadata,
-  VersionConflictError,
-  retryCommand as retry,
-} from '@ddes/core'
+import {Aggregate, EventWithMetadata, retryCommand as retry, VersionConflictError} from '@ddes/core'
 import {describeWithResources} from 'tests/support'
 
 describe('Aggregate', () => {
@@ -29,9 +23,7 @@ describe('Aggregate', () => {
 
       await instanceA!.executeCommand({name: 'myCommand'})
 
-      await expect(
-        instanceB!.executeCommand({name: 'myCommand'})
-      ).resolves.toMatchObject({aggregateVersion: 2})
+      await expect(instanceB!.executeCommand({name: 'myCommand'})).resolves.toMatchObject({aggregateVersion: 2})
     })
   })
 
@@ -68,9 +60,7 @@ describe('Aggregate', () => {
 
       await instanceA!.executeCommand({name: 'create'})
 
-      await expect(
-        instanceB!.executeCommand({name: 'create'})
-      ).rejects.toMatchObject(new Error('Already created'))
+      await expect(instanceB!.executeCommand({name: 'create'})).rejects.toMatchObject(new Error('Already created'))
     })
   })
 
@@ -98,7 +88,7 @@ describe('Aggregate', () => {
           })
         }
 
-        @retry({errorIsRetryable: error => true})
+        @retry({errorIsRetryable: () => true})
         public async myOtherCommand(myArg: string) {
           try {
             return await this.commit({

@@ -1,9 +1,4 @@
-import {
-  Aggregate,
-  EventStore,
-  EventWithMetadata,
-  KeySchema,
-} from '@ddes/core'
+import {Aggregate, EventStore, EventWithMetadata, KeySchema} from '@ddes/core'
 import {describeWithResources} from 'tests/support'
 
 class TestAggregate extends Aggregate {
@@ -46,13 +41,9 @@ describeWithResources('Aggregate.loadOrCreate()', {stores: true}, context => {
   test('when already exists', async () => {
     TestAggregate.eventStore = context.eventStore
 
-    await TestAggregate.commit('test', [
-      {type: 'Created', properties: {id: 'test', name: 'initial'}},
-    ])
+    await TestAggregate.commit('test', [{type: 'Created', properties: {id: 'test', name: 'initial'}}])
 
-    await TestAggregate.commit('test', [
-      {type: 'Updated', properties: {id: 'test', name: 'changed'}},
-    ])
+    await TestAggregate.commit('test', [{type: 'Updated', properties: {id: 'test', name: 'changed'}}])
 
     const aggregate = await TestAggregate.loadOrCreate({
       id: 'test',

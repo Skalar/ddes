@@ -1,10 +1,4 @@
-import {
-  Aggregate,
-  Commit,
-  EventStore,
-  EventWithMetadata,
-  utils,
-} from '@ddes/core'
+import {Aggregate, Commit, EventStore, EventWithMetadata, utils} from '@ddes/core'
 import {describeWithResources} from 'tests/support'
 
 class TestAggregate extends Aggregate {
@@ -36,9 +30,7 @@ const commits = [
     aggregateKey: 'a',
     aggregateVersion: 2,
     timestamp: new Date('2018-01-02'),
-    events: [
-      {type: 'Updated', version: 1, properties: {myProperty: 'changed'}},
-    ],
+    events: [{type: 'Updated', version: 1, properties: {myProperty: 'changed'}}],
   }),
 ]
 
@@ -94,6 +86,10 @@ describeWithResources('Aggregate', {stores: true}, context => {
     })
 
     const snapshot = await TestAggregate.snapshotStore.readSnapshot('TestAggregate', 'a')
+    expect(snapshot!.version).toEqual(2)
+    expect(snapshot!.timestamp).toEqual(utils.toTimestamp('2018-01-02'))
+    expect(snapshot!.compatibilityChecksum).toEqual(TestAggregate.snapshotCompatChecksum)
+    expect(snapshot!.state).toEqual({myProperty: 'snapshotstate'})
 
     expect(
       (await TestAggregate.load({

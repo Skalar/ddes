@@ -10,33 +10,25 @@ describeWithResources('Stores', {stores: true}, context => {
         aggregateType: 'Test',
         aggregateKey: 'a',
         aggregateVersion: 1,
-        events: [
-          {type: 'Created', version: 1, properties: {testProperty: true}},
-        ],
+        events: [{type: 'Created', version: 1, properties: {testProperty: true}}],
       },
       b1: {
         aggregateType: 'Test',
         aggregateKey: 'b',
         aggregateVersion: 1,
-        events: [
-          {type: 'Created', version: 1, properties: {testProperty: true}},
-        ],
+        events: [{type: 'Created', version: 1, properties: {testProperty: true}}],
       },
       a2: {
         aggregateType: 'Test',
         aggregateKey: 'a',
         aggregateVersion: 2,
-        events: [
-          {type: 'Updated', version: 1, properties: {testProperty: false}},
-        ],
+        events: [{type: 'Updated', version: 1, properties: {testProperty: false}}],
       },
       a3: {
         aggregateType: 'Test',
         aggregateKey: 'a',
         aggregateVersion: 3,
-        events: [
-          {type: 'Published', version: 1, properties: {testProperty: false}},
-        ],
+        events: [{type: 'Published', version: 1, properties: {testProperty: false}}],
       },
     }
 

@@ -17,10 +17,8 @@ describeWithResources('AwsEventStore', {}, context => {
     await eventStore.setup()
     await eventStore.teardown()
 
-    expect(
-      eventStore.dynamodb
-        .describeTable({TableName: eventStore.tableName})
-        .promise()
-    ).rejects.toMatchObject({code: 'ResourceNotFoundException'})
+    expect(eventStore.dynamodb.describeTable({TableName: eventStore.tableName}).promise()).rejects.toMatchObject({
+      code: 'ResourceNotFoundException',
+    })
   })
 })

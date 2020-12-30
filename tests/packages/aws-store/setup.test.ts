@@ -17,9 +17,7 @@ describeWithResources('AwsEventStore', {}, context => {
 
     await eventStore.setup()
 
-    const {Table} = await eventStore.dynamodb
-      .describeTable({TableName: eventStore.tableName})
-      .promise()
+    const {Table} = await eventStore.dynamodb.describeTable({TableName: eventStore.tableName}).promise()
 
     expect(Table).toBeDefined()
 

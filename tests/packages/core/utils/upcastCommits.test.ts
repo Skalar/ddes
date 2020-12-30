@@ -1,9 +1,4 @@
-import {
-  AggregateEventUpcasters,
-  BatchMutator,
-  Commit,
-  upcastCommits,
-} from '@ddes/core'
+import {AggregateEventUpcasters, BatchMutator, Commit, upcastCommits} from '@ddes/core'
 import {iterableToArray} from 'tests/support'
 
 const commits = [
@@ -44,9 +39,7 @@ const expectedUpcastedCommits = [
     aggregateKey: 'a',
     aggregateType: 'TestAggregate',
     aggregateVersion: 2,
-    events: [
-      {properties: {myProperty: 'changed'}, type: 'Updated', version: 1},
-    ],
+    events: [{properties: {myProperty: 'changed'}, type: 'Updated', version: 1}],
   },
 ]
 
@@ -61,9 +54,7 @@ const upcasters: AggregateEventUpcasters = {
 
 describe('*upcastCommits()', () => {
   test('without lazy transformation', async () => {
-    await expect(
-      iterableToArray(upcastCommits(commits, upcasters))
-    ).resolves.toMatchObject(expectedUpcastedCommits)
+    await expect(iterableToArray(upcastCommits(commits, upcasters))).resolves.toMatchObject(expectedUpcastedCommits)
   })
 
   test('with lazy transformation', async () => {

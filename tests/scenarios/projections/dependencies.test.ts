@@ -1,13 +1,4 @@
-/* tslint:disable:max-classes-per-file */
-
-import {
-  Aggregate,
-  Commit,
-  EventWithMetadata,
-  KeySchema,
-  Projection,
-  Projector,
-} from '@ddes/core'
+import {Aggregate, Commit, EventWithMetadata, KeySchema, Projection, Projector} from '@ddes/core'
 import {describeWithResources} from 'tests/support'
 import projectorBatchMap from 'tests/support/projectorBatchMap'
 
@@ -90,8 +81,7 @@ describeWithResources('Projections', {stores: true}, context => {
 
       dependencies: {
         ForumThread: {
-          Forum: (forumThread, forum) =>
-            forumThread.keyProps.forumId === forum.keyProps.forumId,
+          Forum: (forumThread, forum) => forumThread.keyProps.forumId === forum.keyProps.forumId,
         },
       },
 
@@ -122,16 +112,10 @@ describeWithResources('Projections', {stores: true}, context => {
 
     const batchMap = projectorBatchMap(processedEvents)
 
-    expect(
-      batchMap['ForumThread.forumId1.threadId1.1.Created']
-    ).toBeGreaterThan(batchMap['Forum.forumId1.1.Created'])
+    expect(batchMap['ForumThread.forumId1.threadId1.1.Created']).toBeGreaterThan(batchMap['Forum.forumId1.1.Created'])
 
-    expect(
-      batchMap['ForumThread.forumId1.threadId1.1.Created']
-    ).toBeGreaterThan(batchMap['Forum.forumId1.1.Updated'])
+    expect(batchMap['ForumThread.forumId1.threadId1.1.Created']).toBeGreaterThan(batchMap['Forum.forumId1.1.Updated'])
 
-    expect(
-      batchMap['ForumThread.forumId2.threadId1.1.Created']
-    ).toBeGreaterThan(batchMap['Forum.forumId2.1.Created'])
+    expect(batchMap['ForumThread.forumId2.threadId1.1.Created']).toBeGreaterThan(batchMap['Forum.forumId2.1.Created'])
   })
 })

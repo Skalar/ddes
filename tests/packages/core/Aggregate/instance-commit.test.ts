@@ -12,19 +12,14 @@ describeWithResources('Aggregate', {stores: true}, context => {
     }
     const aggregate = new TestAggregate()
 
-    const commitA = await aggregate.commit([
-      {type: 'SomeEvent', properties: {myProperty: 'a'}},
-    ])
-    const commitB = await aggregate.commit([
-      {type: 'OtherEvent', properties: {myProperty: 'b'}},
-    ])
+    const commitA = await aggregate.commit([{type: 'SomeEvent', properties: {myProperty: 'a'}}])
+    const commitB = await aggregate.commit([{type: 'OtherEvent', properties: {myProperty: 'b'}}])
 
     expect(commitA).toHaveProperty('chronologicalGroup', 'default')
     expect(commitB).toHaveProperty('chronologicalGroup', 'default')
 
     const commitsInStore = await iterableToArray(
-      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@')
-        .commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@').commits
     )
 
     expect(commitsInStore).toContainEqual(commitA)
@@ -42,19 +37,14 @@ describeWithResources('Aggregate', {stores: true}, context => {
     }
     const aggregate = new TestAggregate()
 
-    const commitA = await aggregate.commit([
-      {type: 'SomeEvent', properties: {myProperty: 'a'}},
-    ])
-    const commitB = await aggregate.commit([
-      {type: 'OtherEvent', properties: {myProperty: 'b'}},
-    ])
+    const commitA = await aggregate.commit([{type: 'SomeEvent', properties: {myProperty: 'a'}}])
+    const commitB = await aggregate.commit([{type: 'OtherEvent', properties: {myProperty: 'b'}}])
 
     expect(commitA).toHaveProperty('chronologicalGroup', 'custom')
     expect(commitB).toHaveProperty('chronologicalGroup', 'custom')
 
     const commitsInStore = await iterableToArray(
-      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@')
-        .commits
+      TestAggregate.eventStore.queryAggregateCommits('TestAggregate', '@').commits
     )
 
     expect(commitsInStore).toContainEqual(commitA)

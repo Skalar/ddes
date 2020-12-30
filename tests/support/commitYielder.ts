@@ -38,8 +38,8 @@ async function* commitYielder(
   }
 
   if (options.neverEnding) {
-    await new Promise(resolve => {
-      //
+    await new Promise(() => {
+      // noop
     })
   }
 }

@@ -32,9 +32,7 @@ function* getTestCommits() {
     aggregateType: 'TestAggregate',
     aggregateKey: 'a',
     aggregateVersion: 2,
-    events: [
-      {type: 'Updated', version: 1, properties: {myProperty: 'changed'}},
-    ],
+    events: [{type: 'Updated', version: 1, properties: {myProperty: 'changed'}}],
   })
 }
 
@@ -112,9 +110,7 @@ describeWithResources(
         await eventStore.commit(commit)
       }
 
-      await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 100})
-      ).resolves.toMatchObject([
+      await expect(iterableToArray(subscriptionStream, {maxWaitTime: 100})).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
@@ -148,21 +144,16 @@ describeWithResources(
 
       const subscriptionStream = new EventSubscriber({
         wsUrl: `ws://localhost:${eventStreamServer.port}`,
-        events: [
-          {aggregateType: 'TestAggregate'},
-          {aggregateType: 'OtherAggregate'},
-        ],
+        events: [{aggregateType: 'TestAggregate'}, {aggregateType: 'OtherAggregate'}],
       })
-      
+
       await subscriptionStream.isReady
 
       for (const commit of getTestCommits()) {
         await eventStore.commit(commit)
       }
 
-      await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 100})
-      ).resolves.toMatchObject([
+      await expect(iterableToArray(subscriptionStream, {maxWaitTime: 100})).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
@@ -213,9 +204,7 @@ describeWithResources(
         await eventStore.commit(commit)
       }
 
-      await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 100})
-      ).resolves.toMatchObject([
+      await expect(iterableToArray(subscriptionStream, {maxWaitTime: 100})).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
@@ -256,9 +245,7 @@ describeWithResources(
         await eventStore.commit(commit)
       }
 
-      await expect(
-        iterableToArray(subscriptionStream1, {maxWaitTime: 100})
-      ).resolves.toMatchObject([
+      await expect(iterableToArray(subscriptionStream1, {maxWaitTime: 100})).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
@@ -277,9 +264,7 @@ describeWithResources(
         },
       ])
 
-      await expect(
-        iterableToArray(subscriptionStream2, {maxWaitTime: 100})
-      ).resolves.toMatchObject([
+      await expect(iterableToArray(subscriptionStream2, {maxWaitTime: 100})).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',
@@ -303,7 +288,6 @@ describeWithResources(
   }
 )
 
-
 describeWithResources(
   'scenarios/event-streaming: basic event streaming',
   {eventStreamServer: true, stores: true},
@@ -312,12 +296,14 @@ describeWithResources(
       const {eventStreamServer} = context
       const eventStore = context.eventStore
 
-      await eventStore.commit(new Commit({
-        aggregateType: 'OldAggregate',
-        aggregateKey: 'a',
-        aggregateVersion: 1,
-        events: [{type: 'Created', version: 1, properties: {myProperty: 'test'}}],
-      }))
+      await eventStore.commit(
+        new Commit({
+          aggregateType: 'OldAggregate',
+          aggregateKey: 'a',
+          aggregateVersion: 1,
+          events: [{type: 'Created', version: 1, properties: {myProperty: 'test'}}],
+        })
+      )
 
       const subscriptionStream = new EventSubscriber({
         wsUrl: `ws://localhost:${eventStreamServer.port}`,
@@ -331,9 +317,7 @@ describeWithResources(
         await eventStore.commit(commit)
       }
 
-      await expect(
-        iterableToArray(subscriptionStream, {maxWaitTime: 100})
-      ).resolves.toMatchObject([
+      await expect(iterableToArray(subscriptionStream, {maxWaitTime: 100})).resolves.toMatchObject([
         {
           aggregateKey: 'a',
           aggregateType: 'TestAggregate',

@@ -9,16 +9,14 @@ describeWithResources('Stores', {stores: true}, context => {
       aggregateType: 'Test',
       aggregateKey: 'test',
       aggregateVersion: 1,
-      events: [
-        {type: 'TestEvent', version: 1, properties: {testProperty: true}},
-      ],
+      events: [{type: 'TestEvent', version: 1, properties: {testProperty: true}}],
       timestamp: '2018-01-01',
       chronologicalGroup: 'default',
     })
 
     await eventStore.commit(commit)
-    await expect(
-      iterableToArray(eventStore.queryAggregateCommits('Test', 'test').commits)
-    ).resolves.toMatchObject([commit])
+    await expect(iterableToArray(eventStore.queryAggregateCommits('Test', 'test').commits)).resolves.toMatchObject([
+      commit,
+    ])
   })
 })
