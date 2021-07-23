@@ -1,0 +1,16 @@
+version: '3.2'
+
+services:
+  dynamodb:
+    image: socialpoint/dynalite
+    command: dynalite --port=8081 --createTableMs=1 --deleteTableMs=1 --updateTableMs=100 --path=/var/dynamodb
+    ports:
+      - 8081:8081
+
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: test
+      POSTGRES_USER: ddes

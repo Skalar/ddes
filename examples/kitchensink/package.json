@@ -1,0 +1,22 @@
+{
+  "name": "ddes-example-kitchensink",
+  "version": "1.0.0",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "setup": "support/setup.ts",
+    "cmd": "support/invoke-command.ts"
+  },
+  "dependencies": {
+    "@ddes/core": "^5.0.0",
+    "@ddes/dynamodb": "^5.0.0",
+    "@ddes/postgres": "^5.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.1.0",
+    "typescript": "^4.3.5"
+  }
+}

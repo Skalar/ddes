@@ -1,16 +1,12 @@
 {
   "compilerOptions": {
-    "target": "esnext",
     "module": "commonjs",
-    "experimentalDecorators": true,
-    "rootDir": ".",
-    "baseUrl": ".",
+    "target": "ES2019",
     "strict": true,
     "sourceMap": true,
     "declaration": true,
-    "outDir": "dist",
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "outDir": "dist"
   },
   "exclude": [
     "node_modules",

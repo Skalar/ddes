@@ -1,104 +1,114 @@
 /**
- * @module @ddes/core
- */
-
-import BatchMutator from './BatchMutator'
-import Commit from './Commit'
-import {AggregateKey, AggregateType, MarshalledCommit, StoreQueryResponse} from './types'
-
-/**
  * Abstract interface for an Event Store
  */
-export default abstract class EventStore {
+export abstract class EventStore {
   /**
    * Performs necessary orchestration to ready the store
    */
-  public abstract setup(): Promise<void>
+  public abstract setup(): Promise<any>
 
   /**
    * Tears down all resources created by the store
    */
-  public abstract teardown(): Promise<void>
+  public abstract teardown(): Promise<any>
 
   /**
-   * Unreliable, probably outdated, best effort commit count
+   * Commit aggregate events to the store
    */
-  public abstract bestEffortCount(): Promise<number>
-
-  /**
-   * Write a commit to the Store
-   */
-  public abstract commit(commit: Commit): Promise<void>
+  public abstract commit<TAggregateCommit extends AggregateCommit>(
+    commitData: TAggregateCommit
+  ): Promise<TAggregateCommit>
 
   /**
    * Query the commits of an [[Aggregate]] instance
    */
-  public abstract queryAggregateCommits(
-    type: AggregateType,
-    key: AggregateKey,
+  public abstract queryAggregateCommits<TAggregateCommit extends AggregateCommit>(
+    type: string,
+    key: string,
     options?: {
-      consistentRead?: boolean
       minVersion?: number
       maxVersion?: number
       maxTime?: Date | number
       limit?: number
       descending?: boolean
     }
-  ): StoreQueryResponse
+  ): AsyncIterable<TAggregateCommit[]>
 
   /**
    * Retrieve ordered commits for each aggregate instance of [[AggregateType]]
    */
-  public abstract scanAggregateInstances(
-    type: AggregateType,
-    options?: {
-      instanceLimit?: number
-    }
-  ): StoreQueryResponse
+  public abstract scanAggregateCommitsGroupedByKey<TAggregateCommit extends AggregateCommit>(
+    type: string
+  ): AsyncIterable<TAggregateCommit[]>
 
   /**
    * Get most recent commit for an [[Aggregate]] instance
    */
-  public abstract getAggregateHeadCommit(type: AggregateType, key: AggregateKey): Promise<Commit | null>
-
-  /**
-   * Get the most recent commit in the given chronological group
-   */
-  public abstract getHeadCommit(chronologicalGroup?: string): Promise<Commit | null>
+  public abstract getAggregateHeadCommit<TAggregateCommit extends AggregateCommit>(
+    type: string,
+    key: string
+  ): Promise<TAggregateCommit | undefined>
 
   /**
    * Scan store commits
    */
-  public abstract scan(options?: {
+  public abstract scan<TAggregateCommit extends AggregateCommit>(options?: {
     totalSegments?: number
     segment?: number
-    filterAggregateTypes?: string[]
-    startKey?: any
-    limit?: number
-    capacityLimit?: number
-  }): StoreQueryResponse
-
-  /**
-   * Get a [[BatchMutator]] for the store
-   */
-  public abstract createBatchMutator(params?: {capacityLimit?: number}): BatchMutator<MarshalledCommit>
+    aggregateTypes?: string[]
+    cursor?: any
+  }): AsyncIterable<TAggregateCommit[]>
 
   /**
    * Retrieve commits from the store chronologically
    */
-  public abstract chronologicalQuery(params: {
-    group?: string
+  public abstract chronologicalQuery<TAggregateCommit extends AggregateCommit>(params: {
     min: string | Date
     max?: string | Date
     descending?: boolean
     limit?: number
     exclusiveMin?: boolean
     exclusiveMax?: boolean
-    filterAggregateTypes?: AggregateType[]
-  }): StoreQueryResponse
+    aggregateTypes?: string[]
+    chronologicalPartition?: string
+  }): AsyncIterable<TAggregateCommit[]>
 
-  /**
-   * Human readable representation of the store instance
-   */
-  public abstract toString(): string
+  public abstract chronologicalKey(data: {
+    aggregateType: string
+    aggregateKey: string
+    aggregateVersion: number
+    timestamp: number
+  }): string
+}
+
+export interface AggregateEvent extends Record<string, any> {
+  type: string
+  version?: number
+}
+
+export interface AggregateCommit<
+  TEvent extends AggregateEvent = AggregateEvent,
+  TAggregateType extends string = string
+> {
+  aggregateType: TAggregateType
+  aggregateKey: string
+  aggregateVersion: number
+  timestamp: number
+  events: TEvent[]
+  expiresAt?: number
+  chronologicalPartition?: string
+  chronologicalKey: string
+}
+
+export class VersionConflictError extends Error {
+  public readonly commit: AggregateCommit
+
+  constructor(commit: AggregateCommit) {
+    super(
+      `${commit.aggregateType}<${commit.aggregateKey}> already has commit version ${commit.aggregateVersion}`
+    )
+    Object.setPrototypeOf(this, new.target.prototype)
+    this.name = 'VersionConflictError'
+    this.commit = commit
+  }
 }
