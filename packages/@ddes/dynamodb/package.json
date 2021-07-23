@@ -1,10 +1,10 @@
 {
-  "name": "@ddes/core",
+  "name": "@ddes/dynamodb",
   "version": "5.0.0",
   "engines": {
     "node": ">=12"
   },
-  "description": "Event Sourcing in TypeScript",
+  "description": "DynamoDB Event Store",
   "author": "Trym Skaar <trym.skaar@gmail.com>",
   "license": "MIT",
   "main": "dist/index.js",
@@ -18,16 +18,19 @@
   "publishConfig": {
     "access": "public"
   },
+  "dependencies": {
+    "@ddes/core": "^5.0.0",
+    "aws-sdk": "^2.612.0"
+  },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
   "keywords": [
-    "distributed",
-    "event sourcing",
-    "event store",
     "aws",
-    "cqrs"
+    "dynamodb",
+    "distributed",
+    "event store",
+    "event sourcing"
   ],
-  "dependencies": {},
   "devDependencies": {
     "typescript": "^4.3.5",
     "@types/node": "^12.0.0"

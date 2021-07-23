@@ -3,10 +3,6 @@ module.exports = {
     es6: true,
     node: true,
   },
-  globals: {
-    Atomics: 'readonly',
-    SharedArrayBuffer: 'readonly',
-  },
   parserOptions: {
     ecmaVersion: 2018,
     sourceType: 'module',
@@ -28,7 +24,7 @@ module.exports = {
     'object-shorthand': ['error', 'always'],
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': [
-      'error',
+      'warn',
       {
         ignoreRestSiblings: true,
         varsIgnorePattern: '^_+$',
