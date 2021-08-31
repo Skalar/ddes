@@ -187,9 +187,9 @@ export class PostgresEventStore extends EventStore {
       yield [rowToCommit(row) as TAggregateCommit]
     }
   }
-
+  
   public async *chronologicalQuery<TAggregateCommit extends AggregateCommit>(params: {
-    group?: string
+    chronologicalPartition?: string
     min: string | Date
     max?: string | Date
     exclusiveMin?: boolean
@@ -197,17 +197,17 @@ export class PostgresEventStore extends EventStore {
     descending?: boolean
     limit?: number
     timeDriftCompensation?: number
-    filterAggregateTypes?: string[]
+    aggregateTypes?: string[]
   }) {
     const {
-      group = 'default',
+      chronologicalPartition = 'default',
       min,
       descending,
       limit,
       exclusiveMin,
       exclusiveMax,
       timeDriftCompensation = 500,
-      filterAggregateTypes,
+      aggregateTypes,
     } = params
     const {max = new Date(Date.now() + timeDriftCompensation)} = params
 
@@ -233,14 +233,14 @@ export class PostgresEventStore extends EventStore {
 
     const query = sql`
       SELECT * FROM ${sql.ident(this.tableName)}
-      WHERE "chronological_partition" = ${group}
+      WHERE "chronological_partition" = ${chronologicalPartition}
       AND "timestamp" BETWEEN ${minDate.getTime()} AND ${maxDate.getTime()}
       ${exclusiveMin ? sql`AND "chronological_key" > ${minCursor}` : sql``}
       ${exclusiveMax ? sql`AND "chronological_key" < ${maxCursor}` : sql``}
       ${
-        filterAggregateTypes
+        aggregateTypes
           ? sql`AND "aggregate_type" in (${sql.join(
-              filterAggregateTypes.map(f => sql`${f}`),
+              aggregateTypes.map(f => sql`${f}`),
               ', '
             )})`
           : sql``
