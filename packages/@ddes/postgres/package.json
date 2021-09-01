@@ -1,6 +1,6 @@
 {
   "name": "@ddes/postgres",
-  "version": "5.0.1",
+  "version": "5.0.2",
   "engines": {
     "node": ">=12"
   },
@@ -21,7 +21,8 @@
   ],
   "types": "./dist/index.d.ts",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "cache": "cache/.npm"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
