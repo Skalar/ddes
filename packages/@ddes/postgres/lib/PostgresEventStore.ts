@@ -60,7 +60,7 @@ export class PostgresEventStore extends EventStore {
       )`
 
       await this.pool.query(query)
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === '23505') {
         throw new VersionConflictError(commit)
       }
@@ -114,30 +114,18 @@ export class PostgresEventStore extends EventStore {
   public async *scanAggregateCommitsGroupedByKey<TAggregateCommit extends AggregateCommit>(
     type: string
   ) {
-    // TODO no need for two queries here? Just order by aggregateType, key and version?
-
     if (!type) {
       throw new Error(`You need to specify 'type'`)
     }
 
     const query = sql`
-      SELECT DISTINCT "aggregate_type", "aggregate_key"
-      FROM ${sql.ident(this.tableName)} WHERE "aggregate_type" = ${type}
+      SELECT * FROM ${sql.ident(
+        this.tableName
+      )} WHERE "aggregate_type" = ${type} AND (expires_at > ${Date.now()} OR expires_at IS NULL) ORDER BY "aggregate_key", "aggregate_version"
     `
 
-    const rows = this.pool.queryStream(query, {})
-
-    for await (const {aggregate_type, aggregate_key} of rows) {
-      const instanceQuery = sql`
-        SELECT * FROM ${sql.ident(this.tableName)}
-        WHERE "aggregate_type" = ${aggregate_type}
-        AND "aggregate_key" = ${aggregate_key}
-        AND (expires_at > ${Date.now()} OR expires_at IS NULL)
-      `
-
-      for await (const row of this.pool.queryStream(instanceQuery, {})) {
-        yield [rowToCommit(row) as TAggregateCommit]
-      }
+    for await (const row of this.pool.queryStream(query, {})) {
+      yield [rowToCommit(row) as TAggregateCommit]
     }
   }
 
@@ -187,7 +175,7 @@ export class PostgresEventStore extends EventStore {
       yield [rowToCommit(row) as TAggregateCommit]
     }
   }
-  
+
   public async *chronologicalQuery<TAggregateCommit extends AggregateCommit>(params: {
     chronologicalPartition?: string
     min: string | Date

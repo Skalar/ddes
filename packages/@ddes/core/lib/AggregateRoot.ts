@@ -250,10 +250,10 @@ export class AggregateRoot<
           state = this.config.state(state, commit, event)
         }
       }
+    }
 
-      if (version) {
-        yield {key, version, timestamp, state} as AggregateInstanceData<TState>
-      }
+    if (version) {
+      yield {key, version, timestamp, state} as AggregateInstanceData<TState>
     }
   }
 
