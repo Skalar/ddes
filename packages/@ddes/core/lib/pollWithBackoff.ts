@@ -1,56 +1,71 @@
 import {BackoffParams, jitteredBackoff} from './jitteredBackoff'
+export interface PollParams extends BackoffParams {}
 
-export interface PollParams extends BackoffParams {
-  aborted?: Promise<any>
-}
-
-export async function* pollWithBackoff<TResult>(
+export function pollWithBackoff<TResult>(
   params: PollParams,
   pollFunction: () => AsyncIterable<TResult>
-): AsyncGenerator<TResult | undefined> {
-  const {minDelay, maxDelay, delayBackoffExponent, aborted: abortedPromise} = params
+): AsyncIterable<TResult | undefined> {
+  const {minDelay, maxDelay, delayBackoffExponent} = params
 
-  let aborted = false
-  let pollDelayPromiseResolver: undefined | ((value?: unknown) => void)
+  return {
+    [Symbol.asyncIterator]() {
+      let consecutiveEmptyPolls = 0
+      let pollIterator: AsyncIterator<TResult> | undefined
+      let delayTimer: NodeJS.Timeout | undefined
 
-  abortedPromise?.then(() => {
-    aborted = true
-    if (pollDelayPromiseResolver) {
-      pollDelayPromiseResolver()
-    }
-  })
+      return {
+        async next() {
+          while (true) {
+            if (!pollIterator) {
+              pollIterator = pollFunction()[Symbol.asyncIterator]()
+            }
 
-  let consecutiveEmptyPolls = 0
+            const {value, done} = await pollIterator.next()
 
-  while (!aborted) {
-    let pollResultCount = 0
+            if (done) {
+              pollIterator = undefined
+            }
 
-    for await (const pollResult of pollFunction()) {
-      pollResultCount++
-      yield pollResult
-    }
+            if (value) {
+              consecutiveEmptyPolls = 0
+              return {value, done: false}
+            } else {
+              consecutiveEmptyPolls++
+            }
 
-    if (pollResultCount === 0) {
-      consecutiveEmptyPolls++
+            const delay = jitteredBackoff({
+              minDelay,
+              maxDelay,
+              delayBackoffExponent,
+              attempt: consecutiveEmptyPolls,
+            })
 
-      yield
+            await new Promise(resolve => {
+              delayTimer = setTimeout(() => {
+                delayTimer = undefined
+                resolve(undefined)
+              }, delay)
+            })
+          }
+        },
 
-      const delay = jitteredBackoff({
-        minDelay,
-        maxDelay,
-        delayBackoffExponent,
-        attempt: consecutiveEmptyPolls,
-      })
+        async return(value) {
+          if (delayTimer) clearTimeout(delayTimer)
+          if (typeof pollIterator !== 'undefined') await pollIterator.return?.()
 
-      await new Promise(resolve => {
-        pollDelayPromiseResolver = resolve
-        setTimeout(() => {
-          resolve(undefined)
-          pollDelayPromiseResolver = undefined
-        }, delay)
-      })
-    } else {
-      consecutiveEmptyPolls = 0
-    }
+          return {value: undefined, done: true}
+        },
+
+        async throw(...args) {
+          await this.return?.()
+
+          if (pollIterator && pollIterator.throw) {
+            return await pollIterator.throw(...args)
+          }
+
+          return {value: undefined, done: true}
+        },
+      }
+    },
   }
 }

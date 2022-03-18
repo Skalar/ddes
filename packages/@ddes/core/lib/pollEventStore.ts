@@ -28,7 +28,6 @@ export async function* pollEventStore<
     maxDelay = 1000,
     delayBackoffExponent = 2,
     chronologicalPartition,
-    aborted,
   } = params
 
   let {initialCursor: cursor = new Date()} = params
@@ -38,7 +37,6 @@ export async function* pollEventStore<
       minDelay,
       maxDelay,
       delayBackoffExponent,
-      aborted,
     },
     () =>
       store.chronologicalQuery<TAggregateCommit>({

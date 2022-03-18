@@ -1,7 +1,7 @@
 export interface BackoffParams {
   minDelay: number
   maxDelay: number
-  delayBackoffExponent: number
+  delayBackoffExponent?: number
 }
 
 export function randomIntInRange(min: number, max: number) {
@@ -13,10 +13,11 @@ export function jitteredBackoff(
     attempt: number
   }
 ) {
-  const {minDelay, maxDelay, delayBackoffExponent, attempt} = params
-
-  return Math.min(
+  const {minDelay, maxDelay, delayBackoffExponent = 1.5, attempt} = params
+  const delay = Math.max(
     params.minDelay,
-    randomIntInRange(0, Math.min(minDelay * delayBackoffExponent ** attempt, maxDelay))
+    Math.min(randomIntInRange(0, minDelay * delayBackoffExponent ** attempt), maxDelay)
   )
+  // console.dir({attempt, delay})
+  return delay
 }
