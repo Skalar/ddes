@@ -45,7 +45,7 @@ export async function* pollEventStore<
         ...(aggregateRoots && {
           aggregateTypes: Object.values(aggregateRoots).map(v => v.config.type),
         }),
-        chronologicalPartition: chronologicalPartition,
+        chronologicalPartition,
       })
   )
 

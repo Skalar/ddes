@@ -1,5 +1,5 @@
 import {BackoffParams, jitteredBackoff} from './jitteredBackoff'
-export interface PollParams extends BackoffParams {}
+export type PollParams = BackoffParams
 
 export function pollWithBackoff<TResult>(
   params: PollParams,
@@ -49,7 +49,7 @@ export function pollWithBackoff<TResult>(
           }
         },
 
-        async return(value) {
+        async return() {
           if (delayTimer) clearTimeout(delayTimer)
           if (typeof pollIterator !== 'undefined') await pollIterator.return?.()
 
