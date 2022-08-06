@@ -73,6 +73,43 @@ export abstract class EventStore {
     chronologicalPartition?: string
   }): AsyncIterable<TAggregateCommit[]>
 
+  public abstract streamCommits<TAggregateCommit extends AggregateCommit>(params?: {
+    aggregateTypes?: string[]
+    chronologicalKey?: string
+  }): AsyncIterable<TAggregateCommit[]>
+  public abstract streamCommits<TAggregateCommit extends AggregateCommit>(
+    params: {
+      aggregateTypes?: string[]
+      chronologicalKey?: string
+    },
+    yieldEmpty: true
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+  public abstract streamCommits<TAggregateCommit extends AggregateCommit>(
+    params: {
+      aggregateTypes?: string[]
+      chronologicalKey?: string
+    },
+    yieldEmpty: boolean
+  ): AsyncIterable<TAggregateCommit[]>
+
+  public abstract streamAggregateInstanceCommits<TAggregateCommit extends AggregateCommit>(
+    aggregateType: string,
+    key: string,
+    minVersion?: number
+  ): AsyncIterable<TAggregateCommit[]>
+  public abstract streamAggregateInstanceCommits<TAggregateCommit extends AggregateCommit>(
+    aggregateType: string,
+    key: string,
+    minVersion: number,
+    yieldEmpty: true
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+  public abstract streamAggregateInstanceCommits<TAggregateCommit extends AggregateCommit>(
+    aggregateType: string,
+    key: string,
+    minVersion: number,
+    yieldEmpty: boolean
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+
   public abstract chronologicalKey(data: {
     aggregateType: string
     aggregateKey: string
