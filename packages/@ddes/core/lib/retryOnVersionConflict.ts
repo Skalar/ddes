@@ -19,8 +19,8 @@ export async function retryOnVersionConflict<TReturnType extends any>(
 
     try {
       return await fn()
-    } catch (error) {
-      if (error instanceof VersionConflictError) {
+    } catch (error: any) {
+      if (error.toString().includes('VersionConflictError')) {
         lastError = error
       } else {
         throw error
