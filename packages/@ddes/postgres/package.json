@@ -20,8 +20,7 @@
   ],
   "types": "./dist/index.d.ts",
   "publishConfig": {
-    "access": "public",
-    "cache": "cache/.npm"
+    "access": "public"
   },
   "repository": "skalar/ddes",
   "homepage": "https://ddes.io",
@@ -34,7 +33,7 @@
     "cqrs"
   ],
   "dependencies": {
-    "@ddes/core": "^5.0.0",
+    "@ddes/core": "workspace:^",
     "@repeaterjs/repeater": "^3.0.4",
     "pg": "^8.7.3",
     "pg-query-stream": "^4.2.3",
@@ -48,6 +47,8 @@
   "scripts": {
     "lint": "eslint lib",
     "build": "tsc -p tsconfig.json",
-    "clean": "rm -fr dist"
+    "clean": "rm -fr dist",
+    "prepack": "yarn build",
+    "postpack": "yarn clean"
   }
 }

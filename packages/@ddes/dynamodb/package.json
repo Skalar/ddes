@@ -18,7 +18,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@ddes/core": "^5.0.0",
+    "@ddes/core": "workspace:^",
     "aws-sdk": "^2.1189.0"
   },
   "repository": "skalar/ddes",
@@ -37,6 +37,8 @@
   "scripts": {
     "lint": "eslint lib",
     "build": "tsc -p tsconfig.json",
-    "clean": "rm -fr dist"
+    "clean": "rm -fr dist",
+    "prepack": "yarn build",
+    "postpack": "yarn clean"
   }
 }

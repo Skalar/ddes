@@ -1,6 +1,7 @@
 {
   "name": "ddes-monorepo",
   "description": "Event Sourcing in TypeScript",
+  "packageManager": "yarn@3.2.2",
   "private": true,
   "license": "MIT",
   "scripts": {

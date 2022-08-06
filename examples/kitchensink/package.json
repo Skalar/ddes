@@ -1,5 +1,5 @@
 {
-  "name": "ddes-example-kitchensink",
+  "name": "kitchensink",
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
@@ -8,15 +8,17 @@
   },
   "scripts": {
     "setup": "support/setup.ts",
-    "cmd": "support/invoke-command.ts",
     "build": "echo"
   },
   "dependencies": {
-    "@ddes/core": "link:../../packages/@ddes/core",
-    "@ddes/dynamodb": "link:../../packages/@ddes/dynamodb",
-    "@ddes/postgres": "link:../../packages/@ddes/postgres"
+    "@ddes/core": "workspace:*",
+    "@ddes/dynamodb": "workspace:*",
+    "@ddes/postgres": "workspace:*",
+    "pg": "^8.7.3"
   },
   "devDependencies": {
+    "@types/node": "^18.6.4",
+    "@types/pg": "^8.6.5",
     "ts-node": "^10.1.0",
     "typescript": "^4.3.5"
   }
