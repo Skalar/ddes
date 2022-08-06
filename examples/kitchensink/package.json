@@ -8,7 +8,8 @@
   },
   "scripts": {
     "setup": "support/setup.ts",
-    "cmd": "support/invoke-command.ts"
+    "cmd": "support/invoke-command.ts",
+    "build": "echo"
   },
   "dependencies": {
     "@ddes/core": "link:../../packages/@ddes/core",
