@@ -2,7 +2,6 @@ import {DynamoDB, ApplicationAutoScaling, IAM} from 'aws-sdk'
 import {ConfigurationOptions} from 'aws-sdk/lib/config-base'
 import {AutoscalingConfig} from './DynamodbEventStore'
 
-
 export async function createTable(
   tableSpecification: DynamoDB.CreateTableInput,
   options: {
@@ -13,12 +12,10 @@ export async function createTable(
   }
 ) {
   const {waitTimeout = 30000, statusCheckInterval = 1000, dynamodb} = options
-
-
   try {
     await dynamodb.createTable(tableSpecification).promise()
-  } catch (error) {
-    if (error.code === 'ResourceInUseException') {
+  } catch (error: any) {
+    if (error?.code === 'ResourceInUseException') {
       return {tableWasCreated: false}
     }
 
@@ -53,7 +50,7 @@ export async function createTable(
                   },
                 })
                 .promise()
-            } catch (error) {
+            } catch (error: any) {
               // dynalite does not support ttl
               if (error.code !== 'UnknownOperationException') {
                 throw error
@@ -73,7 +70,9 @@ export async function createTable(
     await new Promise(resolve => setTimeout(resolve, statusCheckInterval, undefined))
   }
 
-  throw new Error(`Timed out while waiting for table ${tableSpecification.TableName} to become active.`)
+  throw new Error(
+    `Timed out while waiting for table ${tableSpecification.TableName} to become active.`
+  )
 }
 
 export async function deleteTable(
@@ -106,7 +105,9 @@ export async function deleteTable(
             await new Promise(resolve => setTimeout(resolve, statusCheckInterval))
             continue
           default: {
-            throw new Error('Invalid status ${TableStatus} while waiting for table to be deleteTableed')
+            throw new Error(
+              'Invalid status ${TableStatus} while waiting for table to be deleteTableed'
+            )
           }
         }
       }
@@ -115,7 +116,7 @@ export async function deleteTable(
     }
 
     throw new Error(`Timed out while waiting for table ${tableName} to be deleted.`)
-  } catch (error) {
+  } catch (error: any) {
     if (error.code === 'ResourceNotFoundException') {
       if (timer) {
         clearTimeout(timer)
@@ -177,7 +178,7 @@ export async function setupAutoScaling(
         RoleName,
       })
       .promise()
-  } catch (error) {
+  } catch (error: any) {
     if (error.code !== 'EntityAlreadyExists') {
       throw error
     }
@@ -309,7 +310,7 @@ export async function setupAutoScaling(
       await registerTargets()
 
       return
-    } catch (error) {
+    } catch (error: any) {
       if (
         error.code !== 'ValidationException' ||
         !(
@@ -361,8 +362,8 @@ export async function removeAutoScaling(tableName: string, awsConfig?: Configura
           ScalableDimension: `dynamodb:${type}:WriteCapacityUnits`,
         })
         .promise()
-    } catch (error) {
-      if (error.code !== 'ObjectNotFoundException') {
+    } catch (error: any) {
+      if (error?.code !== 'ObjectNotFoundException') {
         throw error
       }
     }
@@ -380,7 +381,7 @@ export async function removeAutoScaling(tableName: string, awsConfig?: Configura
         RoleName,
       })
       .promise()
-  } catch (error) {
+  } catch (error: any) {
     if (!['ObjectNotFoundException', 'NoSuchEntity'].includes(error.code)) {
       throw error
     }

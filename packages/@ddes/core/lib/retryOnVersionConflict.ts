@@ -2,7 +2,7 @@ import {VersionConflictError} from './EventStore'
 import {jitteredBackoff} from './jitteredBackoff'
 import {PollParams} from './pollWithBackoff'
 
-export async function retryOnVersionConflict<TReturnType extends any>(
+export async function retryOnVersionConflict<TReturnType>(
   fn: () => Promise<TReturnType>,
   options: {
     timeout?: number
