@@ -2122,7 +2122,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/__virtual__/pg-cursor-virtual-3597ee279e/0/cache/pg-cursor-npm-2.7.3-76f4ee9355-a6b7615f38.zip/node_modules/pg-cursor/",\
           "packageDependencies": [\
             ["pg-cursor", "virtual:57f27e70a12afce35a8b106519d32faa737d8959d5e86e0a8888f41e6af7dead536e707573fb5b569e6272f25b054d304ed60bc939c33bc199070138d9a74a8d#npm:2.7.3"],\
-            ["@types/pg", null],\
+            ["@types/pg", "npm:8.6.5"],\
             ["pg", "virtual:57f27e70a12afce35a8b106519d32faa737d8959d5e86e0a8888f41e6af7dead536e707573fb5b569e6272f25b054d304ed60bc939c33bc199070138d9a74a8d#npm:8.7.3"]\
           ],\
           "packagePeers": [\
@@ -2186,6 +2186,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./.yarn/cache/pg-query-stream-npm-4.2.3-57f27e70a1-70cea5c298.zip/node_modules/pg-query-stream/",\
           "packageDependencies": [\
             ["pg-query-stream", "npm:4.2.3"],\
+            ["@types/pg", "npm:8.6.5"],\
             ["pg", "virtual:57f27e70a12afce35a8b106519d32faa737d8959d5e86e0a8888f41e6af7dead536e707573fb5b569e6272f25b054d304ed60bc939c33bc199070138d9a74a8d#npm:8.7.3"],\
             ["pg-cursor", "virtual:57f27e70a12afce35a8b106519d32faa737d8959d5e86e0a8888f41e6af7dead536e707573fb5b569e6272f25b054d304ed60bc939c33bc199070138d9a74a8d#npm:2.7.3"]\
           ],\

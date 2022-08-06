@@ -14,7 +14,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ddes/core@workspace:*, @ddes/core@workspace:packages/@ddes/core":
+"@ddes/core@workspace:*, @ddes/core@workspace:^, @ddes/core@workspace:packages/@ddes/core":
   version: 0.0.0-use.local
   resolution: "@ddes/core@workspace:packages/@ddes/core"
   dependencies:
@@ -27,7 +27,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ddes/dynamodb@workspace:packages/@ddes/dynamodb"
   dependencies:
-    "@ddes/core": "workspace:*"
+    "@ddes/core": "workspace:^"
     "@types/node": ^18.6.4
     aws-sdk: ^2.1189.0
     typescript: ^4.3.5
@@ -38,7 +38,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ddes/postgres@workspace:packages/@ddes/postgres"
   dependencies:
-    "@ddes/core": "workspace:*"
+    "@ddes/core": "workspace:^"
     "@repeaterjs/repeater": ^3.0.4
     "@types/node": ^18.6.4
     "@types/pg": ^8.6.5
@@ -1715,7 +1715,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pg@npm:8.7.3, pg@npm:^8.7.3":
+"pg@npm:^8.7.3":
   version: 8.7.3
   resolution: "pg@npm:8.7.3"
   dependencies:
