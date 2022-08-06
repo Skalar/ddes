@@ -53,7 +53,7 @@ export class PostgresEventStore extends EventStore {
         END;
       $$ LANGUAGE plpgsql;
 
-      CREATE TRIGGER ${sql.ident(this.tableName)}
+      CREATE OR REPLACE TRIGGER ${sql.ident(this.tableName)}
         AFTER INSERT
         ON ${sql.ident(this.tableName)}
         FOR EACH ROW
