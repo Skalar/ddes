@@ -11,9 +11,9 @@
     "cmd": "support/invoke-command.ts"
   },
   "dependencies": {
-    "@ddes/core": "^5.0.0",
-    "@ddes/dynamodb": "^5.0.0",
-    "@ddes/postgres": "^5.0.0"
+    "@ddes/core": "link:../../packages/@ddes/core",
+    "@ddes/dynamodb": "link:../../packages/@ddes/dynamodb",
+    "@ddes/postgres": "link:../../packages/@ddes/postgres"
   },
   "devDependencies": {
     "ts-node": "^10.1.0",

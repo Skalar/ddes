@@ -12,15 +12,27 @@ docker compose up -d
 # Prepare stores
 support/setup.ts
 
-# Run account stats (in separate shell)
-STORE=dynamodb consumer-examples/account-stats.ts
+# Choose a store
+export STORE=postgres
+
+# Run account stats (in a separate shell)
+consumer-examples/account-stats.ts
+
+# Simulate projection (in a separate shell)
+consumer-examples/projector.ts
 
 # Generate some events
-STORE=dynamodb commands/open-account.ts mycompany taxes
-STORE=dynamodb commands/deposit-money.ts mycompany taxes 500
-STORE=dynamodb commands/withdraw-money.ts mycompany taxes 1
-STORE=dynamodb commands/open-account.ts mycompany payroll
+commands/open-account.ts mycompany taxes
+commands/deposit-money.ts mycompany taxes 500
+commands/withdraw-money.ts mycompany taxes 1
+commands/open-account.ts mycompany payroll
 
+# Stream commits (version >= 3) from a single account (in a separate shell)
+consumer-examples/stream-account-commits.ts mycompany taxes 3
+
+# Add some money to the account we are streaming commits from
+commands/deposit-money.ts mycompany taxes 100
+ 
 # Shut down and remove stores
 docker compose down
 ```

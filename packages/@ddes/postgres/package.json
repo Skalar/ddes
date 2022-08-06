@@ -12,7 +12,6 @@
     "Trym Skaar <trym.skaar@gmail.com>"
   ],
   "license": "MIT",
-  "main": "dist/index.js",
   "files": [
     "dist",
     "index.js",
