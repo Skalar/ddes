@@ -1,4 +1,5 @@
-import {defineAggregateRoot} from '@ddes/core'
+import {AggregateCommit, defineAggregateRoot} from '@ddes/core'
+import {ExtractEventTypes} from '@ddes/core/lib/utilityTypes'
 import {store} from '../config'
 
 export const events = {
@@ -58,3 +59,6 @@ export const Account = defineAggregateRoot({
     }
   },
 })
+
+export type AccountEvent = ExtractEventTypes<typeof events>
+export type AccountCommit = AggregateCommit<AccountEvent, 'Account'>
