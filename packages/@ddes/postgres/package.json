@@ -1,6 +1,6 @@
 {
   "name": "@ddes/postgres",
-  "version": "5.0.3",
+  "version": "6.0.0",
   "engines": {
     "node": ">=12"
   },
@@ -23,7 +23,7 @@
     "access": "public"
   },
   "repository": "skalar/ddes",
-  "homepage": "https://ddes.io",
+  "homepage": "https://github.com/Skalar/ddes",
   "keywords": [
     "postgres",
     "postgresql",

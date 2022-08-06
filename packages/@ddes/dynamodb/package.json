@@ -1,6 +1,6 @@
 {
   "name": "@ddes/dynamodb",
-  "version": "5.0.2",
+  "version": "6.0.0",
   "engines": {
     "node": ">=12"
   },
@@ -22,7 +22,7 @@
     "aws-sdk": "^2.1189.0"
   },
   "repository": "skalar/ddes",
-  "homepage": "https://ddes.io",
+  "homepage": "https://github.com/Skalar/ddes",
   "keywords": [
     "aws",
     "dynamodb",

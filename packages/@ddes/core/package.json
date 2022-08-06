@@ -1,6 +1,6 @@
 {
   "name": "@ddes/core",
-  "version": "5.1.1",
+  "version": "6.0.0",
   "engines": {
     "node": ">=12"
   },
@@ -18,7 +18,7 @@
     "access": "public"
   },
   "repository": "skalar/ddes",
-  "homepage": "https://ddes.io",
+  "homepage": "https://github.com/Skalar/ddes",
   "keywords": [
     "distributed",
     "event sourcing",

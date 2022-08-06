@@ -1,5 +1,3 @@
-releases:
-  "@ddes/core": major
-  "@ddes/dynamodb": major
-  "@ddes/postgres": major
-  kitchensink: major
+undecided:
+  - "@ddes/core"
+  - "@ddes/postgres"
