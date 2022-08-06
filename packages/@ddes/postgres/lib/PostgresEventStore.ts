@@ -34,7 +34,7 @@ export class PostgresEventStore extends EventStore {
         PRIMARY KEY(aggregate_type, aggregate_key, aggregate_version)
       );
 
-      CREATE INDEX chronological_key_idx ON ${sql.ident(
+      CREATE INDEX IF NOT EXISTS chronological_key_idx ON ${sql.ident(
         this.tableName
       )} (chronological_key, aggregate_type);
 
