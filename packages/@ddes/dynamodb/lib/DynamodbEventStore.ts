@@ -82,7 +82,7 @@ export class DynamodbEventStore extends EventStore {
           ReturnValues: 'NONE',
         })
         .promise()
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'ConditionalCheckFailedException') {
         throw new VersionConflictError(commit)
       }
@@ -308,6 +308,45 @@ export class DynamodbEventStore extends EventStore {
         yield result.Items.map(item => this.unmarshallCommit<TAggregateCommit>(item))
       }
     }
+  }
+
+  public streamCommits<TAggregateCommit extends AggregateCommit<AggregateEvent, string>>(
+    params?:
+      | {aggregateTypes?: string[] | undefined; chronologicalKey?: string | undefined}
+      | undefined
+  ): AsyncIterable<TAggregateCommit[]>
+  public streamCommits<TAggregateCommit extends AggregateCommit<AggregateEvent, string>>(
+    params: {aggregateTypes?: string[] | undefined; chronologicalKey?: string | undefined},
+    yieldEmpty: true
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+  public streamCommits(
+    params: {aggregateTypes?: string[] | undefined; chronologicalKey?: string | undefined},
+    yieldEmpty?: boolean
+  ) {
+    // TODO
+    return undefined as any
+  }
+
+  public streamAggregateInstanceCommits<
+    TAggregateCommit extends AggregateCommit<AggregateEvent, string>
+  >(
+    aggregateType: string,
+    key: string,
+    minVersion?: number | undefined
+  ): AsyncIterable<TAggregateCommit[]>
+  public streamAggregateInstanceCommits<
+    TAggregateCommit extends AggregateCommit<AggregateEvent, string>
+  >(
+    aggregateType: string,
+    key: string,
+    minVersion: number,
+    yieldEmpty: true
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+  public streamAggregateInstanceCommits<
+    TAggregateCommit extends AggregateCommit<AggregateEvent, string>
+  >(aggregateType: string, key: string, minVersion = 1, yieldEmpty?: boolean) {
+    // TODO
+    return undefined as any
   }
 
   //

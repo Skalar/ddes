@@ -1,11 +1,19 @@
-import {EventStore, AggregateCommit, VersionConflictError, AggregateEvent} from '@ddes/core'
-import {ConnectionPool, sql} from '@databases/pg'
+import {AggregateCommit, EventStore, VersionConflictError} from '@ddes/core'
+import {Repeater} from '@repeaterjs/repeater'
+import {createHash} from 'crypto'
+import {on} from 'events'
+import {Pool} from 'pg'
+import QueryStream from 'pg-query-stream'
+import {sql} from 'pg-sql'
+import {PostgresListener} from './PostgresListener'
 
 /**
  * Interface for EventStore powered by PostgreSQL
  */
 export class PostgresEventStore extends EventStore {
-  constructor(protected tableName: string, protected pool: ConnectionPool) {
+  protected listener?: PostgresListener
+
+  constructor(protected tableName: string, protected pool: Pool) {
     super()
   }
 
@@ -17,14 +25,39 @@ export class PostgresEventStore extends EventStore {
       CREATE TABLE IF NOT EXISTS ${sql.ident(this.tableName)} (
         aggregate_type      text NOT NULL,
         aggregate_key       text NOT NULL,
-        aggregate_version   bigint NOT NULL,
+        aggregate_version   int NOT NULL,
         chronological_key   text NOT NULL,
         chronological_partition text NOT NULL,
         events              jsonb NOT NULL,
-        timestamp           bigint NOT NULL,
-        expires_at          bigint,
+        timestamp           timestamp NOT NULL,
+        expires_at          timestamp,
         PRIMARY KEY(aggregate_type, aggregate_key, aggregate_version)
       );
+
+      CREATE INDEX chronological_key_idx ON ${sql.ident(
+        this.tableName
+      )} (chronological_key, aggregate_type);
+
+      CREATE OR REPLACE FUNCTION ${sql.ident(
+        this.tableName + '_notification'
+      )}() RETURNS TRIGGER AS $$
+        BEGIN
+        PERFORM pg_notify(MD5('${sql.raw(this.tableName)}'), '' || NEW.chronological_key);
+        PERFORM pg_notify(MD5('${sql.raw(
+          this.tableName
+        )}:' || NEW.aggregate_type), NEW.aggregate_key || CHR(9) || NEW.aggregate_version || CHR(9) || NEW.chronological_key);
+        PERFORM pg_notify(MD5('${sql.raw(
+          this.tableName
+        )}:' || NEW.aggregate_type || ':' || NEW.aggregate_key), '' || NEW.aggregate_version);
+        RETURN NULL;
+        END;
+      $$ LANGUAGE plpgsql;
+
+      CREATE TRIGGER ${sql.ident(this.tableName)}
+        AFTER INSERT
+        ON ${sql.ident(this.tableName)}
+        FOR EACH ROW
+        EXECUTE PROCEDURE ${sql.ident(this.tableName + '_notification')}();
     `)
   }
 
@@ -32,7 +65,11 @@ export class PostgresEventStore extends EventStore {
    * Remove PostgresQL table
    */
   public async teardown() {
-    await this.pool.query(sql`DROP TABLE IF EXISTS ${sql.ident(this.tableName)}`)
+    await this.pool.query(sql`
+      DROP TABLE IF EXISTS ${sql.ident(this.tableName)};
+      DROP FUNCTION IF EXISTS ${sql.ident(this.tableName + '_notification')};
+      DROP TRIGGER IF EXISTS ${sql.ident(this.tableName)} ON ${sql.ident(this.tableName)};
+    `)
   }
 
   public async commit<TAggregateCommit extends AggregateCommit>(commit: TAggregateCommit) {
@@ -55,8 +92,8 @@ export class PostgresEventStore extends EventStore {
         ${chronologicalKey},
         ${chronologicalPartition},
         ${JSON.stringify(events)},
-        ${new Date(timestamp).getTime()},
-        ${expiresAt || null}
+        ${new Date(timestamp)},
+        ${expiresAt ? new Date(expiresAt) : null}
       )`
 
       await this.pool.query(query)
@@ -81,13 +118,7 @@ export class PostgresEventStore extends EventStore {
       descending?: boolean
     } = {}
   ) {
-    const {
-      minVersion = 1,
-      maxVersion = Number.MAX_SAFE_INTEGER,
-      maxTime,
-      descending,
-      limit,
-    } = options
+    const {minVersion = 1, maxVersion = 2147483647, maxTime, descending, limit} = options
 
     if (!type || !key) {
       throw new Error(`You need to specify 'type' and 'key'`)
@@ -98,16 +129,20 @@ export class PostgresEventStore extends EventStore {
       WHERE "aggregate_type" = ${type}
       AND "aggregate_key" = ${key}
       AND "aggregate_version" BETWEEN ${minVersion} AND ${maxVersion}
-      AND (expires_at > ${Date.now()} OR expires_at IS NULL)
-      ${maxTime ? sql`and "timestamp" <= ${new Date(maxTime).getTime()}` : sql``}
+      AND (expires_at > ${new Date()} OR expires_at IS NULL)
+      ${maxTime ? sql`and "timestamp" <= ${new Date(maxTime)}` : sql``}
       ORDER BY "timestamp" ${descending ? sql`DESC` : sql`ASC`}
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
 
-    const rows = this.pool.queryStream(query, {})
-
-    for await (const row of rows) {
-      yield [rowToCommit(row) as TAggregateCommit]
+    const client = await this.pool.connect()
+    try {
+      const queryStream = client.query(new QueryStream(query.text, query.values))
+      for await (const row of queryStream) {
+        yield [rowToCommit(row) as TAggregateCommit]
+      }
+    } finally {
+      client.release()
     }
   }
 
@@ -121,11 +156,17 @@ export class PostgresEventStore extends EventStore {
     const query = sql`
       SELECT * FROM ${sql.ident(
         this.tableName
-      )} WHERE "aggregate_type" = ${type} AND (expires_at > ${Date.now()} OR expires_at IS NULL) ORDER BY "aggregate_key", "aggregate_version"
+      )} WHERE "aggregate_type" = ${type} AND (expires_at > ${new Date()} OR expires_at IS NULL) ORDER BY "aggregate_key", "aggregate_version"
     `
 
-    for await (const row of this.pool.queryStream(query, {})) {
-      yield [rowToCommit(row) as TAggregateCommit]
+    const client = await this.pool.connect()
+    try {
+      const queryStream = client.query(new QueryStream(query.text, query.values))
+      for await (const row of queryStream) {
+        yield [rowToCommit(row) as TAggregateCommit]
+      }
+    } finally {
+      client.release()
     }
   }
 
@@ -158,7 +199,7 @@ export class PostgresEventStore extends EventStore {
 
     const query = sql`
       SELECT * FROM ${sql.ident(this.tableName)}
-      WHERE (expires_at > ${Date.now()} or expires_at IS NULL)
+      WHERE (expires_at > ${new Date()} or expires_at IS NULL)
       ${
         aggregateTypes
           ? sql`AND "aggregate_type" in (${sql.join(
@@ -171,8 +212,14 @@ export class PostgresEventStore extends EventStore {
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
 
-    for await (const row of this.pool.queryStream(query, {})) {
-      yield [rowToCommit(row) as TAggregateCommit]
+    const client = await this.pool.connect()
+    try {
+      const queryStream = client.query(new QueryStream(query.text, query.values))
+      for await (const row of queryStream) {
+        yield [rowToCommit(row) as TAggregateCommit]
+      }
+    } finally {
+      client.release()
     }
   }
 
@@ -203,17 +250,7 @@ export class PostgresEventStore extends EventStore {
       throw new Error('You must specify the "min" parameter')
     }
 
-    const maxDate =
-      max instanceof Date
-        ? max
-        : new Date(max.toString().replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
-
     const maxCursor = max instanceof Date ? max.toISOString().replace(/[^0-9]/g, '') : max
-
-    const minDate =
-      min instanceof Date
-        ? min
-        : new Date(min.toString().replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3'))
 
     const minCursor = min instanceof Date ? min.toISOString().replace(/[^0-9]/g, '') : min
 
@@ -222,7 +259,6 @@ export class PostgresEventStore extends EventStore {
     const query = sql`
       SELECT * FROM ${sql.ident(this.tableName)}
       WHERE "chronological_partition" = ${chronologicalPartition}
-      AND "timestamp" BETWEEN ${minDate.getTime()} AND ${maxDate.getTime()}
       ${exclusiveMin ? sql`AND "chronological_key" > ${minCursor}` : sql``}
       ${exclusiveMax ? sql`AND "chronological_key" < ${maxCursor}` : sql``}
       ${
@@ -233,12 +269,19 @@ export class PostgresEventStore extends EventStore {
             )})`
           : sql``
       }
-      AND (expires_at > ${Date.now()} or expires_at IS NULL)
+      AND (expires_at > ${new Date()} or expires_at IS NULL)
       ORDER BY chronological_key ${orderByDir}
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
-    for await (const row of this.pool.queryStream(query, {})) {
-      yield [rowToCommit(row) as TAggregateCommit]
+
+    const client = await this.pool.connect()
+    try {
+      const queryStream = client.query(new QueryStream(query.text, query.values))
+      for await (const row of queryStream) {
+        yield [rowToCommit(row) as TAggregateCommit]
+      }
+    } finally {
+      client.release()
     }
   }
 
@@ -255,19 +298,233 @@ export class PostgresEventStore extends EventStore {
       data.aggregateVersion,
     ].join(':')
   }
+
+  public streamCommits<TAggregateCommit extends AggregateCommit>(params?: {
+    aggregateTypes?: string[]
+    chronologicalKey?: string
+  }): AsyncIterable<TAggregateCommit[]>
+  public streamCommits<TAggregateCommit extends AggregateCommit>(
+    params: {
+      aggregateTypes?: string[]
+      chronologicalKey?: string
+    },
+    yieldEmpty: true
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+  public streamCommits<TAggregateCommit extends AggregateCommit>(
+    params: {
+      aggregateTypes?: string[]
+      chronologicalKey?: string
+    } = {},
+    yieldEmpty = false
+  ): AsyncIterable<TAggregateCommit[]> {
+    const {aggregateTypes} = params
+    let {chronologicalKey = ' '} = params
+    const channelNames =
+      Array.isArray(aggregateTypes) && aggregateTypes.length
+        ? aggregateTypes.map(s =>
+            createHash('md5').update([this.tableName, s].join(':')).digest('hex')
+          )
+        : [createHash('md5').update(this.tableName).digest('hex')]
+
+    return {
+      [Symbol.asyncIterator]: () => {
+        const listener = this.getListener()
+        const listenerIterator = Repeater.merge(
+          channelNames.map(channelName => on(listener, channelName))
+        )
+
+        let query: AsyncIterator<TAggregateCommit[]> | undefined
+        let waitingForNotification = false
+
+        return {
+          next: async () => {
+            while (true) {
+              if (!query) {
+                if (waitingForNotification) {
+                  // Wait until we are notified of new potential results
+                  while (true) {
+                    const listenerResult = await listenerIterator.next()
+
+                    if (listenerResult.value) {
+                      const payload = listenerResult.value[listenerResult.value.length - 1]
+
+                      if (Array.isArray(aggregateTypes) && aggregateTypes.length) {
+                        const [, , cursor] = payload.split('\t')
+                        if (cursor > chronologicalKey) {
+                          break
+                        }
+                      } else {
+                        if (payload > chronologicalKey) {
+                          break
+                        }
+                      }
+                    }
+
+                    if (listenerResult.done) {
+                      return {value: undefined, done: true}
+                    }
+                  }
+                }
+
+                waitingForNotification = false
+
+                query = this.chronologicalQuery<TAggregateCommit>({
+                  min: chronologicalKey,
+                  exclusiveMin: true,
+                  aggregateTypes,
+                })
+              }
+
+              const {value, done} = await query.next()
+              if (value) {
+                chronologicalKey = value[value.length - 1].chronologicalKey
+              }
+
+              if (done) {
+                waitingForNotification = true
+                query = undefined
+              }
+
+              if (value || yieldEmpty) {
+                return {value, done: false}
+              }
+            }
+          },
+
+          async return() {
+            if (typeof query !== 'undefined') await query.return?.()
+
+            return {value: undefined, done: true}
+          },
+
+          async throw(...args: any[]) {
+            await this.return?.()
+
+            if (query && query.throw) {
+              return await query.throw(...args)
+            }
+
+            return {value: undefined, done: true}
+          },
+        }
+      },
+    }
+  }
+
+  public streamAggregateInstanceCommits<TAggregateCommit extends AggregateCommit>(
+    aggregateType: string,
+    key: string,
+    minVersion?: number
+  ): AsyncIterable<TAggregateCommit[]>
+  public streamAggregateInstanceCommits<TAggregateCommit extends AggregateCommit>(
+    aggregateType: string,
+    key: string,
+    minVersion: number,
+    yieldEmpty: true
+  ): AsyncIterable<TAggregateCommit[] | undefined>
+  public streamAggregateInstanceCommits<TAggregateCommit extends AggregateCommit>(
+    aggregateType: string,
+    key: string,
+    minVersion = 1,
+    yieldEmpty = false
+  ): AsyncIterable<TAggregateCommit[] | undefined> {
+    const channelName = createHash('md5')
+      .update([this.tableName, aggregateType, key].join(':'))
+      .digest('hex')
+
+    return {
+      [Symbol.asyncIterator]: () => {
+        const listener = this.getListener()
+        const listenerIterator = on(listener, channelName)
+
+        let query: AsyncIterator<TAggregateCommit[]> | undefined
+        let waitingForNotification = false
+
+        return {
+          next: async () => {
+            while (true) {
+              if (!query) {
+                if (waitingForNotification) {
+                  // Wait until we are notified of new potential results
+
+                  while (true) {
+                    const listenerResult = await listenerIterator.next()
+
+                    const [versionString] = listenerResult.value
+
+                    if (parseInt(versionString, 10) >= minVersion) {
+                      break
+                    }
+
+                    if (listenerResult.done) {
+                      return {value: undefined, done: true}
+                    }
+                  }
+                }
+
+                waitingForNotification = false
+                query = this.queryAggregateCommits<TAggregateCommit>(aggregateType, key, {
+                  minVersion,
+                })
+              }
+
+              const {value, done} = await query.next()
+
+              if (value) {
+                minVersion = value[value.length - 1].aggregateVersion + 1
+              }
+
+              if (done) {
+                waitingForNotification = true
+                query = undefined
+              }
+
+              if (value || yieldEmpty) {
+                return {value, done: false}
+              }
+            }
+          },
+
+          async return() {
+            if (typeof query !== 'undefined') await query.return?.()
+
+            return {value: undefined, done: true}
+          },
+
+          async throw(...args: any[]) {
+            await this.return?.()
+
+            if (query && query.throw) {
+              return await query.throw(...args)
+            }
+
+            return {value: undefined, done: true}
+          },
+        }
+      },
+    }
+  }
+
+  protected getListener() {
+    if (!this.listener) {
+      this.listener = new PostgresListener(this.pool)
+    }
+
+    return this.listener
+  }
 }
 
 interface CommitRow {
   composite_id: string
   aggregate_key: string
-  aggregate_version: string
+  aggregate_version: number
   aggregate_type: string
   chronological_key: string
   events: unknown[]
   partition_key: string
   chronological_partition: string
-  timestamp: string
-  expires_at?: string | null
+  timestamp: Date
+  expires_at?: Date | null
 }
 
 function rowToCommit({
@@ -284,12 +541,12 @@ function rowToCommit({
 }: CommitRow): AggregateCommit {
   return {
     aggregateKey: aggregate_key,
-    aggregateVersion: parseInt(aggregate_version, 10),
+    aggregateVersion: aggregate_version,
     aggregateType: aggregate_type,
     chronologicalKey: chronological_key,
     chronologicalPartition: chronological_partition,
-    ...(expires_at ? {expiresAt: parseInt(expires_at)} : {}),
-    ...(timestamp ? {timestamp: parseInt(timestamp)} : {}),
+    ...(expires_at ? {expiresAt: expires_at.valueOf()} : {}),
+    ...(timestamp ? {timestamp: timestamp.valueOf()} : {}),
     ...rest,
   } as AggregateCommit
 }

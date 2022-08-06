@@ -225,6 +225,29 @@ export class AggregateRoot<
   }
 
   /**
+   * Stream current and future aggregate commits for the given key
+   */
+  streamCommits(
+    key: string | TKeyProps
+  ): AsyncIterable<Array<AggregateCommit<TEvent, TAggregateType>>>
+  streamCommits(
+    key: string | TKeyProps,
+    minVersion: number
+  ): AsyncIterable<Array<AggregateCommit<TEvent, TAggregateType>>>
+  streamCommits(
+    key: string | TKeyProps,
+    minVersion: number,
+    yieldEmpty: true
+  ): AsyncIterable<Array<AggregateCommit<TEvent, TAggregateType>> | undefined>
+  streamCommits(key: string | TKeyProps, minVersion = 1, yieldEmpty = false) {
+    const keyString = typeof key === 'string' ? key : this.keyFromProps(key)
+
+    return this.config.store.streamAggregateInstanceCommits<
+      AggregateCommit<TEvent, TAggregateType>
+    >(this.config.type, keyString, minVersion, yieldEmpty)
+  }
+
+  /**
    * Scan through aggregate roots
    */
   async *scanInstances() {
