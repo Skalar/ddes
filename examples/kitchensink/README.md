@@ -7,7 +7,7 @@
 docker compose up -d
 
 # Prepare stores
-support/setup.ts
+yarn ts-node-script support/setup.ts
 
 # Choose a store
 export STORE=postgres
