@@ -14,7 +14,7 @@ process.once('SIGTERM', () => {
 })
 
 postgresConnectionPool.on('error', error => {
-  console.log('shiit postgres error')
+  console.log(`Postgres pool error: ${error}`)
 })
 
 disposables.push({dispose: () => postgresConnectionPool.end()})
