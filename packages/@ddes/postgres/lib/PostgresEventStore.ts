@@ -2,7 +2,7 @@ import {AggregateCommit, EventStore, VersionConflictError} from '@ddes/core'
 import {Repeater} from '@repeaterjs/repeater'
 import {createHash} from 'crypto'
 import {on} from 'events'
-import {Pool} from 'pg'
+import {Pool, PoolClient} from 'pg'
 import QueryStream from 'pg-query-stream'
 import {sql} from 'pg-sql'
 import {PostgresListener} from './PostgresListener'
@@ -85,8 +85,33 @@ export class PostgresEventStore extends EventStore {
     return commit
   }
 
+  public async commitInTransaction<TAggregateCommit extends AggregateCommit>(
+    commits: TAggregateCommit[]
+  ) {
+    const client = await this.pool.connect()
+
+    try {
+      await client.query('BEGIN')
+      for (const commit of commits) {
+        await this.insertCommit(client, commit)
+      }
+      await client.query('COMMIT')
+    } catch (error: any) {
+      await client.query('ROLLBACK')
+      if (error.code === '23505') {
+        // TODO: Identify what commit caused the conflict
+        throw new VersionConflictError(commits[0])
+      }
+      throw error
+    } finally {
+      await client.release()
+    }
+
+    return commits
+  }
+
   private async insertCommit<TAggregateCommit extends AggregateCommit>(
-    pool: Pool,
+    pool: Pool | PoolClient,
     commit: TAggregateCommit
   ) {
     const {
