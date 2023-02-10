@@ -74,7 +74,7 @@ export class PostgresEventStore extends EventStore {
 
   public async commit<TAggregateCommit extends AggregateCommit>(commit: TAggregateCommit) {
     try {
-      await this.commitOne(this.pool, commit)
+      await this.insertCommit(this.pool, commit)
     } catch (error: any) {
       if (error.code === '23505') {
         throw new VersionConflictError(commit)
@@ -85,7 +85,7 @@ export class PostgresEventStore extends EventStore {
     return commit
   }
 
-  private async commitOne<TAggregateCommit extends AggregateCommit>(
+  private async insertCommit<TAggregateCommit extends AggregateCommit>(
     pool: Pool,
     commit: TAggregateCommit
   ) {
