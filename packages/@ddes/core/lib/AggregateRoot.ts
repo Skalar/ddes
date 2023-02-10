@@ -183,14 +183,13 @@ export class AggregateRoot<
   }
 
   /**
-   * Commit aggregate events to the store
-   * TODO include info about VersionConflictError
+   * Build aggregate commit from events without saving it to the store
    */
-  async commit(
+  build(
     key: string | TKeyProps,
     version: number,
     events: TEvent[]
-  ): Promise<AggregateCommit<TEvent, TAggregateType>> {
+  ): AggregateCommit<TEvent, TAggregateType> {
     const aggregateKey = typeof key === 'string' ? key : this.keyFromProps(key)
 
     const commitData = {
@@ -205,6 +204,20 @@ export class AggregateRoot<
       ...commitData,
       chronologicalKey: this.config.store.chronologicalKey(commitData),
     }
+
+    return commit
+  }
+
+  /**
+   * Commit aggregate events to the store
+   * TODO include info about VersionConflictError
+   */
+  async commit(
+    key: string | TKeyProps,
+    version: number,
+    events: TEvent[]
+  ): Promise<AggregateCommit<TEvent, TAggregateType>> {
+    const commit: AggregateCommit<TEvent, TAggregateType> = this.build(key, version, events)
 
     return await this.config.store.commit<AggregateCommit<TEvent, TAggregateType>>(commit)
   }
