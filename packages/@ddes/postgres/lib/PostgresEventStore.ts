@@ -73,6 +73,22 @@ export class PostgresEventStore extends EventStore {
   }
 
   public async commit<TAggregateCommit extends AggregateCommit>(commit: TAggregateCommit) {
+    try {
+      await this.commitOne(this.pool, commit)
+    } catch (error: any) {
+      if (error.code === '23505') {
+        throw new VersionConflictError(commit)
+      }
+      throw error
+    }
+
+    return commit
+  }
+
+  private async commitOne<TAggregateCommit extends AggregateCommit>(
+    pool: Pool,
+    commit: TAggregateCommit
+  ) {
     const {
       aggregateType,
       aggregateKey,
@@ -84,8 +100,7 @@ export class PostgresEventStore extends EventStore {
       chronologicalKey,
     } = commit
 
-    try {
-      const query = sql`INSERT INTO ${sql.ident(this.tableName)} VALUES(
+    const query = sql`INSERT INTO ${sql.ident(this.tableName)} VALUES(
         ${aggregateType},
         ${aggregateKey},
         ${aggregateVersion},
@@ -96,15 +111,7 @@ export class PostgresEventStore extends EventStore {
         ${expiresAt ? new Date(expiresAt) : null}
       )`
 
-      await this.pool.query(query)
-    } catch (error: any) {
-      if (error.code === '23505') {
-        throw new VersionConflictError(commit)
-      }
-      throw error
-    }
-
-    return commit
+    await pool.query(query)
   }
 
   public async *queryAggregateCommits<TAggregateCommit extends AggregateCommit>(
