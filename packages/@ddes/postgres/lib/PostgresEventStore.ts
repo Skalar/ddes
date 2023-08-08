@@ -361,8 +361,9 @@ export class PostgresEventStore extends EventStore {
     return {
       [Symbol.asyncIterator]: () => {
         const listener = this.getListener()
+        const ac = new AbortController()
         const listenerIterator = Repeater.merge(
-          channelNames.map(channelName => on(listener, channelName))
+          channelNames.map(channelName => on(listener, channelName, {signal: ac.signal}))
         )
 
         let query: AsyncIterator<TAggregateCommit[]> | undefined
@@ -375,25 +376,32 @@ export class PostgresEventStore extends EventStore {
                 if (waitingForNotification) {
                   // Wait until we are notified of new potential results
                   while (true) {
-                    const listenerResult = await listenerIterator.next()
+                    try {
+                      const listenerResult = await listenerIterator.next()
 
-                    if (listenerResult.value) {
-                      const payload = listenerResult.value[listenerResult.value.length - 1]
+                      if (listenerResult.value) {
+                        const payload = listenerResult.value[listenerResult.value.length - 1]
 
-                      if (Array.isArray(aggregateTypes) && aggregateTypes.length) {
-                        const [, , cursor] = payload.split('\t')
-                        if (cursor > chronologicalKey) {
-                          break
-                        }
-                      } else {
-                        if (payload > chronologicalKey) {
-                          break
+                        if (Array.isArray(aggregateTypes) && aggregateTypes.length) {
+                          const [, , cursor] = payload.split('\t')
+                          if (cursor > chronologicalKey) {
+                            break
+                          }
+                        } else {
+                          if (payload > chronologicalKey) {
+                            break
+                          }
                         }
                       }
-                    }
 
-                    if (listenerResult.done) {
-                      return {value: undefined, done: true}
+                      if (listenerResult.done) {
+                        return {value: undefined, done: true}
+                      }
+                    } catch (error: any) {
+                      if (error.name === 'AbortError') {
+                        return {value: undefined, done: true}
+                      }
+                      throw error
                     }
                   }
                 }
@@ -424,12 +432,14 @@ export class PostgresEventStore extends EventStore {
           },
 
           async return() {
+            ac.abort()
             if (typeof query !== 'undefined') await query.return?.()
 
             return {value: undefined, done: true}
           },
 
           async throw(...args: any[]) {
+            ac.abort()
             await this.return?.()
 
             if (query && query.throw) {
@@ -467,7 +477,8 @@ export class PostgresEventStore extends EventStore {
     return {
       [Symbol.asyncIterator]: () => {
         const listener = this.getListener()
-        const listenerIterator = on(listener, channelName)
+        const ac = new AbortController()
+        const listenerIterator = on(listener, channelName, {signal: ac.signal})
 
         let query: AsyncIterator<TAggregateCommit[]> | undefined
         let waitingForNotification = false
@@ -480,16 +491,23 @@ export class PostgresEventStore extends EventStore {
                   // Wait until we are notified of new potential results
 
                   while (true) {
-                    const listenerResult = await listenerIterator.next()
+                    try {
+                      const listenerResult = await listenerIterator.next()
 
-                    const [versionString] = listenerResult.value
+                      const [versionString] = listenerResult.value
 
-                    if (parseInt(versionString, 10) >= minVersion) {
-                      break
-                    }
+                      if (parseInt(versionString, 10) >= minVersion) {
+                        break
+                      }
 
-                    if (listenerResult.done) {
-                      return {value: undefined, done: true}
+                      if (listenerResult.done) {
+                        return {value: undefined, done: true}
+                      }
+                    } catch (error: any) {
+                      if (error.name === 'AbortError') {
+                        return {value: undefined, done: true}
+                      }
+                      throw error
                     }
                   }
                 }
@@ -518,12 +536,14 @@ export class PostgresEventStore extends EventStore {
           },
 
           async return() {
+            ac.abort()
             if (typeof query !== 'undefined') await query.return?.()
 
             return {value: undefined, done: true}
           },
 
           async throw(...args: any[]) {
+            ac.abort()
             await this.return?.()
 
             if (query && query.throw) {
