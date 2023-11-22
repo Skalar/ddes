@@ -19,7 +19,7 @@ export function defineAggregateRoot<
   keyPropsSeparator?: string
   snapshots?: {
     write: (key: string[], data: SnapshotData<TState>) => Promise<void>
-    read: (key: string[]) => Promise<SnapshotData<TState>>
+    read: (key: string[]) => Promise<SnapshotData<TState> | undefined>
     frequency: number
     compatibilityVersion: string
   }
