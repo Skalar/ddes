@@ -1,3 +1,6 @@
 node_modules
 docs/
-packages/**/dist
+packages/**/*.js
+packages/**/*.map
+packages/**/*.d.ts
+.turbo

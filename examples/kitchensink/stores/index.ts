@@ -1,2 +1,2 @@
 // export {dynamodb} from './dynamodb'
-export {postgres} from './postgres'
+export { postgres } from './postgres'
