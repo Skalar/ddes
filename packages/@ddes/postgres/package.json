@@ -1,54 +1,47 @@
 {
-  "name": "@ddes/postgres",
-  "version": "6.2.1",
-  "engines": {
-    "node": ">=12"
-  },
-  "description": "PostgreSQL powered EventStore, SnapshotStore and MetaStore implementations for DDES, a framework for distributed Event Sourcing & CQRS",
-  "author": "Kristinn Thor Johannsson <spiffern@gmail.com>",
-  "contributors": [
-    "Lars Larsen Skjæveland <larslalars@gmail.com>",
-    "Gudleik Rasch <gudleik@gmail.com>",
-    "Trym Skaar <trym.skaar@gmail.com>"
-  ],
-  "license": "MIT",
-  "files": [
-    "dist",
-    "index.js",
-    "package.json",
-    "README.md"
-  ],
-  "types": "./dist/index.d.ts",
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": "skalar/ddes",
-  "homepage": "https://github.com/Skalar/ddes",
-  "keywords": [
-    "postgres",
-    "postgresql",
-    "distributed",
-    "event store",
-    "event sourcing",
-    "cqrs"
-  ],
-  "dependencies": {
-    "@ddes/core": "workspace:^",
-    "@repeaterjs/repeater": "^3.0.4",
-    "pg": "^8.7.3",
-    "pg-query-stream": "^4.2.3",
-    "pg-sql": "^1.1.0"
-  },
-  "devDependencies": {
-    "@types/node": "^18.6.4",
-    "@types/pg": "^8.6.5",
-    "typescript": "^4.3.5"
-  },
-  "scripts": {
-    "lint": "eslint lib",
-    "build": "tsc -p tsconfig.json",
-    "clean": "rm -fr dist",
-    "prepack": "yarn build",
-    "postpack": "yarn clean"
-  }
+	"name": "@ddes/postgres",
+	"version": "6.2.1",
+	"engines": {
+		"node": ">=12"
+	},
+	"description": "PostgreSQL powered EventStore, SnapshotStore and MetaStore implementations for DDES, a framework for distributed Event Sourcing & CQRS",
+	"author": "Kristinn Thor Johannsson <spiffern@gmail.com>",
+	"contributors": [
+		"Lars Larsen Skjæveland <larslalars@gmail.com>",
+		"Gudleik Rasch <gudleik@gmail.com>",
+		"Trym Skaar <trym.skaar@gmail.com>"
+	],
+	"license": "MIT",
+	"files": ["**/*.{d.ts,js,map}", "package.json", "README.md"],
+	"publishConfig": {
+		"access": "public"
+	},
+	"repository": "skalar/ddes",
+	"homepage": "https://github.com/Skalar/ddes",
+	"keywords": [
+		"postgres",
+		"postgresql",
+		"distributed",
+		"event store",
+		"event sourcing",
+		"cqrs"
+	],
+	"dependencies": {
+		"@ddes/core": "workspace:^",
+		"@repeaterjs/repeater": "^3.0.5",
+		"pg": "^8.11.3",
+		"pg-query-stream": "^4.5.3",
+		"pg-sql": "^1.1.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.10.4",
+		"@types/pg": "^8.10.9",
+		"typescript": "^5.3.3"
+	},
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"clean": "rm -fr ./**/*.{d.ts,js,js.map} *.{d.ts,js,js.map}",
+		"prepack": "yarn build",
+		"postpack": "yarn clean"
+	}
 }

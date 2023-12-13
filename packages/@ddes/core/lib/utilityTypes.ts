@@ -6,4 +6,6 @@
  * type MyEventType = ExtractEventTypes<typeof events>
  * ```
  */
-export type ExtractEventTypes<T extends Record<string, any>> = ReturnType<T[keyof T]>
+export type ExtractEventTypes<T extends Record<string, any>> = ReturnType<
+	T[keyof T]
+>

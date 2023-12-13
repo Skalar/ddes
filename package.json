@@ -1,30 +1,20 @@
 {
-  "name": "ddes-monorepo",
-  "description": "Event Sourcing in TypeScript",
-  "packageManager": "yarn@3.2.2",
-  "private": true,
-  "license": "MIT",
-  "scripts": {
-    "lint": "yarn workspaces run lint",
-    "build": "yarn clean && yarn workspaces run build",
-    "clean": "rm -fr packages/@ddes/*/dist"
-  },
-  "devDependencies": {
-    "@types/node": "^18.6.4",
-    "@typescript-eslint/eslint-plugin": "^5.32.0",
-    "@typescript-eslint/parser": "^5.32.0",
-    "eslint": "^8.21.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-prettier": "^4.2.1",
-    "prettier": "^2.3.2",
-    "tsconfig-paths": "^4.0.0",
-    "typedoc": "^0.23.10",
-    "typescript": "^4.3.5"
-  },
-  "npmClient": "yarn",
-  "useWorkspaces": true,
-  "workspaces": [
-    "packages/@ddes/*",
-    "examples/*"
-  ]
+	"name": "ddes-monorepo",
+	"devDependencies": {
+		"@biomejs/biome": "^1.4.1",
+		"@types/node": "^20.10.4",
+		"turbo": "^1.11.2",
+		"typedoc": "^0.25.4",
+		"typescript": "^5.3.3"
+	},
+	"description": "Event Sourcing in TypeScript",
+	"license": "MIT",
+	"private": true,
+	"scripts": {
+		"lint": "biome check packages examples",
+		"lint:fix": "biome check packages examples --apply",
+		"build": "turbo run clean && bun run lint && turbo run build",
+		"clean": "turbo run clean"
+	},
+	"workspaces": ["packages/@ddes/*", "examples/*"]
 }

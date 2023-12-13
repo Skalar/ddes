@@ -1,2 +1,2 @@
-export {Account} from './Account'
-export {SomeAggregate} from './SomeAggregate'
+export { Account } from './Account'
+export { SomeAggregate } from './SomeAggregate'

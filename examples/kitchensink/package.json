@@ -1,25 +1,26 @@
 {
-  "name": "kitchensink",
-  "version": "1.0.0",
-  "license": "MIT",
-  "private": true,
-  "engines": {
-    "node": ">=12"
-  },
-  "scripts": {
-    "setup": "support/setup.ts",
-    "build": "echo"
-  },
-  "dependencies": {
-    "@ddes/core": "workspace:*",
-    "@ddes/dynamodb": "workspace:*",
-    "@ddes/postgres": "workspace:*",
-    "pg": "^8.7.3"
-  },
-  "devDependencies": {
-    "@types/node": "^18.6.4",
-    "@types/pg": "^8.6.5",
-    "ts-node": "^10.1.0",
-    "typescript": "^4.3.5"
-  }
+	"name": "kitchensink",
+	"version": "1.0.0",
+	"license": "MIT",
+	"private": true,
+	"engines": {
+		"node": ">=12"
+	},
+	"scripts": {
+		"setup": "support/setup.ts",
+		"build": "echo",
+		"clean": "echo"
+	},
+	"dependencies": {
+		"@ddes/core": "workspace:*",
+		"@ddes/dynamodb": "workspace:*",
+		"@ddes/postgres": "workspace:*",
+		"pg": "^8.11.3"
+	},
+	"devDependencies": {
+		"@types/node": "^20.10.4",
+		"@types/pg": "^8.10.9",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.3.3"
+	}
 }
