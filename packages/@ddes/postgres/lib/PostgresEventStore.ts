@@ -167,7 +167,7 @@ export class PostgresEventStore extends EventStore {
       AND "aggregate_version" BETWEEN ${minVersion} AND ${maxVersion}
       AND (expires_at > ${new Date()} OR expires_at IS NULL)
       ${maxTime ? sql`and "timestamp" <= ${new Date(maxTime)}` : sql``}
-      ORDER BY "timestamp" ${descending ? sql`DESC` : sql`ASC`}
+      ORDER BY "aggregate_version" ${descending ? sql`DESC` : sql`ASC`}
       ${limit ? sql`LIMIT ${limit}` : sql``}
     `
 
