@@ -1,9 +1,9 @@
 {
 	"name": "ddes-monorepo",
 	"devDependencies": {
-		"@biomejs/biome": "^1.4.1",
-		"@types/node": "^20.10.4",
-		"turbo": "^1.11.2",
+		"@biomejs/biome": "^1.5.3",
+		"@types/node": "^20.11.24",
+		"turbo": "^1.12.4",
 		"typedoc": "^0.25.4",
 		"typescript": "^5.3.3"
 	},

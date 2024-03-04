@@ -13,7 +13,10 @@ import { PostgresListener } from './PostgresListener'
 export class PostgresEventStore extends EventStore {
 	protected listener?: PostgresListener
 
-	constructor(protected tableName: string, protected pool: Pool) {
+	constructor(
+		protected tableName: string,
+		protected pool: Pool,
+	) {
 		super()
 	}
 

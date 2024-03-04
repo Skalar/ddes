@@ -5,7 +5,7 @@ import {
 	VersionConflictError,
 } from '@ddes/core'
 
-import { DynamoDB } from 'aws-sdk'
+import { AWSError, DynamoDB, Request } from 'aws-sdk'
 import * as orchestration from './orchestration'
 
 /**
@@ -579,7 +579,9 @@ export class DynamodbEventStore extends EventStore {
 		let lastEvaluatedKey: DynamoDB.Key | undefined
 
 		do {
-			let request
+			let request:
+				| Request<DynamoDB.ScanOutput, AWSError>
+				| Request<DynamoDB.QueryOutput, AWSError>
 
 			if (type === 'scan') {
 				request = this.client.scan({

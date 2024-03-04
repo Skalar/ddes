@@ -89,7 +89,7 @@ export async function deleteTable(
 ) {
 	const { waitTimeout = 30000, statusCheckInterval = 1000, dynamodb } = options
 
-	let timer
+	let timer: NodeJS.Timeout | null = null
 
 	try {
 		await dynamodb.deleteTable({ TableName: tableName }).promise()
