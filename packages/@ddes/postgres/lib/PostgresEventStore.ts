@@ -43,9 +43,9 @@ export class PostgresEventStore extends EventStore {
 
       CREATE OR REPLACE FUNCTION ${sql.ident(`${this.tableName}_notification`)}() RETURNS TRIGGER AS $$
         BEGIN
-        PERFORM pg_notify(MD5('${sql.raw(this.tableName)}'), '' || NEW.chronological_key);
-        PERFORM pg_notify(MD5('${sql.raw(this.tableName)}:' || NEW.aggregate_type), NEW.aggregate_key || CHR(9) || NEW.aggregate_version || CHR(9) || NEW.chronological_key);
-        PERFORM pg_notify(MD5('${sql.raw(this.tableName)}:' || NEW.aggregate_type || ':' || NEW.aggregate_key), '' || NEW.aggregate_version);
+        PERFORM pg_notify(left(encode(sha256(('${sql.raw(this.tableName)}')::bytea), 'hex'), 48), '' || NEW.chronological_key);
+        PERFORM pg_notify(left(encode(sha256(('${sql.raw(this.tableName)}:' || NEW.aggregate_type)::bytea), 'hex'), 48), NEW.aggregate_key || CHR(9) || NEW.aggregate_version || CHR(9) || NEW.chronological_key);
+        PERFORM pg_notify(left(encode(sha256(('${sql.raw(this.tableName)}:' || NEW.aggregate_type || ':' || NEW.aggregate_key)::bytea), 'hex'), 48), '' || NEW.aggregate_version);
         RETURN NULL;
         END;
       $$ LANGUAGE plpgsql;
@@ -379,11 +379,12 @@ export class PostgresEventStore extends EventStore {
 		const channelNames =
 			Array.isArray(aggregateTypes) && aggregateTypes.length
 				? aggregateTypes.map((s) =>
-						createHash('md5')
+						createHash('sha256')
 							.update([this.tableName, s].join(':'))
-							.digest('hex'),
+							.digest('hex')
+							.substring(0, 48),
 				  )
-				: [createHash('md5').update(this.tableName).digest('hex')]
+				: [createHash('sha256').update(this.tableName).digest('hex').substring(0, 48)]
 
 		return {
 			[Symbol.asyncIterator]: () => {
@@ -510,9 +511,10 @@ export class PostgresEventStore extends EventStore {
 		yieldEmpty = false,
 	): AsyncIterable<TAggregateCommit[] | undefined> {
 		let minVersion = _minVersion
-		const channelName = createHash('md5')
+		const channelName = createHash('sha256')
 			.update([this.tableName, aggregateType, key].join(':'))
 			.digest('hex')
+			.substring(0, 48)
 
 		return {
 			[Symbol.asyncIterator]: () => {
