@@ -1,6 +1,6 @@
 {
 	"name": "@ddes/postgres",
-	"version": "7.0.2",
+	"version": "7.0.6",
 	"engines": {
 		"node": ">=12"
 	},
